@@ -5,6 +5,7 @@ import mongoose from 'mongoose';
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './config/swagger-config'; 
 import patientsRoutes from './routes/patients/patientRoutes'
+import indexRoute from './routes/indexRoute'
 import errorHandler from "./middlewares/errorMiddleware"
 import dotenv from "dotenv";
 
@@ -38,6 +39,7 @@ app.use(cors({ credentials: true }));
 
 app.use(bodyParser.json());
 
+app.use(indexRoute)
 app.use("/dev", patientsRoutes);
 app.use('/swagger', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
