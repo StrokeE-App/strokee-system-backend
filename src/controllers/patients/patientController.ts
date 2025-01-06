@@ -55,7 +55,7 @@ export const loginUser = async (req: Request, res: Response) => {
 
     try {
         const token = await authenticatePatient(email, password)
-        res.status(201).json({ message: "Login exitoso.", token });
+        res.status(200).json({ message: "Login exitoso.", token });
     } catch (error) {
 
         if (error instanceof Error) {
@@ -77,7 +77,7 @@ export const getAllPatients = async (req: Request, res: Response) => {
     try{
 
         const listOfPatients = await getAllPatientsFromCollection()
-        res.status(201).json({ data : listOfPatients });
+        res.status(200).json({ data : listOfPatients });
     }catch(error){
         if (error instanceof Error) {
             res.status(500).json({
