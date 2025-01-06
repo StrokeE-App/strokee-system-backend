@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { getAllPatientsFromCollection, addPatientIntoPatientCollection, authenticatePatient } from "../../services/patients/patientService";
+import { getAllPatientsFromCollection, addPatientIntoPatientCollection, authenticatePatient, refreshUserToken } from "../../services/patients/patientService";
 
 export const registerPatient = async (req: Request, res: Response) => {
     const {
@@ -46,7 +46,7 @@ export const registerPatient = async (req: Request, res: Response) => {
     }
 };
 
-export const loginUser = async (req: Request, res: Response) => {
+export const loginUser = async (req: Request, res: Response): Promise<void> => {
     const { email, password } = req.body;
 
     if (!email || !password) {
@@ -54,8 +54,15 @@ export const loginUser = async (req: Request, res: Response) => {
     }
 
     try {
-        const token = await authenticatePatient(email, password)
-        res.status(200).json({ message: "Login exitoso.", token });
+        const tokens = await authenticatePatient(email, password);
+
+        if (!tokens) {
+            res.status(401).json({ message: "Credenciales inválidas" });
+            return
+        }
+
+        const { idToken, refreshToken } = tokens;
+        res.status(200).json({ message: "Login exitoso.", idToken, refreshToken });
     } catch (error) {
 
         if (error instanceof Error) {
@@ -73,12 +80,30 @@ export const loginUser = async (req: Request, res: Response) => {
 
 };
 
+export const refreshToken = async (req: Request, res: Response) => {
+    const { refreshToken } = req.body;
+
+    try {
+        const token = await refreshUserToken(refreshToken)
+        res.status(200).send(token)
+    } catch (error: unknown) {
+
+        if (error instanceof Error) {
+            res.status(500).json({
+                message: "Error al refrescar el token.",
+                error: error.message,
+            });
+        }
+
+    }
+}
+
 export const getAllPatients = async (req: Request, res: Response) => {
-    try{
+    try {
 
         const listOfPatients = await getAllPatientsFromCollection()
-        res.status(200).json({ data : listOfPatients });
-    }catch(error){
+        res.status(200).json({ data: listOfPatients });
+    } catch (error) {
         if (error instanceof Error) {
             res.status(500).json({
                 message: "No fue posible obtener todos los pacientes",

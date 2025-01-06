@@ -1,6 +1,11 @@
 import Patient from "../../models/usersModels/patientModel";
-import { authSDK, auth} from "../../config/firebase-cofig";
+import { authSDK, auth } from "../../config/firebase-cofig";
 import { signInWithEmailAndPassword } from 'firebase/auth';
+import axios from "axios";
+import dotenv from "dotenv";
+import { AuthResponse } from "../../models/authResponseModel";
+
+dotenv.config();
 
 const validatePatientFields = (
     firstName: string,
@@ -109,14 +114,15 @@ export const addPatientIntoPatientCollection = async (
     }
 };
 
-export const authenticatePatient = async (email: string, password: string): Promise<string | null> => {
+export const authenticatePatient = async (email: string, password: string): Promise<AuthResponse | null> => {
     try {
 
         const patientRecord = await signInWithEmailAndPassword(auth, email, password);
-        
+
         const idToken = await patientRecord.user.getIdToken();
-        
-        return idToken;
+        const refreshToken = patientRecord.user.refreshToken;
+
+        return { idToken, refreshToken };
     } catch (e: unknown) {
         if (e instanceof Error) {
             if (e.message.includes('auth/user-not-found')) {
@@ -129,19 +135,43 @@ export const authenticatePatient = async (email: string, password: string): Prom
         } else {
             console.log("Error desconocido al autenticar.");
         }
-        
+
         return null;
     }
 };
 
-export const getAllPatientsFromCollection = async() => {
-    try{
+export const refreshUserToken = async (refreshToken: String) => {
+
+    try {
+        const url = `https://securetoken.googleapis.com/v1/token?key=${process.env.APIKEY}`;
+
+        const response = await axios.post(url, {
+            grant_type: "refresh_token",
+            refresh_token: refreshToken,
+        });
+
+        const { id_token, expires_in, refresh_token, user_id } = response.data;
+
+        return {
+            message: "Token refrescado exitosamente.",
+            idToken: id_token,
+            expiresIn: expires_in,
+            refreshToken: refresh_token,
+            userId: user_id,
+        };
+    } catch (error: unknown) {
+        console.error("Failed to refresh token |", error)
+    }
+}
+
+export const getAllPatientsFromCollection = async () => {
+    try {
 
         const listPatients = await Patient.find()
 
         return listPatients
 
-    }catch(error){
+    } catch (error) {
         console.log("No de logro obtener pacientes de la base de datos ")
     }
 }
