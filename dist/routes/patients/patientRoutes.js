@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var express_1 = require("express");
+var patientController_1 = require("../../controllers/patients/patientController");
+var authMiddleware_1 = require("../../middlewares/authMiddleware");
+var router = (0, express_1.Router)();
+router.get("/patients", authMiddleware_1.verifyToken, patientController_1.getAllPatients);
+router.post("/register", patientController_1.registerPatient);
+router.post("/login", patientController_1.loginUser);
+exports.default = router;
