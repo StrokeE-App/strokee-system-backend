@@ -36,7 +36,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getAllPatients = exports.loginUser = exports.registerPatient = void 0;
+exports.getAllPatients = exports.refreshToken = exports.loginUser = exports.registerPatient = void 0;
 var patientService_1 = require("../../services/patients/patientService");
 var registerPatient = function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
     var _a, firstName, lastName, email, password, phoneNumber, age, birthDate, weight, height, medications, conditions, error_1;
@@ -73,7 +73,7 @@ var registerPatient = function (req, res) { return __awaiter(void 0, void 0, voi
 }); };
 exports.registerPatient = registerPatient;
 var loginUser = function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var _a, email, password, token, error_2;
+    var _a, email, password, tokens, idToken, refreshToken_1, error_2;
     return __generator(this, function (_b) {
         switch (_b.label) {
             case 0:
@@ -86,8 +86,13 @@ var loginUser = function (req, res) { return __awaiter(void 0, void 0, void 0, f
                 _b.trys.push([1, 3, , 4]);
                 return [4 /*yield*/, (0, patientService_1.authenticatePatient)(email, password)];
             case 2:
-                token = _b.sent();
-                res.status(201).json({ message: "Login exitoso.", token: token });
+                tokens = _b.sent();
+                if (!tokens) {
+                    res.status(401).json({ message: "Credenciales inválidas" });
+                    return [2 /*return*/];
+                }
+                idToken = tokens.idToken, refreshToken_1 = tokens.refreshToken;
+                res.status(200).json({ message: "Login exitoso.", idToken: idToken, refreshToken: refreshToken_1 });
                 return [3 /*break*/, 4];
             case 3:
                 error_2 = _b.sent();
@@ -109,8 +114,36 @@ var loginUser = function (req, res) { return __awaiter(void 0, void 0, void 0, f
     });
 }); };
 exports.loginUser = loginUser;
+var refreshToken = function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+    var refreshToken, token, error_3;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                refreshToken = req.body.refreshToken;
+                _a.label = 1;
+            case 1:
+                _a.trys.push([1, 3, , 4]);
+                return [4 /*yield*/, (0, patientService_1.refreshUserToken)(refreshToken)];
+            case 2:
+                token = _a.sent();
+                res.status(200).send(token);
+                return [3 /*break*/, 4];
+            case 3:
+                error_3 = _a.sent();
+                if (error_3 instanceof Error) {
+                    res.status(500).json({
+                        message: "Error al refrescar el token.",
+                        error: error_3.message,
+                    });
+                }
+                return [3 /*break*/, 4];
+            case 4: return [2 /*return*/];
+        }
+    });
+}); };
+exports.refreshToken = refreshToken;
 var getAllPatients = function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var listOfPatients, error_3;
+    var listOfPatients, error_4;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -118,14 +151,14 @@ var getAllPatients = function (req, res) { return __awaiter(void 0, void 0, void
                 return [4 /*yield*/, (0, patientService_1.getAllPatientsFromCollection)()];
             case 1:
                 listOfPatients = _a.sent();
-                res.status(201).json({ data: listOfPatients });
+                res.status(200).json({ data: listOfPatients });
                 return [3 /*break*/, 3];
             case 2:
-                error_3 = _a.sent();
-                if (error_3 instanceof Error) {
+                error_4 = _a.sent();
+                if (error_4 instanceof Error) {
                     res.status(500).json({
                         message: "No fue posible obtener todos los pacientes",
-                        error: error_3.message || "Error desconocido.",
+                        error: error_4.message || "Error desconocido.",
                     });
                 }
                 else {

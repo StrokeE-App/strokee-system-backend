@@ -39,10 +39,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getAllPatientsFromCollection = exports.authenticatePatient = exports.addPatientIntoPatientCollection = void 0;
+exports.getAllPatientsFromCollection = exports.refreshUserToken = exports.authenticatePatient = exports.addPatientIntoPatientCollection = void 0;
 var patientModel_1 = __importDefault(require("../../models/usersModels/patientModel"));
 var firebase_cofig_1 = require("../../config/firebase-cofig");
 var auth_1 = require("firebase/auth");
+var axios_1 = __importDefault(require("axios"));
+var dotenv_1 = __importDefault(require("dotenv"));
+dotenv_1.default.config();
 var validatePatientFields = function (firstName, lastName, email, password, phoneNumber, age, birthDate, weight, height, medications, conditions) {
     if (!firstName)
         return "firstName";
@@ -128,7 +131,7 @@ var addPatientIntoPatientCollection = function (firstName, lastName, email, pass
 }); };
 exports.addPatientIntoPatientCollection = addPatientIntoPatientCollection;
 var authenticatePatient = function (email, password) { return __awaiter(void 0, void 0, void 0, function () {
-    var patientRecord, idToken, e_1;
+    var patientRecord, idToken, refreshToken, e_1;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -139,7 +142,8 @@ var authenticatePatient = function (email, password) { return __awaiter(void 0, 
                 return [4 /*yield*/, patientRecord.user.getIdToken()];
             case 2:
                 idToken = _a.sent();
-                return [2 /*return*/, idToken];
+                refreshToken = patientRecord.user.refreshToken;
+                return [2 /*return*/, { idToken: idToken, refreshToken: refreshToken }];
             case 3:
                 e_1 = _a.sent();
                 if (e_1 instanceof Error) {
@@ -162,8 +166,38 @@ var authenticatePatient = function (email, password) { return __awaiter(void 0, 
     });
 }); };
 exports.authenticatePatient = authenticatePatient;
+var refreshUserToken = function (refreshToken) { return __awaiter(void 0, void 0, void 0, function () {
+    var url, response, _a, id_token, expires_in, refresh_token, user_id, error_2;
+    return __generator(this, function (_b) {
+        switch (_b.label) {
+            case 0:
+                _b.trys.push([0, 2, , 3]);
+                url = "https://securetoken.googleapis.com/v1/token?key=".concat(process.env.APIKEY);
+                return [4 /*yield*/, axios_1.default.post(url, {
+                        grant_type: "refresh_token",
+                        refresh_token: refreshToken,
+                    })];
+            case 1:
+                response = _b.sent();
+                _a = response.data, id_token = _a.id_token, expires_in = _a.expires_in, refresh_token = _a.refresh_token, user_id = _a.user_id;
+                return [2 /*return*/, {
+                        message: "Token refrescado exitosamente.",
+                        idToken: id_token,
+                        expiresIn: expires_in,
+                        refreshToken: refresh_token,
+                        userId: user_id,
+                    }];
+            case 2:
+                error_2 = _b.sent();
+                console.error("Failed to refresh token |", error_2);
+                return [3 /*break*/, 3];
+            case 3: return [2 /*return*/];
+        }
+    });
+}); };
+exports.refreshUserToken = refreshUserToken;
 var getAllPatientsFromCollection = function () { return __awaiter(void 0, void 0, void 0, function () {
-    var listPatients, error_2;
+    var listPatients, error_3;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -173,7 +207,7 @@ var getAllPatientsFromCollection = function () { return __awaiter(void 0, void 0
                 listPatients = _a.sent();
                 return [2 /*return*/, listPatients];
             case 2:
-                error_2 = _a.sent();
+                error_3 = _a.sent();
                 console.log("No de logro obtener pacientes de la base de datos ");
                 return [3 /*break*/, 3];
             case 3: return [2 /*return*/];
