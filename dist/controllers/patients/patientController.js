@@ -36,7 +36,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getAllPatients = exports.refreshToken = exports.loginUser = exports.registerPatient = void 0;
+exports.logoutPatient = exports.getAllPatients = exports.refreshToken = exports.loginUser = exports.registerPatient = void 0;
 var patientService_1 = require("../../services/patients/patientService");
 var registerPatient = function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
     var _a, firstName, lastName, email, password, phoneNumber, age, birthDate, weight, height, medications, conditions, error_1;
@@ -92,7 +92,11 @@ var loginUser = function (req, res) { return __awaiter(void 0, void 0, void 0, f
                     return [2 /*return*/];
                 }
                 idToken = tokens.idToken, refreshToken_1 = tokens.refreshToken;
-                res.status(200).json({ message: "Login exitoso.", idToken: idToken, refreshToken: refreshToken_1 });
+                res.cookie('session_token', idToken, {
+                    httpOnly: true,
+                    secure: process.env.NODE_ENV === 'production',
+                });
+                res.status(200).json({ message: "Login exitoso." });
                 return [3 /*break*/, 4];
             case 3:
                 error_2 = _b.sent();
@@ -173,3 +177,11 @@ var getAllPatients = function (req, res) { return __awaiter(void 0, void 0, void
     });
 }); };
 exports.getAllPatients = getAllPatients;
+var logoutPatient = function (req, res) {
+    res.clearCookie('session_token', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+    });
+    res.status(200).json({ message: 'Desconectado correctamente' });
+};
+exports.logoutPatient = logoutPatient;

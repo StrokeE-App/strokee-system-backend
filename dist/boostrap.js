@@ -13,6 +13,7 @@ var patientRoutes_1 = __importDefault(require("./routes/patients/patientRoutes")
 var indexRoute_1 = __importDefault(require("./routes/indexRoute"));
 var errorMiddleware_1 = __importDefault(require("./middlewares/errorMiddleware"));
 var dotenv_1 = __importDefault(require("dotenv"));
+var cookie_parser_1 = __importDefault(require("cookie-parser"));
 dotenv_1.default.config();
 var app = (0, express_1.default)();
 var connectToMongo = function () {
@@ -28,9 +29,10 @@ var connectToMongo = function () {
 };
 connectToMongo();
 app.use(errorMiddleware_1.default);
+app.use((0, cookie_parser_1.default)());
 app.use((0, cors_1.default)({ credentials: true }));
 app.use(body_parser_1.default.json());
 app.use(indexRoute_1.default);
-app.use("/dev", patientRoutes_1.default);
+app.use("/patient", patientRoutes_1.default);
 app.use('/swagger', swagger_ui_express_1.default.serve, swagger_ui_express_1.default.setup(swagger_config_1.default));
 exports.default = app;

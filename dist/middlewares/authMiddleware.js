@@ -44,34 +44,33 @@ var patientModel_1 = __importDefault(require("../models/usersModels/patientModel
 var firebase_cofig_1 = require("../config/firebase-cofig");
 var verifyToken = function (req, res, next) { return __awaiter(void 0, void 0, void 0, function () {
     var token, decodedToken, email, user, error_1;
-    var _a;
-    return __generator(this, function (_b) {
-        switch (_b.label) {
+    return __generator(this, function (_a) {
+        switch (_a.label) {
             case 0:
-                token = (_a = req.headers.authorization) === null || _a === void 0 ? void 0 : _a.split(" ")[1];
+                token = req.cookies.session_token;
                 if (!token) {
                     res.status(401).json({ message: "Token no proporcionado." });
                     return [2 /*return*/];
                 }
-                _b.label = 1;
+                _a.label = 1;
             case 1:
-                _b.trys.push([1, 4, , 5]);
+                _a.trys.push([1, 4, , 5]);
                 return [4 /*yield*/, firebase_cofig_1.authSDK.verifyIdToken(token)];
             case 2:
-                decodedToken = _b.sent();
+                decodedToken = _a.sent();
                 email = decodedToken.email;
                 return [4 /*yield*/, patientModel_1.default.findOne({ email: email })];
             case 3:
-                user = _b.sent();
+                user = _a.sent();
                 if (!user) {
-                    res.status(404).json({ message: "Usuario no encontrado en la base de datos." });
+                    res.status(404).json({ message: "Usuario no encontrado" });
                     return [2 /*return*/];
                 }
                 req.user = user;
                 next();
                 return [3 /*break*/, 5];
             case 4:
-                error_1 = _b.sent();
+                error_1 = _a.sent();
                 res.status(403).json({ message: "Token inválido o expirado.", error: error_1 });
                 return [2 /*return*/];
             case 5: return [2 /*return*/];

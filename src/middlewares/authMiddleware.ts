@@ -4,7 +4,7 @@ import { authSDK } from "../config/firebase-cofig";
 
 
 export const verifyToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const token = req.headers.authorization?.split(" ")[1];
+    const token = req.cookies.session_token;  
 
     if (!token) {
         res.status(401).json({ message: "Token no proporcionado." });
@@ -17,7 +17,7 @@ export const verifyToken = async (req: Request, res: Response, next: NextFunctio
 
         const user = await Patient.findOne({ email });
         if (!user) {
-            res.status(404).json({ message: "Usuario no encontrado en la base de datos." });
+            res.status(404).json({ message: "Usuario no encontrado" });
             return
         }
 

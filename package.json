@@ -6,7 +6,7 @@
   "scripts": {
     "start_dev": "nodemon",
     "start": "ts-node src/index.ts",
-    "build": "tsc",
+    "build": "tsc && copyfiles -u 1 src/swagger/**/*.ts dist/swagger",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -22,6 +22,7 @@
   "homepage": "https://github.com/CarlosAC-29/strokee-system-backend#readme",
   "devDependencies": {
     "@types/body-parser": "^1.19.5",
+    "@types/cookie-parser": "^1.4.8",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/node": "^22.10.2",
@@ -35,6 +36,7 @@
   "dependencies": {
     "@types/mongoose": "^5.11.97",
     "axios": "^1.7.9",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",

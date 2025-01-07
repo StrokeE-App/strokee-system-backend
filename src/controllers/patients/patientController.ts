@@ -62,7 +62,13 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
         }
 
         const { idToken, refreshToken } = tokens;
-        res.status(200).json({ message: "Login exitoso.", idToken, refreshToken });
+
+        res.cookie('session_token', idToken, {
+            httpOnly: true,  
+            secure: process.env.NODE_ENV === 'production', 
+        });
+
+        res.status(200).json({ message: "Login exitoso."});
     } catch (error) {
 
         if (error instanceof Error) {
@@ -117,3 +123,12 @@ export const getAllPatients = async (req: Request, res: Response) => {
         }
     }
 }
+
+export const logoutPatient = (req: Request, res: Response) => {
+    res.clearCookie('session_token', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production', 
+    });
+
+    res.status(200).json({ message: 'Desconectado correctamente' });
+};
