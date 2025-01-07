@@ -4,15 +4,15 @@ import { authSDK } from "../config/firebase-cofig";
 
 
 export const verifyToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const token = req.cookies.session_token;  
-
+    const token = req.cookies.session_token;
+    
     if (!token) {
         res.status(401).json({ message: "Token no proporcionado." });
         return
     }
 
     try {
-        const decodedToken = await authSDK.verifyIdToken(token);
+        const decodedToken = await authSDK.verifySessionCookie(token);
         const { email } = decodedToken;
 
         const user = await Patient.findOne({ email });

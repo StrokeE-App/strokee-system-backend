@@ -114,6 +114,32 @@ export const addPatientIntoPatientCollection = async (
     }
 };
 
+export const cookiesForPatient = async (token: string): Promise<String | null> => {
+    try {
+        const decodedToken = await authSDK.verifyIdToken(token);
+
+        const sessionCookie = await authSDK.createSessionCookie(token, { expiresIn: 60 * 60 * 24 * 1000 }); 
+
+        return sessionCookie;
+    } catch (e: unknown) {
+        if (e instanceof Error) {
+            if (e.message.includes('auth/user-not-found')) {
+                console.error("El usuario no existe. Por favor, verifica las credenciales.");
+            } else if (e.message.includes('auth/wrong-password')) {
+                console.error("La contraseña es incorrecta. Inténtalo de nuevo.");
+            } else if (e.message.includes('auth/invalid-id-token')) {
+                console.error("El token de ID proporcionado no es válido o ha expirado.");
+            } else {
+                console.error("Ocurrió un error desconocido durante la autenticación:", e.message);
+            }
+        } else {
+            console.error("Ocurrió un error inesperado durante la autenticación.");
+        }
+
+        return null;
+    }
+};
+
 export const authenticatePatient = async (email: string, password: string): Promise<AuthResponse | null> => {
     try {
 

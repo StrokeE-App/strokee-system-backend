@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { getAllPatientsFromCollection, addPatientIntoPatientCollection, authenticatePatient, refreshUserToken } from "../../services/patients/patientService";
+import { getAllPatientsFromCollection, addPatientIntoPatientCollection, authenticatePatient, refreshUserToken, cookiesForPatient } from "../../services/patients/patientService";
 
 export const registerPatient = async (req: Request, res: Response) => {
     const {
@@ -46,7 +46,7 @@ export const registerPatient = async (req: Request, res: Response) => {
     }
 };
 
-export const loginUser = async (req: Request, res: Response): Promise<void> => {
+export const getToken = async (req: Request, res: Response): Promise<void> => {
     const { email, password } = req.body;
 
     if (!email || !password) {
@@ -63,7 +63,40 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
 
         const { idToken, refreshToken } = tokens;
 
-        res.cookie('session_token', idToken, {
+        res.status(200).json({ message: "Login exitoso.", token : idToken, refreshToken });
+    } catch (error) {
+
+        if (error instanceof Error) {
+            res.status(500).json({
+                message: "Error al logguear usuario.",
+                error: error.message || "Error desconocido.",
+            });
+        } else {
+            res.status(500).json({
+                message: "Error al logguear usuario.",
+                error: "Error desconocido.",
+            });
+        }
+    }
+
+};
+
+export const loginPatient = async (req: Request, res: Response) => {
+    const { token } = req.body;
+
+    if (!token) {
+        res.status(400).json({ message: 'Token y el Refresh token son obligatorios' });
+    }
+
+    try {
+        const sessionCookie  = await cookiesForPatient(token);
+
+        if (!sessionCookie ) {
+            res.status(401).json({ message: "Credenciales inválidas" });
+            return
+        }
+
+        res.cookie('session_token', sessionCookie , {
             httpOnly: true,  
             secure: process.env.NODE_ENV === 'production', 
         });
@@ -84,7 +117,7 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
         }
     }
 
-};
+}
 
 export const refreshToken = async (req: Request, res: Response) => {
     const { refreshToken } = req.body;
