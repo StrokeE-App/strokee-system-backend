@@ -9,12 +9,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+    return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -39,7 +39,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getAllPatientsFromCollection = exports.refreshUserToken = exports.authenticatePatient = exports.addPatientIntoPatientCollection = void 0;
+exports.getAllPatientsFromCollection = exports.refreshUserToken = exports.authenticatePatient = exports.cookiesForPatient = exports.addPatientIntoPatientCollection = void 0;
 var patientModel_1 = __importDefault(require("../../models/usersModels/patientModel"));
 var firebase_cofig_1 = require("../../config/firebase-cofig");
 var auth_1 = require("firebase/auth");
@@ -130,8 +130,46 @@ var addPatientIntoPatientCollection = function (firstName, lastName, email, pass
     });
 }); };
 exports.addPatientIntoPatientCollection = addPatientIntoPatientCollection;
+var cookiesForPatient = function (token) { return __awaiter(void 0, void 0, void 0, function () {
+    var decodedToken, sessionCookie, e_1;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 3, , 4]);
+                return [4 /*yield*/, firebase_cofig_1.authSDK.verifyIdToken(token)];
+            case 1:
+                decodedToken = _a.sent();
+                return [4 /*yield*/, firebase_cofig_1.authSDK.createSessionCookie(token, { expiresIn: 60 * 60 * 24 * 1000 })];
+            case 2:
+                sessionCookie = _a.sent();
+                return [2 /*return*/, sessionCookie];
+            case 3:
+                e_1 = _a.sent();
+                if (e_1 instanceof Error) {
+                    if (e_1.message.includes('auth/user-not-found')) {
+                        console.error("El usuario no existe. Por favor, verifica las credenciales.");
+                    }
+                    else if (e_1.message.includes('auth/wrong-password')) {
+                        console.error("La contraseña es incorrecta. Inténtalo de nuevo.");
+                    }
+                    else if (e_1.message.includes('auth/invalid-id-token')) {
+                        console.error("El token de ID proporcionado no es válido o ha expirado.");
+                    }
+                    else {
+                        console.error("Ocurrió un error desconocido durante la autenticación:", e_1.message);
+                    }
+                }
+                else {
+                    console.error("Ocurrió un error inesperado durante la autenticación.");
+                }
+                return [2 /*return*/, null];
+            case 4: return [2 /*return*/];
+        }
+    });
+}); };
+exports.cookiesForPatient = cookiesForPatient;
 var authenticatePatient = function (email, password) { return __awaiter(void 0, void 0, void 0, function () {
-    var patientRecord, idToken, refreshToken, e_1;
+    var patientRecord, idToken, refreshToken, e_2;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -145,16 +183,16 @@ var authenticatePatient = function (email, password) { return __awaiter(void 0, 
                 refreshToken = patientRecord.user.refreshToken;
                 return [2 /*return*/, { idToken: idToken, refreshToken: refreshToken }];
             case 3:
-                e_1 = _a.sent();
-                if (e_1 instanceof Error) {
-                    if (e_1.message.includes('auth/user-not-found')) {
+                e_2 = _a.sent();
+                if (e_2 instanceof Error) {
+                    if (e_2.message.includes('auth/user-not-found')) {
                         console.log("El usuario no existe.");
                     }
-                    else if (e_1.message.includes('auth/wrong-password')) {
+                    else if (e_2.message.includes('auth/wrong-password')) {
                         console.log("Contraseña incorrecta.");
                     }
                     else {
-                        console.log("Error desconocido:", e_1.message);
+                        console.log("Error desconocido:", e_2.message);
                     }
                 }
                 else {

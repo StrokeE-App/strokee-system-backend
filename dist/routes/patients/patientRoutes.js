@@ -7,6 +7,7 @@ var router = (0, express_1.Router)();
 router.get("/all", authMiddleware_1.verifyToken, patientController_1.getAllPatients);
 router.post("/register", patientController_1.registerPatient);
 router.post("/refresh-token", patientController_1.refreshToken);
-router.post("/authenticate", patientController_1.loginUser);
+router.post("/authenticate", patientController_1.getToken);
+router.post("/login", patientController_1.loginPatient);
 router.post("/logout", patientController_1.logoutPatient);
 exports.default = router;

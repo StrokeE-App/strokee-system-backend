@@ -9,12 +9,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+    return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -36,7 +36,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.logoutPatient = exports.getAllPatients = exports.refreshToken = exports.loginUser = exports.registerPatient = void 0;
+exports.logoutPatient = exports.getAllPatients = exports.refreshToken = exports.loginPatient = exports.getToken = exports.registerPatient = void 0;
 var patientService_1 = require("../../services/patients/patientService");
 var registerPatient = function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
     var _a, firstName, lastName, email, password, phoneNumber, age, birthDate, weight, height, medications, conditions, error_1;
@@ -72,7 +72,7 @@ var registerPatient = function (req, res) { return __awaiter(void 0, void 0, voi
     });
 }); };
 exports.registerPatient = registerPatient;
-var loginUser = function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+var getToken = function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
     var _a, email, password, tokens, idToken, refreshToken_1, error_2;
     return __generator(this, function (_b) {
         switch (_b.label) {
@@ -92,11 +92,7 @@ var loginUser = function (req, res) { return __awaiter(void 0, void 0, void 0, f
                     return [2 /*return*/];
                 }
                 idToken = tokens.idToken, refreshToken_1 = tokens.refreshToken;
-                res.cookie('session_token', idToken, {
-                    httpOnly: true,
-                    secure: process.env.NODE_ENV === 'production',
-                });
-                res.status(200).json({ message: "Login exitoso." });
+                res.status(200).json({ message: "Login exitoso.", token: idToken, refreshToken: refreshToken_1 });
                 return [3 /*break*/, 4];
             case 3:
                 error_2 = _b.sent();
@@ -117,9 +113,54 @@ var loginUser = function (req, res) { return __awaiter(void 0, void 0, void 0, f
         }
     });
 }); };
-exports.loginUser = loginUser;
+exports.getToken = getToken;
+var loginPatient = function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+    var token, sessionCookie, error_3;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                token = req.body.token;
+                if (!token) {
+                    res.status(400).json({ message: 'Token y el Refresh token son obligatorios' });
+                }
+                _a.label = 1;
+            case 1:
+                _a.trys.push([1, 3, , 4]);
+                return [4 /*yield*/, (0, patientService_1.cookiesForPatient)(token)];
+            case 2:
+                sessionCookie = _a.sent();
+                if (!sessionCookie) {
+                    res.status(401).json({ message: "Credenciales inválidas" });
+                    return [2 /*return*/];
+                }
+                res.cookie('session_token', sessionCookie, {
+                    httpOnly: true,
+                    secure: process.env.NODE_ENV === 'production',
+                });
+                res.status(200).json({ message: "Login exitoso." });
+                return [3 /*break*/, 4];
+            case 3:
+                error_3 = _a.sent();
+                if (error_3 instanceof Error) {
+                    res.status(500).json({
+                        message: "Error al logguear usuario.",
+                        error: error_3.message || "Error desconocido.",
+                    });
+                }
+                else {
+                    res.status(500).json({
+                        message: "Error al logguear usuario.",
+                        error: "Error desconocido.",
+                    });
+                }
+                return [3 /*break*/, 4];
+            case 4: return [2 /*return*/];
+        }
+    });
+}); };
+exports.loginPatient = loginPatient;
 var refreshToken = function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var refreshToken, token, error_3;
+    var refreshToken, token, error_4;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -133,11 +174,11 @@ var refreshToken = function (req, res) { return __awaiter(void 0, void 0, void 0
                 res.status(200).send(token);
                 return [3 /*break*/, 4];
             case 3:
-                error_3 = _a.sent();
-                if (error_3 instanceof Error) {
+                error_4 = _a.sent();
+                if (error_4 instanceof Error) {
                     res.status(500).json({
                         message: "Error al refrescar el token.",
-                        error: error_3.message,
+                        error: error_4.message,
                     });
                 }
                 return [3 /*break*/, 4];
@@ -147,7 +188,7 @@ var refreshToken = function (req, res) { return __awaiter(void 0, void 0, void 0
 }); };
 exports.refreshToken = refreshToken;
 var getAllPatients = function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var listOfPatients, error_4;
+    var listOfPatients, error_5;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -158,11 +199,11 @@ var getAllPatients = function (req, res) { return __awaiter(void 0, void 0, void
                 res.status(200).json({ data: listOfPatients });
                 return [3 /*break*/, 3];
             case 2:
-                error_4 = _a.sent();
-                if (error_4 instanceof Error) {
+                error_5 = _a.sent();
+                if (error_5 instanceof Error) {
                     res.status(500).json({
                         message: "No fue posible obtener todos los pacientes",
-                        error: error_4.message || "Error desconocido.",
+                        error: error_5.message || "Error desconocido.",
                     });
                 }
                 else {
