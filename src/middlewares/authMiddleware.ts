@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import Patient from "../models/usersModels/patientModel";
-import { authSDK } from "../config/firebase-cofig";
+import { firebaseAdmin } from "../config/firebase-cofig";
 
 
 export const verifyToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -12,7 +12,7 @@ export const verifyToken = async (req: Request, res: Response, next: NextFunctio
     }
 
     try {
-        const decodedToken = await authSDK.verifySessionCookie(token);
+        const decodedToken = await firebaseAdmin.verifySessionCookie(token);
         const { email } = decodedToken;
 
         const user = await Patient.findOne({ email });

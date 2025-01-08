@@ -1,9 +1,6 @@
 import Patient from "../../models/usersModels/patientModel";
-import { authSDK, auth } from "../../config/firebase-cofig";
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import axios from "axios";
+import { firebaseAdmin } from "../../config/firebase-cofig";
 import dotenv from "dotenv";
-import { AuthResponse } from "../../models/authResponseModel";
 
 dotenv.config();
 
@@ -73,7 +70,7 @@ export const addPatientIntoPatientCollection = async (
             throw new Error(`El email ${email} ya está registrado.`);
         }
 
-        const patientRecord = await authSDK.createUser({
+        const patientRecord = await firebaseAdmin.createUser({
             email,
             password,
         });
@@ -113,82 +110,6 @@ export const addPatientIntoPatientCollection = async (
         }
     }
 };
-
-export const cookiesForPatient = async (token: string): Promise<String | null> => {
-    try {
-        const decodedToken = await authSDK.verifyIdToken(token);
-
-        const sessionCookie = await authSDK.createSessionCookie(token, { expiresIn: 60 * 60 * 24 * 1000 }); 
-
-        return sessionCookie;
-    } catch (e: unknown) {
-        if (e instanceof Error) {
-            if (e.message.includes('auth/user-not-found')) {
-                console.error("El usuario no existe. Por favor, verifica las credenciales.");
-            } else if (e.message.includes('auth/wrong-password')) {
-                console.error("La contraseña es incorrecta. Inténtalo de nuevo.");
-            } else if (e.message.includes('auth/invalid-id-token')) {
-                console.error("El token de ID proporcionado no es válido o ha expirado.");
-            } else {
-                console.error("Ocurrió un error desconocido durante la autenticación:", e.message);
-            }
-        } else {
-            console.error("Ocurrió un error inesperado durante la autenticación.");
-        }
-
-        return null;
-    }
-};
-
-export const authenticatePatient = async (email: string, password: string): Promise<AuthResponse | null> => {
-    try {
-
-        const patientRecord = await signInWithEmailAndPassword(auth, email, password);
-
-        const idToken = await patientRecord.user.getIdToken();
-        const refreshToken = patientRecord.user.refreshToken;
-
-        return { idToken, refreshToken };
-    } catch (e: unknown) {
-        if (e instanceof Error) {
-            if (e.message.includes('auth/user-not-found')) {
-                console.log("El usuario no existe.");
-            } else if (e.message.includes('auth/wrong-password')) {
-                console.log("Contraseña incorrecta.");
-            } else {
-                console.log("Error desconocido:", e.message);
-            }
-        } else {
-            console.log("Error desconocido al autenticar.");
-        }
-
-        return null;
-    }
-};
-
-export const refreshUserToken = async (refreshToken: String) => {
-
-    try {
-        const url = `https://securetoken.googleapis.com/v1/token?key=${process.env.APIKEY}`;
-
-        const response = await axios.post(url, {
-            grant_type: "refresh_token",
-            refresh_token: refreshToken,
-        });
-
-        const { id_token, expires_in, refresh_token, user_id } = response.data;
-
-        return {
-            message: "Token refrescado exitosamente.",
-            idToken: id_token,
-            expiresIn: expires_in,
-            refreshToken: refresh_token,
-            userId: user_id,
-        };
-    } catch (error: unknown) {
-        console.error("Failed to refresh token |", error)
-    }
-}
 
 export const getAllPatientsFromCollection = async () => {
     try {
