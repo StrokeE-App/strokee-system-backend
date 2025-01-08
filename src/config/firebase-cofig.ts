@@ -23,4 +23,4 @@ admin.initializeApp({
 });
 
 console.log("Connected to Firebase")
-export const authSDK = admin.auth();
+export const firebaseAdmin = admin.auth();
