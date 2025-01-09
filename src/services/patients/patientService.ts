@@ -44,7 +44,7 @@ export const addPatientIntoPatientCollection = async (
     height: number,
     medications: string[],
     conditions: string[]
-): Promise<void> => {
+): Promise<{ success: boolean, message: string, patientId?: string }> => {
     try {
         const missingField = validatePatientFields(
             firstName,
@@ -94,23 +94,27 @@ export const addPatientIntoPatientCollection = async (
             isDeleted: false
         });
 
-        await Patient.updateOne(
+        const insertPatient = await Patient.updateOne(
             { patientId: patientRecord.uid, isDeleted: false },
             newPatient,
             { upsert: true }
         );
 
+        if (insertPatient.upsertedCount > 0) {
+            return { success: true, message: 'Paciente agregado exitosamente.', patientId: patientRecord.uid };
+        } else {
+            return { success: false, message: 'No se realizaron cambios en la base de datos.' };
+        }
     } catch (error: unknown) {
         if (error instanceof Error) {
             console.error(`Error al agregar al paciente: ${error.message}`);
-            throw new Error(`Error al agregar al paciente: ${error.message}`);
+            return { success: false, message: `Error al agregar al paciente: ${error.message}` };
         } else {
             console.error("Error desconocido al agregar al paciente.");
-            throw new Error("Error desconocido al agregar al paciente.");
+            return { success: false, message: "Error desconocido al agregar al paciente." };
         }
     }
 };
-
 export const getAllPatientsFromCollection = async () => {
     try {
 
