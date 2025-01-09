@@ -1,9 +1,9 @@
 import { createSessionCookie } from "../../services/auth/authService";
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import { authenticateUser } from "../../services/auth/authService";
 
 
-export const loginUser = async (req: Request, res: Response) => {
+export const loginUser = async (req: Request, res: Response, next: NextFunction) => {
     const { token } = req.body;
 
     if (!token) {
@@ -14,7 +14,7 @@ export const loginUser = async (req: Request, res: Response) => {
         const sessionCookie  = await createSessionCookie(token);
 
         if (!sessionCookie ) {
-            res.status(401).json({ message: "Credenciales inválidas" });
+            res.status(401).json({ message: "Token invalido" });
             return
         }
 
@@ -25,18 +25,7 @@ export const loginUser = async (req: Request, res: Response) => {
 
         res.status(200).json({ message: "Login exitoso."});
     } catch (error) {
-
-        if (error instanceof Error) {
-            res.status(500).json({
-                message: "Error al logguear usuario.",
-                error: error.message || "Error desconocido.",
-            });
-        } else {
-            res.status(500).json({
-                message: "Error al logguear usuario.",
-                error: "Error desconocido.",
-            });
-        }
+        next(error);
     }
 
 }
@@ -50,7 +39,7 @@ export const logoutUser = (req: Request, res: Response) => {
     res.status(200).json({ message: 'Desconectado correctamente' });
 };
 
-export const getToken = async (req: Request, res: Response): Promise<void> => {
+export const getToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const { email, password } = req.body;
 
     if (!email || !password) {
@@ -69,18 +58,7 @@ export const getToken = async (req: Request, res: Response): Promise<void> => {
 
         res.status(200).json({ message: "Login exitoso.", token : idToken, refreshToken });
     } catch (error) {
-
-        if (error instanceof Error) {
-            res.status(500).json({
-                message: "Error al logguear usuario.",
-                error: error.message || "Error desconocido.",
-            });
-        } else {
-            res.status(500).json({
-                message: "Error al logguear usuario.",
-                error: "Error desconocido.",
-            });
-        }
+        next(error);
     }
 
 };
