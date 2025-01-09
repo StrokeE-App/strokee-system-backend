@@ -1,7 +1,7 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { getAllPatientsFromCollection, addPatientIntoPatientCollection } from "../../services/patients/patientService";
 
-export const registerPatient = async (req: Request, res: Response) => {
+export const registerPatient = async (req: Request, res: Response, next: NextFunction) => {
     const {
         firstName,
         lastName,
@@ -17,7 +17,7 @@ export const registerPatient = async (req: Request, res: Response) => {
     } = req.body;
 
     try {
-        await addPatientIntoPatientCollection(
+        const result = await addPatientIntoPatientCollection(
             firstName,
             lastName,
             email,
@@ -30,19 +30,19 @@ export const registerPatient = async (req: Request, res: Response) => {
             medications,
             conditions
         );
-        res.status(201).json({ message: "Paciente registrado con éxito." });
-    } catch (error) {
-        if (error instanceof Error) {
-            res.status(500).json({
-                message: "Error al registrar paciente.",
-                error: error.message || "Error desconocido.",
+
+        if (result.success) {
+            res.status(201).json({
+                message: result.message,
+                patientId: result.patientId,
             });
         } else {
-            res.status(500).json({
-                message: "Error al registrar paciente.",
-                error: "Error desconocido.",
+            res.status(400).json({
+                message: result.message,
             });
         }
+    } catch (error) {
+        next(error);
     }
 };
 
