@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction } from "express";
-import Patient from "../models/usersModels/patientModel";
 import { firebaseAdmin } from "../config/firebase-cofig";
 
 export const verifyTokenWithRole = (allowedRoles: string[]) => {
@@ -13,22 +12,14 @@ export const verifyTokenWithRole = (allowedRoles: string[]) => {
 
         try {
             const decodedToken = await firebaseAdmin.verifySessionCookie(token, true);
-            const { email } = decodedToken;
+            const { email, user_id: userId, role } = decodedToken;
 
-            const user = await Patient.findOne({ email });
-            if (!user) {
-                res.status(404).json({ message: "Usuario no encontrado." });
-                return;
-            }
-
-            const userRole = decodedToken.role 
-
-            if (!allowedRoles.includes(userRole)) {
+            if (!allowedRoles.includes(role)) {
                 res.status(403).json({ message: "Acceso denegado. No tienes permisos para esta acción." });
                 return;
             }
 
-            (req as any).user = user;
+            (req as any).userId = {userId, email, role};
             next();
         } catch (error) {
             console.error("Error en la verificación del token o rol:", error);
