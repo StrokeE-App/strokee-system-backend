@@ -17,6 +17,8 @@ export const createSessionCookie = async (token: string): Promise<String | null>
                 console.error("La contraseña es incorrecta. Inténtalo de nuevo.");
             } else if (e.message.includes('auth/invalid-id-token')) {
                 console.error("El token de ID proporcionado no es válido o ha expirado.");
+            } else if (e.message.includes('auth/id-token-expired')) {
+                console.error("El token de ID proporcionado ha expirado.");
             } else {
                 console.error("Ocurrió un error desconocido durante la autenticación:", e.message);
             }
