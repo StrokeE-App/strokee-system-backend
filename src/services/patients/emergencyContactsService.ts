@@ -2,16 +2,9 @@ import uniqid from "uniqid";
 import { IEmergencyContact } from "../../models/usersModels/emergencyContactModel";
 import patientEmergencyContact from "../../models/usersModels/patientEmergencyContact";
 import { firebaseAdmin } from "../../config/firebase-cofig";
+import { MAX_FIRST_NAME_LENGTH, MAX_LAST_NAME_LENGTH } from "../../config/constantsUsers";
+import { isValidEmail, isValidPhoneNumber } from "../utils";
 
-const isValidEmail = (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-};
-
-const isValidPhoneNumber = (phoneNumber: string): boolean => {
-    const phoneRegex = /^[0-9]{10}$/;
-    return phoneRegex.test(phoneNumber);
-};
 
 export const addEmergencyContactsIntoCollection = async (patientId: string, newContacts: IEmergencyContact[]): Promise<{ success: boolean, message: string, duplicateEmails: string[], duplicatePhones: string[] }> => {
     try {
@@ -63,17 +56,17 @@ export const addEmergencyContactsIntoCollection = async (patientId: string, newC
             }
         });
 
-        const MAX_NAME_LENGTH = 100;
         newContacts.forEach(contact => {
-            if (contact.firstName && contact.firstName.length > MAX_NAME_LENGTH) {
-                throw new Error(`El nombre del contacto ${contact.firstName} excede el límite de ${MAX_NAME_LENGTH} caracteres.`);
+            if (contact.firstName && contact.firstName.length > MAX_FIRST_NAME_LENGTH) {
+                throw new Error(`El nombre del contacto ${contact.firstName} excede el límite de ${MAX_FIRST_NAME_LENGTH} caracteres.`);
             }
         });
 
-        const MAX_CONTACTS = 10;
-        if (newContacts.length + (patientRecord ? patientRecord.contacts.length : 0) > MAX_CONTACTS) {
-            throw new Error(`El número máximo de contactos de emergencia es ${MAX_CONTACTS}.`);
-        }
+        newContacts.forEach(contact => {
+            if (contact.lastName && contact.lastName.length > MAX_LAST_NAME_LENGTH) {
+                throw new Error(`El apellido del contacto ${contact.lastName} excede el límite de ${MAX_LAST_NAME_LENGTH} caracteres.`);
+            }
+        });
 
         const contactsWithIds = newContacts.map((newContact) => {
             if (!newContact.contactId) {
