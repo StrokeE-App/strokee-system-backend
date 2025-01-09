@@ -8,20 +8,24 @@ const loadSwaggerFile = (filename: string) => {
   return yaml.load(fileContent);
 };
 
+const loginSwagger = loadSwaggerFile("./auth/loginSwagger.yaml") as any;
+const patients = loadSwaggerFile("./users/patients.yaml") as any;
+
 const swaggerDocs = {
   openapi: "3.0.0",
   info: {
-    title: "API de Ejemplo",
+    title: "StrokeE back-end API",
     version: "1.0.0",
     description: "Documentación de la API",
   },
   servers: [
     {
-      url: "http://localhost:4000", // Cambia según tu configuración
+      url: "http://localhost:4000", 
     },
   ],
   paths: {
-    ...(loadSwaggerFile("./auth/loginSwagger.yaml") as any).paths,
+    ...loginSwagger.paths, 
+    ...patients.paths, 
   },
 };
 
