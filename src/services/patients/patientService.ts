@@ -65,7 +65,6 @@ export const addPatientIntoPatientCollection = async (
         }
 
         const existingPatient = await Patient.findOne({ email });
-
         if (existingPatient) {
             throw new Error(`El email ${email} ya está registrado.`);
         }
@@ -78,6 +77,8 @@ export const addPatientIntoPatientCollection = async (
         if (!patientRecord.uid) {
             throw new Error('No se pudo crear el usuario en Firebase.');
         }
+
+        await firebaseAdmin.setCustomUserClaims(patientRecord.uid, { role: "patient" });
 
         const newPatient = new Patient({
             patientId: patientRecord.uid,
@@ -115,6 +116,7 @@ export const addPatientIntoPatientCollection = async (
         }
     }
 };
+
 export const getAllPatientsFromCollection = async () => {
     try {
 
