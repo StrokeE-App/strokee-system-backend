@@ -35,7 +35,6 @@ mongoose.connection.on('error', (err) => {
 connectToMongo()
 
 
-app.use(errorHandler);
 app.use(cookieParser());
 app.use(cors({ credentials: true }));
 app.use(bodyParser.json());
@@ -43,6 +42,9 @@ app.use(indexRoute)
 app.use("/patient", patientsRoutes);
 app.use("/", indexRoutes);
 app.use('/swagger', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+
+// Middleware para manejar errores debe ser el último middleware
+app.use(errorHandler);
 
 
 export default app;
