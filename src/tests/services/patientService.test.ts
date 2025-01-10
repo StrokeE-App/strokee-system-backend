@@ -1,9 +1,9 @@
 import { addPatientIntoPatientCollection } from '../../services/patients/patientService';
 import Patient from '../../models/usersModels/patientModel';
-import { firebaseAdmin } from "../../config/firebase-cofig";
+import { firebaseAdmin } from "../../config/firebase-config";
 
 jest.mock('../../models/usersModels/patientModel');
-jest.mock('../../config/firebase-cofig');
+jest.mock('../../config/firebase-config');
 
 describe('addPatientIntoPatientCollection', () => {
 

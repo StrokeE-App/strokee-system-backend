@@ -14,7 +14,7 @@ export interface IPatient extends Document {
     emergencyContact: IEmergencyContact[];
     medications: string[];
     conditions: string[];
-    isDeleted : boolean;
+    isDeleted: boolean;
 }
 
 const PatientSchema: Schema = new Schema(
@@ -33,7 +33,11 @@ const PatientSchema: Schema = new Schema(
         conditions: { type: [String], default: [] },
         isDeleted: { type: Boolean, default: false },
     },
-    { timestamps: true }
+    {
+        timestamps: true,
+        versionKey: false,
+    },
+
 );
 
 export default mongoose.model<IPatient>("patients", PatientSchema);
