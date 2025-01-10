@@ -1,6 +1,6 @@
 import Patient from "../../models/usersModels/patientModel";
 import { IEmergencyContact } from "../../models/usersModels/emergencyContactModel";
-import { firebaseAdmin } from "../../config/firebase-cofig";
+import { firebaseAdmin } from "../../config/firebase-config";
 import { validateEmergencyContactData } from "./emergencyContactsService";
 import dotenv from "dotenv";
 

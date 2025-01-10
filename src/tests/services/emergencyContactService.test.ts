@@ -1,8 +1,8 @@
 import { addEmergencyContactsIntoCollection } from '../../services/patients/emergencyContactsService';
 import patientModel from '../../models/usersModels/patientModel';
-import { firebaseAdmin } from '../../config/firebase-cofig';
+import { firebaseAdmin } from '../../config/firebase-config';
 
-jest.mock('../../config/firebase-cofig', () => ({
+jest.mock('../../config/firebase-config', () => ({
     firebaseAdmin: {
         getUser: jest.fn(),
     },
