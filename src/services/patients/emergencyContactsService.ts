@@ -1,6 +1,6 @@
 import { IEmergencyContact } from "../../models/usersModels/emergencyContactModel";
 import patientModel from "../../models/usersModels/patientModel";
-import { firebaseAdmin } from "../../config/firebase-cofig";
+import { firebaseAdmin } from "../../config/firebase-config";
 import { validateEmergencyContact } from "../utils";
 
 export const addEmergencyContactsIntoCollection = async (

@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { firebaseAdmin } from "../config/firebase-cofig";
+import { firebaseAdmin } from "../config/firebase-config";
 
 export const verifyTokenWithRole = (allowedRoles: string[]) => {
     return async (req: Request, res: Response, next: NextFunction): Promise<void> => {

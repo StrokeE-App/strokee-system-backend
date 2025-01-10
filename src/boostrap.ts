@@ -5,6 +5,7 @@ import mongoose from 'mongoose';
 import swaggerUi from 'swagger-ui-express';
 import swaggerDocs from './swagger/swagger-index';
 import patientsRoutes from './routes/patients/patientRoutes'
+import paramedicsRoutes from './routes/paramedics/paramedicRoutes'
 import indexRoutes from './routes/indexRoute'
 import indexRoute from './routes/indexRoute'
 import errorHandler from "./middlewares/errorMiddleware"
@@ -40,6 +41,7 @@ app.use(cors({ credentials: true }));
 app.use(bodyParser.json());
 app.use(indexRoute)
 app.use("/patient", patientsRoutes);
+app.use("/paramedic", paramedicsRoutes);
 app.use("/", indexRoutes);
 app.use('/swagger', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 

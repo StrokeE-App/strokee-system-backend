@@ -1,4 +1,4 @@
-import { firebaseAdmin, auth } from "../../config/firebase-cofig";
+import { firebaseAdmin, auth } from "../../config/firebase-config";
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { AuthResponse } from "../../models/authResponseModel";
 

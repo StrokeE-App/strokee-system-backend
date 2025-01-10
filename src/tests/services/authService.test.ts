@@ -1,7 +1,7 @@
 import { createSessionCookie } from "../../services/auth/authService";
-import { firebaseAdmin } from "../../config/firebase-cofig";
+import { firebaseAdmin } from "../../config/firebase-config";
 
-jest.mock("../../config/firebase-cofig", () => ({
+jest.mock("../../config/firebase-config", () => ({
     firebaseAdmin: {
         verifyIdToken: jest.fn(),
         createSessionCookie: jest.fn(),

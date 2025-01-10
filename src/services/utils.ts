@@ -12,6 +12,18 @@ export const isValidPhoneNumber = (phoneNumber: string): boolean => {
     return phoneRegex.test(phoneNumber);
 };
 
+export const isValidFirstName = (firstName: string): boolean => {
+    return firstName.length <= MAX_FIRST_NAME_LENGTH;
+}
+
+export const isValidLastName = (lastName: string): boolean => {
+    return lastName.length <= MAX_LAST_NAME_LENGTH;
+}
+
+export const isValidPassword = (password: string): boolean => {
+    return password.length >= 8;
+}
+
 export const validateEmergencyContact = (contact: IEmergencyContact) => {
     if (contact.email && !isValidEmail(contact.email)) {
         throw new Error(`El correo electrónico ${contact.email} no tiene un formato válido.`);
