@@ -2,13 +2,14 @@ import { firebaseAdmin, auth } from "../../config/firebase-cofig";
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { AuthResponse } from "../../models/authResponseModel";
 
-export const createSessionCookie = async (token: string): Promise<String | null> => {
+export const createSessionCookie = async (token: string): Promise<{ sessionCookie: string | null, userId: string | null } | null> => {
     try {
         const decodedToken = await firebaseAdmin.verifyIdToken(token);
+        const { user_id: userId } = decodedToken; 
 
-        const sessionCookie = await firebaseAdmin.createSessionCookie(token, { expiresIn: 60 * 60 * 24 * 1000 }); 
+        const sessionCookie = await firebaseAdmin.createSessionCookie(token, { expiresIn: 60 * 60 * 24 * 1000 });
 
-        return sessionCookie;
+        return { sessionCookie, userId };
     } catch (e: unknown) {
         if (e instanceof Error) {
             if (e.message.includes('auth/user-not-found')) {
