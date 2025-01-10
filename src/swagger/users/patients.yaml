@@ -1,13 +1,10 @@
-openapi: 3.0.0
-info:
-  title: API de Registro de Pacientes
-  description: API para registrar pacientes en el sistema.
-  version: 1.0.0
 paths:
   /patients/register:
     post:
       summary: Registrar un nuevo paciente
       description: Registra un nuevo paciente proporcionando detalles personales e información médica.
+      tags:
+        - Patients
       operationId: registerPatient
       requestBody:
         required: true
@@ -55,6 +52,32 @@ paths:
                   format: float
                   example: 175
                   description: La altura del paciente en centímetros.
+                emergencyContact:
+                  type: array
+                  description: Lista de contactos de emergencia del paciente.
+                  items:
+                    type: object
+                    properties:
+                      firstName:
+                        firstName: string
+                        example: 'John'
+                        description: Primer nombre del contacto de emergencia.
+                      lastName:
+                        lastName: string
+                        example: 'Doe'
+                        description: Apellido del contacto de emergencia.
+                      email:
+                        email: string
+                        example: 'john.doe@example.com'
+                        description: Correo del contacto de emergencia.
+                      phoneNumber:
+                        type: string
+                        example: '9876543210'
+                        description: Número de teléfono del contacto de emergencia.
+                      relationship:
+                        type: string
+                        example: 'Twin'
+                        description: Relación con el paciente.
                 medications:
                   type: array
                   items:

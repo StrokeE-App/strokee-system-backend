@@ -3,6 +3,8 @@ paths:
     post:
       summary: Iniciar sesión de un usuario
       description: Autentica a un usuario utilizando un token y configura una cookie de sesión.
+      tags:
+        - Auth
       requestBody:
         required: true
         content:
@@ -77,6 +79,8 @@ paths:
     post:
       summary: Cerrar sesión de un usuario
       description: Borra la cookie de sesión del usuario y finaliza la sesión.
+      tags:
+        - Auth
       responses:
         200:
           description: Desconexión exitosa.
