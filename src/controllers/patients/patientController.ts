@@ -12,6 +12,7 @@ export const registerPatient = async (req: Request, res: Response, next: NextFun
         birthDate,
         weight,
         height,
+        emergencyContact,
         medications,
         conditions,
     } = req.body;
@@ -27,6 +28,7 @@ export const registerPatient = async (req: Request, res: Response, next: NextFun
             birthDate,
             weight,
             height,
+            emergencyContact,
             medications,
             conditions
         );
@@ -39,6 +41,8 @@ export const registerPatient = async (req: Request, res: Response, next: NextFun
         } else {
             res.status(400).json({
                 message: result.message,
+                duplicateEmails: result.duplicateEmails,
+                duplicatePhones: result.duplicatePhones,
             });
         }
     } catch (error) {

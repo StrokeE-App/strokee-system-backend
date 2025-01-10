@@ -1,5 +1,5 @@
 import { addPatientIntoPatientCollection } from '../../services/patients/patientService';
-import  Patient  from '../../models/usersModels/patientModel';
+import Patient from '../../models/usersModels/patientModel';
 import { firebaseAdmin } from "../../config/firebase-cofig";
 
 jest.mock('../../models/usersModels/patientModel');
@@ -18,6 +18,7 @@ describe('addPatientIntoPatientCollection', () => {
             new Date('1995-05-15'),
             70,
             175,
+            [], 
             ['medication1'],
             ['condition1']
         );
@@ -39,12 +40,22 @@ describe('addPatientIntoPatientCollection', () => {
             new Date('1995-05-15'),
             70,
             175,
+            [
+                {
+                    firstName: "Jane",
+                    lastName: "caceres",
+                    email: "jane.doe@example.com",
+                    phoneNumber: "1234567990",
+                    relationship: "Friend",
+                    isDeleted: false
+                }
+            ],
             ['medication1'],
             ['condition1']
         );
     
         expect(result.success).toBe(false);
-        expect(result.message).toBe('Error al agregar al paciente: El email johndoe@example.com ya está registrado.');
+        expect(result.message).toBe('El email johndoe@example.com ya está registrado.');
     });
 
     it('should return an error when Firebase user creation fails', async () => {
@@ -61,6 +72,7 @@ describe('addPatientIntoPatientCollection', () => {
             new Date('1995-05-15'),
             70,
             175,
+            [],
             ['medication1'],
             ['condition1']
         );
@@ -85,6 +97,7 @@ describe('addPatientIntoPatientCollection', () => {
             new Date('1995-05-15'),
             70,
             175,
+            [],
             ['medication1'],
             ['condition1']
         );
@@ -110,6 +123,7 @@ describe('addPatientIntoPatientCollection', () => {
             new Date('1995-05-15'),
             70,
             175,
+            [],
             ['medication1'],
             ['condition1']
         );

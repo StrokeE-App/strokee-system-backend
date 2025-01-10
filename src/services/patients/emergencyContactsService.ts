@@ -1,12 +1,12 @@
-import uniqid from "uniqid";
 import { IEmergencyContact } from "../../models/usersModels/emergencyContactModel";
-import patientEmergencyContact from "../../models/usersModels/patientEmergencyContact";
+import patientModel from "../../models/usersModels/patientModel";
 import { firebaseAdmin } from "../../config/firebase-cofig";
-import { MAX_FIRST_NAME_LENGTH, MAX_LAST_NAME_LENGTH } from "../../config/constantsUsers";
-import { isValidEmail, isValidPhoneNumber } from "../utils";
+import { validateEmergencyContact } from "../utils";
 
-
-export const addEmergencyContactsIntoCollection = async (patientId: string, newContacts: IEmergencyContact[]): Promise<{ success: boolean, message: string, duplicateEmails: string[], duplicatePhones: string[] }> => {
+export const addEmergencyContactsIntoCollection = async (
+    patientId: string,
+    newContacts: IEmergencyContact[]
+): Promise<{ success: boolean, message: string, duplicateEmails: string[], duplicatePhones: string[] }> => {
     try {
         const patientExists = await firebaseAdmin.getUser(patientId).catch((error) => {
             if ((error as any).code === 'auth/user-not-found') {
@@ -17,84 +17,101 @@ export const addEmergencyContactsIntoCollection = async (patientId: string, newC
         });
 
         if (!patientExists) {
-            return { success: false, message: `El paciente con ID ${patientId} no existe.`, duplicateEmails: [], duplicatePhones: [] };
+            return {
+                success: false,
+                message: `El paciente con ID ${patientId} no existe.`,
+                duplicateEmails: [],
+                duplicatePhones: []
+            };
         }
 
-        const patientRecord = await patientEmergencyContact.findOne({ patientId });
+        const patientRecord = await patientModel.findOne({ patientId });
+        const existingContacts = patientRecord ? patientRecord.emergencyContact || [] : [];
 
-        const existingContacts = patientRecord ? patientRecord.contacts : [];
+        const duplicatePhoneContacts = newContacts.filter(newContact =>
+            existingContacts.some(contact => contact.phoneNumber === newContact.phoneNumber)
+        );
 
-        const duplicatePhoneContacts = newContacts.filter((newContact) => {
-            return existingContacts.some(contact => contact.phoneNumber === newContact.phoneNumber);
-        });
-
-        const duplicateEmailContacts = newContacts.filter((newContact) => {
-            return existingContacts.some(contact => contact.email === newContact.email);
-        });
+        const duplicateEmailContacts = newContacts.filter(newContact =>
+            existingContacts.some(contact => contact.email === newContact.email)
+        );
 
         const duplicatePhoneNumbers = duplicatePhoneContacts.map(c => c.phoneNumber);
         const duplicateEmails = duplicateEmailContacts.map(c => c.email);
 
         if (duplicatePhoneNumbers.length > 0 || duplicateEmails.length > 0) {
-            return { 
-                success: false, 
+            return {
+                success: false,
                 message: "Algunos contactos ya existen con el mismo número de teléfono o correo electrónico.",
-                duplicateEmails: duplicateEmails,
+                duplicateEmails,
                 duplicatePhones: duplicatePhoneNumbers
             };
         }
 
-        newContacts.forEach(contact => {
-            if (contact.email && !isValidEmail(contact.email)) {
-                throw new Error(`El correo electrónico ${contact.email} no tiene un formato válido.`);
-            }
-            if (contact.phoneNumber && !isValidPhoneNumber(contact.phoneNumber)) {
-                throw new Error(`El número de teléfono ${contact.phoneNumber} no tiene un formato válido.`);
-            }
-            if (!contact.firstName || (!contact.phoneNumber && !contact.email)) {
-                throw new Error("Cada contacto debe tener un nombre y al menos un número de teléfono o correo electrónico.");
-            }
-        });
+        newContacts.forEach(contact => validateEmergencyContact(contact));
 
-        newContacts.forEach(contact => {
-            if (contact.firstName && contact.firstName.length > MAX_FIRST_NAME_LENGTH) {
-                throw new Error(`El nombre del contacto ${contact.firstName} excede el límite de ${MAX_FIRST_NAME_LENGTH} caracteres.`);
-            }
-        });
+        await patientModel.updateOne(
+            { patientId },
+            { $addToSet: { emergencyContact: { $each: newContacts } } },
+            { upsert: true }
+        );
 
-        newContacts.forEach(contact => {
-            if (contact.lastName && contact.lastName.length > MAX_LAST_NAME_LENGTH) {
-                throw new Error(`El apellido del contacto ${contact.lastName} excede el límite de ${MAX_LAST_NAME_LENGTH} caracteres.`);
-            }
-        });
+        return {
+            success: true,
+            message: "Contactos de emergencia agregados exitosamente.",
+            duplicateEmails: [],
+            duplicatePhones: []
+        };
 
-        const contactsWithIds = newContacts.map((newContact) => {
-            if (!newContact.contactId) {
-                newContact.contactId = uniqid(); 
-            }
-            return newContact;
-        });
-
-        if (!patientRecord) {
-            const newPatientRecord = new patientEmergencyContact({
-                patientId,
-                contacts: contactsWithIds, 
-            });
-            await newPatientRecord.save();
-            return { success: true, message: "Paciente y contactos de emergencia agregados exitosamente.", duplicateEmails: [], duplicatePhones: [] };
-        } else {
-            contactsWithIds.forEach((newContact) => {
-                const contactExists = patientRecord.contacts.some(contact => contact.contactId === newContact.contactId);
-                if (!contactExists) {
-                    patientRecord.contacts.push(newContact);
-                }
-            });
-
-            await patientRecord.save();
-            return { success: true, message: "Contactos de emergencia agregados exitosamente.", duplicateEmails: [], duplicatePhones: [] };
-        }
     } catch (error) {
         console.error("Error al agregar los contactos de emergencia:", error);
-        return { success: false, message: `Hubo un error al procesar la solicitud: ${(error as any).message || 'Error desconocido.'}`, duplicateEmails: [], duplicatePhones: [] };
+        return {
+            success: false,
+            message: `Hubo un error al procesar la solicitud: ${(error as any).message || 'Error desconocido.'}`,
+            duplicateEmails: [],
+            duplicatePhones: []
+        };
+    }
+};
+
+export const validateEmergencyContactData = (contacts: IEmergencyContact[]): { 
+    success: boolean, 
+    message?: string, 
+    duplicateEmails?: string[], 
+    duplicatePhones?: string[] 
+} => {
+    const phoneCount: Record<string, number> = {};
+    const emailCount: Record<string, number> = {};
+
+    try {
+        contacts.forEach(contact => validateEmergencyContact(contact));
+
+        contacts.forEach(contact => {
+            if (contact.phoneNumber) {
+                phoneCount[contact.phoneNumber] = (phoneCount[contact.phoneNumber] || 0) + 1;
+            }
+            if (contact.email) {
+                emailCount[contact.email] = (emailCount[contact.email] || 0) + 1;
+            }
+        });
+
+        const duplicatePhones = Object.keys(phoneCount).filter(phone => phoneCount[phone] > 1);
+        const duplicateEmails = Object.keys(emailCount).filter(email => emailCount[email] > 1);
+
+        if (duplicatePhones.length > 0 || duplicateEmails.length > 0) {
+            return { 
+                success: false, 
+                message: "Hay contactos duplicados en el array de entrada.",
+                duplicateEmails,
+                duplicatePhones
+            };
+        }
+
+        return { success: true, message: "Todos los contactos son válidos." }; 
+    } catch (error) {
+        return { 
+            success: false, 
+            message: `Error al validar contactos: ${(error as Error).message}` 
+        };
     }
 };

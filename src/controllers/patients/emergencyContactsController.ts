@@ -1,10 +1,8 @@
 import { NextFunction, Request, Response } from "express";
-import { addEmergencyContactsIntoCollection } from "../../services/patients/emergencyContactsService";
+import { addEmergencyContactsIntoCollection, validateEmergencyContactData } from "../../services/patients/emergencyContactsService";
 
-const validateEmergencyContactData = (patientId: string, contacts: any[]): string | null => {
-    if (!patientId) {
-        return "Falta el patientId.";
-    }
+const validateEmergencyContactDataController = (contacts: any[]): string | null => {
+
     if (!contacts || !Array.isArray(contacts) || contacts.length === 0) {
         return "Faltan contactos válidos o el formato es incorrecto.";
     }
@@ -12,9 +10,10 @@ const validateEmergencyContactData = (patientId: string, contacts: any[]): strin
 };
 
 export const registerEmergencyContacts = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const { patientId, contacts } = req.body;
+    const { contacts } = req.body;
+    const userId = (req as any).userId.userId;
 
-    const validationError = validateEmergencyContactData(patientId, contacts);
+    const validationError = validateEmergencyContactDataController(contacts);
     if (validationError) {
         res.status(400).json({
             message: validationError,
@@ -23,7 +22,7 @@ export const registerEmergencyContacts = async (req: Request, res: Response, nex
     }
 
     try {
-        const result = await addEmergencyContactsIntoCollection(patientId, contacts);
+        const result = await addEmergencyContactsIntoCollection(userId, contacts);
 
         if (result.success) {
             res.status(201).json({
@@ -40,3 +39,31 @@ export const registerEmergencyContacts = async (req: Request, res: Response, nex
         next(error);
     }
 };
+
+export const validateListofEmergencyContacts = (req: Request, res: Response, next: NextFunction) => {
+    const { contacts } = req.body;
+
+    if (!contacts || !Array.isArray(contacts)) {
+        res.status(400).json({
+            message: "Faltan contactos válidos o el formato es incorrecto.",
+        });
+    }
+
+    try {
+        const result = validateEmergencyContactData(contacts);
+
+        if (result.success) {
+            res.status(201).json({
+                message: result.message,
+            });
+        } else {
+            res.status(400).json({
+                message: result.message,
+                duplicateEmails: result.duplicateEmails ? result.duplicateEmails : [],
+                duplicatePhones: result.duplicatePhones ? result.duplicatePhones : [],
+            });
+        }
+    } catch (error) {
+        next(error);
+    }
+}

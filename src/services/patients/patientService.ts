@@ -1,5 +1,7 @@
 import Patient from "../../models/usersModels/patientModel";
+import { IEmergencyContact } from "../../models/usersModels/emergencyContactModel";
 import { firebaseAdmin } from "../../config/firebase-cofig";
+import { validateEmergencyContactData } from "./emergencyContactsService";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -14,6 +16,7 @@ const validatePatientFields = (
     birthDate: Date,
     weight: number,
     height: number,
+    emergencyContact: IEmergencyContact[],
     medications: string[],
     conditions: string[]
 ): string | null => {
@@ -26,6 +29,7 @@ const validatePatientFields = (
     if (!birthDate) return "birthDate";
     if (!weight) return "weight";
     if (!height) return "height";
+    if (!emergencyContact) return "emergencyContact";
     if (medications.length === 0) return "medications";
     if (conditions.length === 0) return "conditions";
 
@@ -42,9 +46,10 @@ export const addPatientIntoPatientCollection = async (
     birthDate: Date,
     weight: number,
     height: number,
+    emergencyContact: IEmergencyContact[],
     medications: string[],
     conditions: string[]
-): Promise<{ success: boolean, message: string, patientId?: string }> => {
+): Promise<{ success: boolean, message: string, patientId?: string, duplicateEmails?: string[], duplicatePhones?: string[] }> => {
     try {
         const missingField = validatePatientFields(
             firstName,
@@ -56,6 +61,7 @@ export const addPatientIntoPatientCollection = async (
             birthDate,
             weight,
             height,
+            emergencyContact,
             medications,
             conditions
         );
@@ -66,21 +72,30 @@ export const addPatientIntoPatientCollection = async (
 
         const existingPatient = await Patient.findOne({ email });
         if (existingPatient) {
-            throw new Error(`El email ${email} ya está registrado.`);
+            return {
+                success: false,
+                message: `El email ${email} ya está registrado.`,
+            };
         }
 
-        const patientRecord = await firebaseAdmin.createUser({
-            email,
-            password,
-        });
+        const contactValidation = validateEmergencyContactData(emergencyContact);
+        if (!contactValidation.success) {
+            return {
+                success: false,
+                message: `${contactValidation.message}`,
+                duplicateEmails: contactValidation.duplicateEmails || [],
+                duplicatePhones: contactValidation.duplicatePhones || [],
+            };
+        }
 
+        const patientRecord = await firebaseAdmin.createUser({ email, password });
         if (!patientRecord.uid) {
             throw new Error('No se pudo crear el usuario en Firebase.');
         }
 
         await firebaseAdmin.setCustomUserClaims(patientRecord.uid, { role: "patient" });
 
-        const newPatient = new Patient({
+        const newPatient = {
             patientId: patientRecord.uid,
             firstName,
             lastName,
@@ -90,30 +105,27 @@ export const addPatientIntoPatientCollection = async (
             birthDate,
             weight,
             height,
+            emergencyContact,
             medications,
             conditions,
-            isDeleted: false
-        });
+            isDeleted: false,
+        };
 
-        const insertPatient = await Patient.updateOne(
+        const result = await Patient.updateOne(
             { patientId: patientRecord.uid, isDeleted: false },
             newPatient,
             { upsert: true }
         );
 
-        if (insertPatient.upsertedCount > 0) {
+        if (result.upsertedCount > 0) {
             return { success: true, message: 'Paciente agregado exitosamente.', patientId: patientRecord.uid };
         } else {
             return { success: false, message: 'No se realizaron cambios en la base de datos.' };
         }
-    } catch (error: unknown) {
-        if (error instanceof Error) {
-            console.error(`Error al agregar al paciente: ${error.message}`);
-            return { success: false, message: `Error al agregar al paciente: ${error.message}` };
-        } else {
-            console.error("Error desconocido al agregar al paciente.");
-            return { success: false, message: "Error desconocido al agregar al paciente." };
-        }
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Error desconocido";
+        console.error(`Error al agregar al paciente: ${errorMessage}`);
+        return { success: false, message: `Error al agregar al paciente: ${errorMessage}` };
     }
 };
 

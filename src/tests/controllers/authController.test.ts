@@ -57,6 +57,7 @@ describe("Patient Controller", () => {
                 req.body.birthDate,
                 req.body.weight,
                 req.body.height,
+                req.body.emergencyContact,
                 req.body.medications,
                 req.body.conditions
             );
@@ -88,6 +89,7 @@ describe("Patient Controller", () => {
                 req.body.birthDate,
                 req.body.weight,
                 req.body.height,
+                req.body.emergencyContact,
                 req.body.medications,
                 req.body.conditions
             );
