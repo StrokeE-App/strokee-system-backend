@@ -1,0 +1,157 @@
+paths:
+  /emergency-contacts/register:
+    post:
+      summary: Registrar contactos de emergencia para un paciente
+      description: Permite registrar uno o más contactos de emergencia para un paciente en la base de datos.
+      tags:
+        - Emergency Contacts
+      security:
+        - BearerAuth: []
+      requestBody:
+        description: Datos de los contactos de emergencia a registrar.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                contacts:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      firstName:
+                        type: string
+                        example: 'Jane'
+                      lastName:
+                        type: string
+                        example: 'Doe'
+                      phoneNumber:
+                        type: string
+                        example: '1234567890'
+                      email:
+                        type: string
+                        example: 'jane.doe@example.com'
+                      relationship:
+                        type: string
+                        example: 'sister'
+              required:
+                - contacts
+      responses:
+        '201':
+          description: Contactos de emergencia registrados exitosamente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Contactos de emergencia agregados exitosamente.'
+        '400':
+          description: Error al registrar los contactos de emergencia debido a datos incorrectos o duplicados.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Algunos contactos ya existen con el mismo número de teléfono o correo electrónico.'
+                  duplicateEmails:
+                    type: array
+                    items:
+                      type: string
+                      example: 'john.doe@example.com'
+                  duplicatePhones:
+                    type: array
+                    items:
+                      type: string
+                      example: '9876543210'
+        '500':
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Error desconocido al agregar los contactos de emergencia.'
+  /emergency-contacts/validate:
+    post:
+      summary: Validar una lista de contactos de emergencia
+      description: Valida una lista de contactos de emergencia para asegurarse de que no haya errores de formato ni duplicados.
+      tags:
+        - Emergency Contacts
+      security:
+        - BearerAuth: []
+      requestBody:
+        description: Lista de contactos de emergencia a validar.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                contacts:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      firstName:
+                        type: string
+                        example: 'Jane'
+                      lastName:
+                        type: string
+                        example: 'Doe'
+                      phoneNumber:
+                        type: string
+                        example: '1234567890'
+                      email:
+                        type: string
+                        example: 'jane.doe@example.com'
+                      relationship:
+                        type: string
+                        example: 'sister'
+              required:
+                - contacts
+      responses:
+        '201':
+          description: La lista de contactos de emergencia es válida.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Los contactos de emergencia son válidos.'
+        '400':
+          description: Error en la validación de los contactos debido a datos incorrectos o duplicados.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Algunos contactos ya existen con el mismo número de teléfono o correo electrónico.'
+                  duplicateEmails:
+                    type: array
+                    items:
+                      type: string
+                      example: 'john@exmaple.com'
+                  duplicatePhones:
+                    type: array
+                    items:
+                      type: string
+                      example: '9876543210' 
+        '500':
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Error desconocido al validar los contactos de emergencia.'

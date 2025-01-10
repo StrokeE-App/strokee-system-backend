@@ -1,10 +1,13 @@
 import { Router } from "express";
 import { getAllPatients, registerPatient } from "../../controllers/patients/patientController";
-import { verifyToken } from "../../middlewares/authMiddleware"
+import { registerEmergencyContacts, validateListofEmergencyContacts } from "../../controllers/patients/emergencyContactsController";
+import { verifyTokenWithRole } from "../../middlewares/authMiddleware"
 const router = Router()
 
-router.get("/all", verifyToken, getAllPatients);
+router.get("/all", verifyTokenWithRole(['admin', 'patient']), getAllPatients);
 router.post("/register", registerPatient);
+router.post("/emergency-contacts/register", verifyTokenWithRole(['admin', 'patient']), registerEmergencyContacts);
+router.post("/emergency-contacts/validate", validateListofEmergencyContacts);
 
 
 export default router;

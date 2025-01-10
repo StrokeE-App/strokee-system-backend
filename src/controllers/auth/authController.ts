@@ -7,28 +7,31 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
     const { token } = req.body;
 
     if (!token) {
-        res.status(400).json({ message: 'Token no valido o vacío' });
+        res.status(400).json({ message: 'Token no válido o vacío' });
+        return;
     }
 
     try {
-        const sessionCookie  = await createSessionCookie(token);
+        const sessionData = await createSessionCookie(token);
 
-        if (!sessionCookie ) {
-            res.status(401).json({ message: "Token invalido" });
-            return
+        if (!sessionData || !sessionData.sessionCookie) { 
+            res.status(401).json({ message: "Token inválido" });
+            return;
         }
 
-        res.cookie('session_token', sessionCookie , {
-            httpOnly: true,  
-            secure: process.env.NODE_ENV === 'production', 
+        res.cookie('session_token', sessionData.sessionCookie, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
         });
 
-        res.status(200).json({ message: "Login exitoso."});
+        res.status(200).json({
+            message: "Login exitoso.",
+            userId: sessionData.userId, 
+        });
     } catch (error) {
         next(error);
     }
-
-}
+};
 
 export const logoutUser = (req: Request, res: Response) => {
     res.clearCookie('session_token', {
