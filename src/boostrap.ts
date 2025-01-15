@@ -4,8 +4,9 @@ import cors from 'cors';
 import mongoose from 'mongoose';
 import swaggerUi from 'swagger-ui-express';
 import swaggerDocs from './swagger/swagger-index';
-import patientsRoutes from './routes/patients/patientRoutes'
-import paramedicsRoutes from './routes/paramedics/paramedicRoutes'
+import patientsRoutes from './routes/patientRoutes'
+import paramedicsRoutes from './routes/paramedicRoutes'
+import emergencyRoutes from './routes/emergencyRoutes'
 import indexRoutes from './routes/indexRoute'
 import indexRoute from './routes/indexRoute'
 import errorHandler from "./middlewares/errorMiddleware"
@@ -42,6 +43,7 @@ app.use(bodyParser.json());
 app.use(indexRoute)
 app.use("/patient", patientsRoutes);
 app.use("/paramedic", paramedicsRoutes);
+app.use("/emergency", emergencyRoutes);
 app.use("/", indexRoutes);
 app.use('/swagger', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 

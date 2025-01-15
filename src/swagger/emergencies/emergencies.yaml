@@ -1,0 +1,102 @@
+paths:
+  /emergencies/{emergencyId}:
+      get:
+        summary: Obtener una emergencia por su ID
+        description: Recupera los detalles de una emergencia utilizando el ID proporcionado.
+        tags:
+          - Emergencies
+        operationId: getEmergency
+        parameters:
+          - name: emergencyId
+            in: path
+            required: true
+            description: ID único de la emergencia
+            schema:
+              type: string
+        responses:
+          '200':
+            description: Emergencia encontrada con éxito.
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: 'Emergencia encontrada'
+                    data:
+                      type: object
+                      properties:
+                        emergencyId:
+                          type: string
+                          example: '42f059dc-04a4-4222-9de1-a3a4be4ba160'
+                        startDate:
+                          type: string
+                          format: date-time
+                          example: '2025-01-01T01:00:00Z'
+                        pickupDate:
+                          type: string
+                          format: date-time
+                          example: '2025-01-01T01:00:00Z'
+                        deliveredDate:
+                          type: string
+                          format: date-time
+                          example: '2025-01-01T01:00:00Z'
+                        nihScale:
+                          type: integer
+                          example: 20
+                        status:
+                          type: string
+                          example: 'ACTIVE'
+                        patient:
+                          type: object
+                          properties:
+                            age:
+                              type: integer
+                              example: 24
+                            firstName:
+                              type: string
+                              example: 'Carlos'
+                            height:
+                              type: integer
+                              example: 101
+                            lastName:
+                              type: string
+                              example: 'Caceres'
+                            phoneNumber:
+                              type: string
+                              example: '3057479364'
+                            weight:
+                              type: number
+                              format: float
+                              example: 74.5
+          '400':
+            description: Error al consultar la emergencia.
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: 'Error al consultar la emergencia'
+          '404':
+            description: No se encontró la emergencia con el ID proporcionado.
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: 'No se encontró la emergencia con el id proporcionado.'
+          '500':
+            description: Error interno en el servidor.
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: 'Error desconocido al consultar la emergencia.'
