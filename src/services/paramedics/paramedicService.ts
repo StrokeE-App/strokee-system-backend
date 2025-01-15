@@ -1,4 +1,5 @@
 import paramedicModel from "../../models/usersModels/paramedicModel";
+import emergencyModel from "../../models/emergencyModel";
 import { firebaseAdmin } from "../../config/firebase-config";
 import { isValidFirstName, isValidLastName, isValidEmail, isValidPassword } from "../utils";
 
@@ -94,3 +95,66 @@ export const addParamedicIntoCollection = async (
         return { success: false, message: `Error al agregar al paramedico: ${errorMessage}` };
     }
 };
+
+export const getAllActiveEmergenciesFromCollection = async (userId: string) => {
+    try {
+
+        if(!userId){
+            return { success: false, message: "El el userId es obligatorio" };
+        }
+
+        const paramedic = await paramedicModel.findOne({ paramedicId: userId, isDeleted: false }, { _id: 0, ambulanceId: 1 });
+
+        if (!paramedic) {
+            return { success: false, message: "Paramédico no encontrado." };
+        }
+
+        const emergencies = await emergencyModel.aggregate([
+            {
+                $match: {
+                    ambulanceId: paramedic.ambulanceId,
+                    status: "ACTIVE"
+                }
+            },
+            {
+                $lookup: {
+                    from: "patients",
+                    localField: "patientId",
+                    foreignField: "patientId",
+                    as: "patient"
+                }
+            },
+            {
+                $unwind: "$patient"
+            },
+            {
+                $project: {
+                    "_id": 0,
+                    "emergencyId": 1,
+                    "status": 1,
+                    "startDate": 1,
+                    "pickupDate": 1,
+                    "deliveredDate": 1,
+                    "nihScale": 1,
+                    "patient.firstName": 1,
+                    "patient.lastName": 1,
+                    "patient.age": 1,
+                    "patient.height": 1,
+                    "patient.weight": 1,
+                    "patient.phoneNumber": 1
+                }
+            }
+        ]);
+
+        if (!emergencies || emergencies.length === 0) {
+            return { success: true, message: "No se encontraron emergencias" };
+        }
+
+        return { success: true, data: emergencies, message: "Emergencias encontradas" };
+
+    }catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Error desconocido";
+        console.error(`Error al consultar las emergencias: ${errorMessage}`);
+        return { success: false, message: `Error al consultar las emergencias: ${errorMessage}` };
+    }
+}

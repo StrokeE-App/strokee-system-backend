@@ -72,3 +72,99 @@ paths:
                   message:
                     type: string
                     example: Error desconocido al registrar el paramédico.
+  /paramedic/active-emergencies:
+      get:
+        summary: Obtener emergencias activas para una ambulancia
+        description: Recupera una lista de emergencias activas asociadas a una ambulancia.
+        tags:
+          - Paramedics
+        operationId: getActiveEmergencies
+        responses:
+          '200':
+            description: Emergencias activas encontradas con éxito.
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: 'Emergencias encontradas'
+                    data:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          emergencyId:
+                            type: string
+                            example: '42f059dc-04a4-4222-9de1-a3a4be4ba160'
+                          startDate:
+                            type: string
+                            format: date-time
+                            example: '2025-01-01T01:00:00Z'
+                          pickupDate:
+                            type: string
+                            format: date-time
+                            example: '2025-01-01T01:00:00Z'
+                          deliveredDate:
+                            type: string
+                            format: date-time
+                            example: '2025-01-01T01:00:00Z'
+                          nihScale:
+                            type: integer
+                            example: 20
+                          status:
+                            type: string
+                            example: 'ACTIVE'
+                          patient:
+                            type: object
+                            properties:
+                              age:
+                                type: integer
+                                example: 24
+                              firstName:
+                                type: string
+                                example: 'Carlos'
+                              height:
+                                type: integer
+                                example: 101
+                              lastName:
+                                type: string
+                                example: 'Caceres'
+                              phoneNumber:
+                                type: string
+                                example: '3057479364'
+                              weight:
+                                type: number
+                                format: float
+                                example: 74.5
+          '400':
+            description: Error al consultar las emergencias activas.
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: 'Error al consultar las emergencias activas.'
+          '404':
+            description: No se encontraron emergencias activas para la ambulancia.
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: 'No se encontraron emergencias activas'
+          '500':
+            description: Error interno en el servidor.
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: 'Error desconocido al consultar las emergencias.'

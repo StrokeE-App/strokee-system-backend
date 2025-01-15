@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { getAllPatients, registerPatient } from "../../controllers/patients/patientController";
-import { registerEmergencyContacts, validateListofEmergencyContacts } from "../../controllers/patients/emergencyContactsController";
-import { verifyTokenWithRole } from "../../middlewares/authMiddleware"
+import { getAllPatients, registerPatient } from "../controllers/patients/patientController";
+import { registerEmergencyContacts, validateListofEmergencyContacts } from "../controllers/patients/emergencyContactsController";
+import { verifyTokenWithRole } from "../middlewares/authMiddleware"
 const router = Router()
 
 router.get("/all", verifyTokenWithRole(['admin', 'patient']), getAllPatients);
