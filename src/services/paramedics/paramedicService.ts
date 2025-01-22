@@ -1,5 +1,7 @@
 import paramedicModel from "../../models/usersModels/paramedicModel";
 import emergencyModel from "../../models/emergencyModel";
+import rolesModel from "../../models/usersModels/rolesModel";
+import { publishToExchange } from "../publisherService";
 import { firebaseAdmin } from "../../config/firebase-config";
 import { isValidFirstName, isValidLastName, isValidEmail, isValidPassword } from "../utils";
 
@@ -67,8 +69,6 @@ export const addParamedicIntoCollection = async (
             throw new Error('No se pudo crear el usuario en Firebase.');
         }
 
-        await firebaseAdmin.setCustomUserClaims(paramedicRecord.uid, { role: "paramedic" });
-
         const newParamedic = {
             paramedicId: paramedicRecord.uid,
             ambulanceId,
@@ -84,7 +84,19 @@ export const addParamedicIntoCollection = async (
             { upsert: true }
         );
 
-        if (result.upsertedCount > 0) {
+        const newRole = {
+            userId: paramedicRecord.uid,
+            role: "paramedic",
+            isDeleted: false,
+        }
+
+        const addRole = await rolesModel.updateOne(
+            { userId: paramedicRecord.uid, isDeleted: false },
+            newRole,
+            { upsert: true }
+        );
+
+        if (result.upsertedCount > 0 && addRole.upsertedCount > 0) {
             return { success: true, message: 'Paramedico agregado exitosamente.', ambulanceId: paramedicRecord.uid };
         } else {
             return { success: false, message: 'No se realizaron cambios en la base de datos.' };
@@ -99,7 +111,7 @@ export const addParamedicIntoCollection = async (
 export const getAllActiveEmergenciesFromCollection = async (userId: string) => {
     try {
 
-        if(!userId){
+        if (!userId) {
             return { success: false, message: "El el userId es obligatorio" };
         }
 
@@ -152,9 +164,75 @@ export const getAllActiveEmergenciesFromCollection = async (userId: string) => {
 
         return { success: true, data: emergencies, message: "Emergencias encontradas" };
 
-    }catch (error) {
+    } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "Error desconocido";
         console.error(`Error al consultar las emergencias: ${errorMessage}`);
         return { success: false, message: `Error al consultar las emergencias: ${errorMessage}` };
     }
 }
+export const updateEmergencyPickUpFromCollection = async (
+    emergencyId: string,
+    pickupDate: string
+) => {
+    try {
+        if (!emergencyId) {
+            return { success: false, message: "El ID de emergencia es obligatorio." };
+        }
+        if (!pickupDate) {
+            return { success: false, message: "La fecha de recogida es obligatoria." };
+        }
+
+        const parsedPickUpDate = new Date(pickupDate);
+        if (isNaN(parsedPickUpDate.getTime())) {
+            return { success: false, message: "La fecha de recogida no es válida." };
+        }
+
+        await emergencyModel.updateOne(
+            { emergencyId },
+            { $set: { pickupDate: parsedPickUpDate.toISOString() } },
+            { upsert: true }
+        );
+
+        const message = {
+            emergencyId,
+            pickupDate: parsedPickUpDate.toISOString(),
+            status: "ACTIVE",
+        };
+
+        await publishToExchange("paramedic_exchange", "paramedic_update_queue", message);
+
+        return { success: true, message: "Emergencia confirmada y mensaje enviado." };
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Error desconocido";
+        console.error(`Error al actualizar la hora de recogida del paciente [ID: ${emergencyId}]: ${errorMessage}`);
+        return { success: false, message: `Error al actualizar la hora de recogida: ${errorMessage}` };
+    }
+};
+
+export const cancelEmergencyCollection = async (emergencyId: string, pickupDate: string) => {
+    try {
+        if (!emergencyId) {
+            return { success: false, message: "El ID de emergencia es obligatorio." };
+        }
+        if (!pickupDate) {
+            return { success: false, message: "La fecha de recogida es obligatoria." };
+        }
+
+        const parsedPickUpDate = new Date(pickupDate);
+        if (isNaN(parsedPickUpDate.getTime())) {
+            return { success: false, message: "La fecha de recogida no es válida." };
+        }
+
+        await emergencyModel.updateOne(
+            { emergencyId },
+            { $set: { pickupDate: parsedPickUpDate.toISOString(), status: "CANCELLED" } },
+            { upsert: true }
+        );
+
+        return { success: true, message: "Emergencia stroke descartada." };
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Error desconocido";
+        console.error(`Error al descartar la emergencia de stroke [ID: ${emergencyId}]: ${errorMessage}`);
+        return { success: false, message: `Error al descartar la emergencia: ${errorMessage}` };
+    }
+};

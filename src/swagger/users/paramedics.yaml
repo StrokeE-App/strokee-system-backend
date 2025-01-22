@@ -168,3 +168,131 @@ paths:
                     message:
                       type: string
                       example: 'Error desconocido al consultar las emergencias.'
+  /paramedic/confirm-stroke:
+    post:
+      summary: Confirmar emergencia y asignar fecha de recogida.
+      description: Este endpoint permite confirmar una emergencia y asignar una fecha de recogida.
+      tags:
+        - Paramedics
+      operationId: confirmEmergency
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                emergencyId:
+                  type: string
+                  description: El identificador único de la emergencia.
+                  example: "EMG123"
+                pickupDate:
+                  type: string
+                  format: date-time
+                  description: La fecha y hora de recogida de la emergencia.
+                  example: "2025-01-22T15:30:00"
+      responses:
+        '200':
+          description: La emergencia ha sido confirmada con éxito.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Emergencia confirmada con éxito."
+        '400':
+          description: Se proporcionó información incorrecta o incompleta.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Por favor, ingresar un emergencyid y un pickdate valido"
+        '404':
+          description: No se encontraron emergencias con el ID proporcionado.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "No se encontraron emergencias con ese Id"
+        '500':
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Error desconocido al procesar la emergencia."
+  /paramedic/discard-stroke:
+    post:
+      summary: Cancelar una emergencia.
+      description: Este endpoint permite cancelar una emergencia existente.
+      tags:
+        - Paramedics
+      operationId: cancelEmergency
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                emergencyId:
+                  type: string
+                  description: El identificador único de la emergencia a cancelar.
+                  example: "EMG123"
+                pickupDate:
+                  type: string
+                  format: date-time
+                  description: La fecha y hora de recogida de la emergencia.
+                  example: "2025-01-22T15:30:00"
+      responses:
+        '200':
+          description: La emergencia ha sido cancelada con éxito.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Emergencia cancelada con éxito."
+        '400':
+          description: Se proporcionó información incorrecta o incompleta.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Por favor, ingresar un emergencyid y un pickdate valido"
+        '404':
+          description: No se encontraron emergencias con el ID proporcionado.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "No se encontraron emergencias con ese Id"
+        '500':
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Error desconocido al procesar la cancelación de la emergencia."

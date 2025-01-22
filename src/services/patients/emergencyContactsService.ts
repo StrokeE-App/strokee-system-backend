@@ -29,11 +29,11 @@ export const addEmergencyContactsIntoCollection = async (
         const existingContacts = patientRecord ? patientRecord.emergencyContact || [] : [];
 
         const duplicatePhoneContacts = newContacts.filter(newContact =>
-            existingContacts.some(contact => contact.phoneNumber === newContact.phoneNumber)
+            existingContacts.some((contact: { phoneNumber: string; }) => contact.phoneNumber === newContact.phoneNumber)
         );
 
         const duplicateEmailContacts = newContacts.filter(newContact =>
-            existingContacts.some(contact => contact.email === newContact.email)
+            existingContacts.some((contact: { email: string; }) => contact.email === newContact.email)
         );
 
         const duplicatePhoneNumbers = duplicatePhoneContacts.map(c => c.phoneNumber);
