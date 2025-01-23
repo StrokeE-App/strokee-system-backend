@@ -5,6 +5,7 @@ import { firebaseAdmin } from '../../config/firebase-config';
 jest.mock('../../config/firebase-config', () => ({
     firebaseAdmin: {
         getUser: jest.fn(),
+        verifySessionCookie: jest.fn(),
     },
 }));
 
@@ -19,20 +20,12 @@ describe('addEmergencyContactsIntoCollection', () => {
     });
 
     it('debería agregar contactos de emergencia exitosamente', async () => {
+        (firebaseAdmin.verifySessionCookie as jest.Mock).mockResolvedValue({
+            uid: 'existingPatientId',
+        });
+
         (firebaseAdmin.getUser as jest.Mock).mockResolvedValue({
             uid: 'existingPatientId',
-            email: 'patient@example.com',
-            emailVerified: true,
-            disabled: false,
-            metadata: {
-                creationTime: '2023-01-01T00:00:00.000Z',
-                lastSignInTime: '2023-01-02T00:00:00.000Z',
-                toJSON: () => ({}),
-            },
-            providerData: [],
-            customClaims: {},
-            tokensValidAfterTime: null,
-            toJSON: () => ({}),
         });
 
         (patientModel.findOne as jest.Mock).mockResolvedValue({
@@ -55,6 +48,7 @@ describe('addEmergencyContactsIntoCollection', () => {
 
         const result = await addEmergencyContactsIntoCollection('existingPatientId', newContacts);
 
+        expect(firebaseAdmin.verifySessionCookie).toHaveBeenCalledWith('existingPatientId', true);
         expect(firebaseAdmin.getUser).toHaveBeenCalledWith('existingPatientId');
         expect(patientModel.findOne).toHaveBeenCalledWith({ patientId: 'existingPatientId' });
         expect(patientModel.updateOne).toHaveBeenCalledWith(
@@ -71,10 +65,15 @@ describe('addEmergencyContactsIntoCollection', () => {
     });
 
     it('debería retornar error si el paciente no existe', async () => {
+        (firebaseAdmin.verifySessionCookie as jest.Mock).mockResolvedValue({
+            uid: 'nonExistentPatientId',
+        });
+
         (firebaseAdmin.getUser as jest.Mock).mockRejectedValue({ code: 'auth/user-not-found' });
 
         const result = await addEmergencyContactsIntoCollection('nonExistentPatientId', []);
 
+        expect(firebaseAdmin.verifySessionCookie).toHaveBeenCalledWith('nonExistentPatientId', true);
         expect(firebaseAdmin.getUser).toHaveBeenCalledWith('nonExistentPatientId');
         expect(result).toEqual({
             success: false,
@@ -85,6 +84,10 @@ describe('addEmergencyContactsIntoCollection', () => {
     });
 
     it('debería retornar error si hay contactos duplicados', async () => {
+        (firebaseAdmin.verifySessionCookie as jest.Mock).mockResolvedValue({
+            uid: 'existingPatientId',
+        });
+
         (firebaseAdmin.getUser as jest.Mock).mockResolvedValue({
             uid: 'existingPatientId',
         });

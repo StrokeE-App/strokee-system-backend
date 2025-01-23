@@ -12,9 +12,11 @@ import indexRoute from './routes/indexRoute'
 import errorHandler from "./middlewares/errorMiddleware"
 import dotenv from "dotenv";
 import cookieParser from 'cookie-parser';
+import amqp from 'amqplib'; 
 
 dotenv.config();
 const app = express();
+const RABBITMQ_URL = process.env.RABBIT_MQ || 'amqp://localhost';
 
 const connectToMongo = () => {
     
@@ -34,7 +36,18 @@ mongoose.connection.on('error', (err) => {
 
 }
 
+const connectToRabbitMQ = async () => {
+  try {
+    await amqp.connect(RABBITMQ_URL);
+    console.log('Connected to RabbitMQ');
+    
+  } catch (error) {
+    console.error('Error connecting to RabbitMQ:', error);
+  }
+};
+
 connectToMongo()
+connectToRabbitMQ()
 
 
 app.use(cookieParser());

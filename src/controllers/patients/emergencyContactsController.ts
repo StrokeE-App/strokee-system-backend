@@ -11,7 +11,13 @@ const validateEmergencyContactDataController = (contacts: any[]): string | null 
 
 export const registerEmergencyContacts = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const { contacts } = req.body;
-    const userId = (req as any).userId.userId;
+
+    const token = req.cookies.session_token;
+
+    if (!token) {
+        res.status(401).json({ message: 'No autorizado: cookie no encontrada' });
+        return;
+    }
 
     const validationError = validateEmergencyContactDataController(contacts);
     if (validationError) {
@@ -22,7 +28,7 @@ export const registerEmergencyContacts = async (req: Request, res: Response, nex
     }
 
     try {
-        const result = await addEmergencyContactsIntoCollection(userId, contacts);
+        const result = await addEmergencyContactsIntoCollection(token, contacts);
 
         if (result.success) {
             res.status(201).json({
