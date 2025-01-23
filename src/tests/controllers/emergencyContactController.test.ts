@@ -8,6 +8,7 @@ jest.mock('../../services/patients/emergencyContactsService', () => ({
 
 interface CustomRequest extends Request {
   userId: string;
+  cookies: { session_token?: string };
 }
 
 describe('registerEmergencyContacts Controller', () => {
@@ -28,7 +29,8 @@ describe('registerEmergencyContacts Controller', () => {
           },
         ],
       },
-      userId: 'mockUserId', 
+      userId: 'mockUserId',
+      cookies: { session_token: 'mockToken' }, // Mock de la cookie
     };
     res = {
       status: jest.fn().mockReturnThis(),
@@ -37,7 +39,7 @@ describe('registerEmergencyContacts Controller', () => {
     next = jest.fn();
   });
 
-  it('should return 201 and success message if contacts are added successfully', async () => {
+  it('debería devolver 201 y mensaje de éxito si los contactos se agregan correctamente', async () => {
     const result = { success: true, message: 'Contactos de emergencia agregados exitosamente.', duplicateEmails: [], duplicatePhones: [] };
     (addEmergencyContactsIntoCollection as jest.Mock).mockResolvedValue(result);
 
@@ -49,7 +51,7 @@ describe('registerEmergencyContacts Controller', () => {
     });
   });
 
-  it('should return 400 and error message if contacts are not added due to duplicates', async () => {
+  it('debería devolver 400 y mensaje de error si los contactos no se agregan por duplicados', async () => {
     const result = { success: false, message: 'Algunos contactos ya existen.', duplicateEmails: ['jane.doe@example.com'], duplicatePhones: [] };
     (addEmergencyContactsIntoCollection as jest.Mock).mockResolvedValue(result);
 
@@ -63,7 +65,7 @@ describe('registerEmergencyContacts Controller', () => {
     });
   });
 
-  it('should call next with an error if addEmergencyContactsIntoCollection throws an error', async () => {
+  it('debería llamar a next con un error si addEmergencyContactsIntoCollection lanza un error', async () => {
     const errorMessage = 'Error desconocido al agregar contactos de emergencia.';
     (addEmergencyContactsIntoCollection as jest.Mock).mockRejectedValue(new Error(errorMessage));
 
@@ -72,7 +74,7 @@ describe('registerEmergencyContacts Controller', () => {
     expect(next).toHaveBeenCalledWith(new Error(errorMessage));
   });
 
-  it('should return 400 if contacts format is incorrect', async () => {
+  it('debería devolver 400 si el formato de los contactos es incorrecto', async () => {
     req.body.contacts = [];
 
     await registerEmergencyContacts(req as Request, res as Response, next);
@@ -80,6 +82,17 @@ describe('registerEmergencyContacts Controller', () => {
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith({
       message: 'Faltan contactos válidos o el formato es incorrecto.',
+    });
+  });
+
+  it('debería devolver 401 si no se encuentra la cookie de sesión', async () => {
+    req.cookies = {}; // Eliminamos la cookie para simular que no existe
+
+    await registerEmergencyContacts(req as Request, res as Response, next);
+
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith({
+      message: 'No autorizado: cookie no encontrada',
     });
   });
 });

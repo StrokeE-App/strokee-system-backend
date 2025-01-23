@@ -1,7 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { 
     addParamedicIntoCollection, 
-    getAllActiveEmergenciesFromCollection, 
     updateEmergencyPickUpFromCollection,
     cancelEmergencyCollection
 } from "../../services/paramedics/paramedicService";
@@ -16,33 +15,6 @@ export const registerParamedic = async (req: Request, res: Response, next: NextF
             res.status(201).json({
                 message: result.message,
                 ambulanceId: result.ambulanceId,
-            });
-        } else {
-            res.status(400).json({
-                message: result.message,
-            });
-        }
-    } catch (error) {
-        next(error);
-    }
-}
-
-export const getActiveEmergencies = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        const userId = (req as any).userId.userId;
-
-        const result = await getAllActiveEmergenciesFromCollection(userId);
-
-        if (result.success) {
-            if (!result.data) {
-                res.status(404).json({
-                    message: "No se encontraron emergencias activas",
-                });
-                return;
-            }
-            res.status(200).json({
-                message: result.message,
-                data: result.data,
             });
         } else {
             res.status(400).json({

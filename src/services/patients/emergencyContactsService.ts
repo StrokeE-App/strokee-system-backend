@@ -4,10 +4,12 @@ import { firebaseAdmin } from "../../config/firebase-config";
 import { validateEmergencyContact } from "../utils";
 
 export const addEmergencyContactsIntoCollection = async (
-    patientId: string,
+    tokenPatientId: string,
     newContacts: IEmergencyContact[]
 ): Promise<{ success: boolean, message: string, duplicateEmails: string[], duplicatePhones: string[] }> => {
     try {
+        const decodedToken = await firebaseAdmin.verifySessionCookie(tokenPatientId, true);
+        const patientId = decodedToken.uid;
         const patientExists = await firebaseAdmin.getUser(patientId).catch((error) => {
             if ((error as any).code === 'auth/user-not-found') {
                 return null;

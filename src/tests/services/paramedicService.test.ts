@@ -1,7 +1,6 @@
 import {
     validateParamedicFields,
     addParamedicIntoCollection,
-    getAllActiveEmergenciesFromCollection,
     updateEmergencyPickUpFromCollection,
     cancelEmergencyCollection
 } from '../../services/paramedics/paramedicService';
@@ -145,80 +144,6 @@ describe('Paramedic', () => {
 
         expect(result.success).toBe(false);
         expect(result.message).toBe(`Error al agregar al paramedico: El correo electrónico ${invalidEmail} no tiene un formato válido.`);
-    });
-
-    it('should return an error when userId is missing', async () => {
-        const result = await getAllActiveEmergenciesFromCollection('');
-        expect(result.success).toBe(false);
-        expect(result.message).toBe('El el userId es obligatorio');
-    });
-
-    it('should return an error message if userId is missing', async () => {
-        const result = await getAllActiveEmergenciesFromCollection('');
-        expect(result.success).toBe(false);
-        expect(result.message).toBe('El el userId es obligatorio');
-    });
-
-    it('should return an error message if paramedic is not found', async () => {
-        paramedicModel.findOne = jest.fn().mockResolvedValue(null);
-
-        const result = await getAllActiveEmergenciesFromCollection('ambulance123');
-        expect(result.success).toBe(false);
-        expect(result.message).toBe('Paramédico no encontrado.');
-    });
-
-    it('should return an empty message if no active emergencies are found', async () => {
-        // Simulate paramedic found
-        paramedicModel.findOne = jest.fn().mockResolvedValue({ ambulanceId: 'AMB123' });
-        emergencyModel.aggregate = jest.fn().mockResolvedValue([]);
-
-        const result = await getAllActiveEmergenciesFromCollection('ambulance123');
-        expect(result.success).toBe(true);
-        expect(result.message).toBe('No se encontraron emergencias');
-    });
-
-    it('should return active emergencies with patient details if found', async () => {
-        const mockEmergency = {
-            emergencyId: '123',
-            status: 'ACTIVE',
-            patientId: 'patient123',
-            startDate: '2022-01-01',
-            pickupDate: '2022-01-02',
-            deliveredDate: '2022-01-03',
-            nihScale: 10,
-            patient: {
-                age: 24,
-                firstName: "John",
-                height: 101,
-                lastName: "Doe",
-                phoneNumber: "3057479364",
-                weight: 74.5
-            }
-        };
-
-        // Simulate paramedic found
-        paramedicModel.findOne = jest.fn().mockResolvedValue({ ambulanceId: 'AMB123' });
-        emergencyModel.aggregate = jest.fn().mockResolvedValue([mockEmergency]);
-
-        const result = await getAllActiveEmergenciesFromCollection('ambulance123');
-
-        expect(result.success).toBe(true);
-        expect(result.message).toBe('Emergencias encontradas');
-        expect(result.data).toHaveLength(1);
-        expect(result.data).toBeDefined();
-        expect(result.data?.[0].patient).toBeDefined();
-    });
-
-    it('should handle errors gracefully if an error occurs in the service', async () => {
-        const mockError = new Error('Database error');
-
-        paramedicModel.findOne = jest.fn().mockResolvedValue({ ambulanceId: 'AMB123' });
-        emergencyModel.aggregate = jest.fn().mockRejectedValue(mockError);
-
-        const result = await getAllActiveEmergenciesFromCollection('ambulance123');
-
-        expect(result.success).toBe(false);
-        expect(result.message).toBe('Error al consultar las emergencias: Database error');
     });
 
     describe('updateEmergencyPickUpFromCollection', () => {
