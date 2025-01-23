@@ -1,0 +1,71 @@
+paths:
+  /operator/register:
+    post:
+      summary: Register a new operator
+      description: This endpoint allows you to register a new operator by providing their details (first name, last name, email, and password).
+      requestBody:
+        description: The operator's details to be registered.
+        content:
+          application/json:
+            required: true
+            schema:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                  description: The first name of the operator.
+                lastName:
+                  type: string
+                  description: The last name of the operator.
+                email:
+                  type: string
+                  description: The email address of the operator.
+                  format: email
+                password:
+                  type: string
+                  description: The password for the operator.
+                  minLength: 6
+              required:
+                - firstName
+                - lastName
+                - email
+                - password
+      responses:
+        '201':
+          description: Operator registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example : Operador agregado exitosamente.
+                    description: A success message indicating the operator was registered.
+                  operatorId:
+                    type: string
+                    description: The unique ID of the newly registered operator.
+        '400':
+          description: Bad request, failed to register the operator (e.g., email already in use).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example : No se realizaron cambios en la base de datos.
+                    description: A message indicating why the registration failed.
+        '500':
+          description: Internal server error, if something went wrong during the registration process.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example : Error al agregar al Operador
+                    description: A message indicating an error occurred.
+      tags:
+        - Operator
