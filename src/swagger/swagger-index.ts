@@ -10,6 +10,7 @@ const loadSwaggerFile = (filename: string) => {
 
 const loginSwagger = loadSwaggerFile("./auth/loginSwagger.yaml") as any;
 const patients = loadSwaggerFile("./users/patients.yaml") as any;
+const operators = loadSwaggerFile("./users/operators.yaml") as any;
 const emergencyContacts = loadSwaggerFile("./users/emergencyContacts.yaml") as any;
 const paramedics = loadSwaggerFile("./users/paramedics.yaml") as any;
 const emergencies = loadSwaggerFile("./emergencies/emergencies.yaml") as any;
@@ -31,6 +32,7 @@ const swaggerDocs = {
     ...patients.paths, 
     ...emergencyContacts.paths,
     ...paramedics.paths,
+    ...operators.paths,
     ...emergencies.paths,
   },
 };
