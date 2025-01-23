@@ -4,10 +4,12 @@ import { firebaseAdmin } from "../../config/firebase-config";
 import { validateEmergencyContact } from "../utils";
 
 export const addEmergencyContactsIntoCollection = async (
-    patientId: string,
+    tokenPatientId: string,
     newContacts: IEmergencyContact[]
 ): Promise<{ success: boolean, message: string, duplicateEmails: string[], duplicatePhones: string[] }> => {
     try {
+        const decodedToken = await firebaseAdmin.verifySessionCookie(tokenPatientId, true);
+        const patientId = decodedToken.uid;
         const patientExists = await firebaseAdmin.getUser(patientId).catch((error) => {
             if ((error as any).code === 'auth/user-not-found') {
                 return null;
@@ -29,11 +31,11 @@ export const addEmergencyContactsIntoCollection = async (
         const existingContacts = patientRecord ? patientRecord.emergencyContact || [] : [];
 
         const duplicatePhoneContacts = newContacts.filter(newContact =>
-            existingContacts.some(contact => contact.phoneNumber === newContact.phoneNumber)
+            existingContacts.some((contact: { phoneNumber: string; }) => contact.phoneNumber === newContact.phoneNumber)
         );
 
         const duplicateEmailContacts = newContacts.filter(newContact =>
-            existingContacts.some(contact => contact.email === newContact.email)
+            existingContacts.some((contact: { email: string; }) => contact.email === newContact.email)
         );
 
         const duplicatePhoneNumbers = duplicatePhoneContacts.map(c => c.phoneNumber);

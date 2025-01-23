@@ -23,6 +23,7 @@
   },
   "homepage": "https://github.com/CarlosAC-29/strokee-system-backend#readme",
   "devDependencies": {
+    "@types/amqplib": "^0.10.6",
     "@types/body-parser": "^1.19.5",
     "@types/cookie-parser": "^1.4.8",
     "@types/cors": "^2.8.17",
@@ -43,6 +44,7 @@
   },
   "dependencies": {
     "@types/mongoose": "^5.11.97",
+    "amqplib": "^0.10.5",
     "axios": "^1.7.9",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",

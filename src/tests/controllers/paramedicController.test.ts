@@ -1,10 +1,11 @@
-import { registerParamedic, getActiveEmergencies } from '../../controllers/paramedics/paramedicController';
-import { addParamedicIntoCollection, getAllActiveEmergenciesFromCollection } from '../../services/paramedics/paramedicService';
+import { registerParamedic, cancelEmergency, confirmEmergency } from '../../controllers/paramedics/paramedicController';
+import { addParamedicIntoCollection, cancelEmergencyCollection, updateEmergencyPickUpFromCollection } from '../../services/paramedics/paramedicService';
 import { Request, Response, NextFunction } from 'express';
 
 jest.mock('../../services/paramedics/paramedicService', () => ({
   addParamedicIntoCollection: jest.fn(),
-  getAllActiveEmergenciesFromCollection: jest.fn(),
+  updateEmergencyPickUpFromCollection: jest.fn(),
+  cancelEmergencyCollection: jest.fn(),
 }));
 
 interface CustomRequest extends Request {
@@ -69,14 +70,17 @@ describe('Paramedic tests', () => {
     });
   });
 
-  describe('getEmergency Controller', () => {
-    let req: Partial<CustomRequest>;
+  describe('confirmEmergency Controller', () => {
+    let req: Partial<Request>;
     let res: Partial<Response>;
     let next: NextFunction;
 
     beforeEach(() => {
       req = {
-        userId: 'user123', 
+        body: {
+          emergencyId: 'EMG123',
+          pickupDate: '2025-01-22T10:00:00Z',
+        },
       };
       res = {
         status: jest.fn().mockReturnThis(),
@@ -85,36 +89,34 @@ describe('Paramedic tests', () => {
       next = jest.fn();
     });
 
-    it('should return 200 with active emergencies when found', async () => {
-      const result = { success: true, message: 'Emergencias activas encontradas', data: [{ emergencyId: 'EMG123', status: 'ACTIVE' }] };
-      (getAllActiveEmergenciesFromCollection as jest.Mock).mockResolvedValue(result);
+    it('should return 200 and the confirmation message when pickup is confirmed', async () => {
+      const result = { success: true, message: 'Emergencia confirmada exitosamente' };
+      (updateEmergencyPickUpFromCollection as jest.Mock).mockResolvedValue(result);
 
-      await getActiveEmergencies(req as Request, res as Response, next);
+      await confirmEmergency(req as Request, res as Response, next);
 
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({
         message: result.message,
-        data: result.data,
       });
     });
 
-    it('should return 404 if no active emergencies are found', async () => {
-      const result = { success: true, message: 'No se encontraron emergencias activas' };
-      (getAllActiveEmergenciesFromCollection as jest.Mock).mockResolvedValue(result);
+    it('should return 400 if missing emergencyId or pickupDate in the request body', async () => {
+      req.body = {}; // Empty request body
 
-      await getActiveEmergencies(req as Request, res as Response, next);
+      await confirmEmergency(req as Request, res as Response, next);
 
-      expect(res.status).toHaveBeenCalledWith(404);
+      expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith({
-        message: 'No se encontraron emergencias activas',
+        message: 'Por favor, ingresar un emergencyid y un pickdate valido',
       });
     });
 
-    it('should return 400 if getActiveEmergenciesFromCollection service fails', async () => {
-      const result = { success: false, message: 'Error al consultar las emergencias activas' };
-      (getAllActiveEmergenciesFromCollection as jest.Mock).mockResolvedValue(result);
+    it('should return 404 if no emergency is found with the given emergencyId', async () => {
+      const result = { success: false, message: 'No se encontraron emergencias con ese Id' };
+      (updateEmergencyPickUpFromCollection as jest.Mock).mockResolvedValue(result);
 
-      await getActiveEmergencies(req as Request, res as Response, next);
+      await confirmEmergency(req as Request, res as Response, next);
 
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith({
@@ -122,11 +124,75 @@ describe('Paramedic tests', () => {
       });
     });
 
-    it('should call next with an error if getActiveEmergenciesFromCollection throws an error', async () => {
-      const errorMessage = 'Error desconocido al consultar las emergencias activas.';
-      (getAllActiveEmergenciesFromCollection as jest.Mock).mockRejectedValue(new Error(errorMessage));
+    it('should call next with an error if updateEmergencyPickUpFromCollection throws an error', async () => {
+      const errorMessage = 'Error desconocido al confirmar la emergencia.';
+      (updateEmergencyPickUpFromCollection as jest.Mock).mockRejectedValue(new Error(errorMessage));
 
-      await getActiveEmergencies(req as Request, res as Response, next);
+      await confirmEmergency(req as Request, res as Response, next);
+
+      expect(next).toHaveBeenCalledWith(new Error(errorMessage));
+    });
+  });
+
+  describe('cancelEmergency Controller', () => {
+    let req: Partial<Request>;
+    let res: Partial<Response>;
+    let next: NextFunction;
+
+    beforeEach(() => {
+      req = {
+        body: {
+          emergencyId: 'EMG123',
+          pickupDate: '2025-01-22T10:00:00Z',
+        },
+      };
+      res = {
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn(),
+      };
+      next = jest.fn();
+    });
+
+    it('should return 200 and the cancellation message when emergency is canceled', async () => {
+      const result = { success: true, message: 'Emergencia cancelada exitosamente' };
+      (cancelEmergencyCollection as jest.Mock).mockResolvedValue(result);
+
+      await cancelEmergency(req as Request, res as Response, next);
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith({
+        message: result.message,
+      });
+    });
+
+    it('should return 400 if missing emergencyId or pickupDate in the request body', async () => {
+      req.body = {}; // Empty request body
+
+      await cancelEmergency(req as Request, res as Response, next);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({
+        message: 'Por favor, ingresar un emergencyid y un pickdate valido',
+      });
+    });
+
+    it('should return 404 if no emergency is found with the given emergencyId', async () => {
+      const result = { success: false, message: 'No se encontraron emergencias con ese Id' };
+      (cancelEmergencyCollection as jest.Mock).mockResolvedValue(result);
+
+      await cancelEmergency(req as Request, res as Response, next);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({
+        message: result.message,
+      });
+    });
+
+    it('should call next with an error if cancelEmergencyCollection throws an error', async () => {
+      const errorMessage = 'Error desconocido al cancelar la emergencia.';
+      (cancelEmergencyCollection as jest.Mock).mockRejectedValue(new Error(errorMessage));
+
+      await cancelEmergency(req as Request, res as Response, next);
 
       expect(next).toHaveBeenCalledWith(new Error(errorMessage));
     });
