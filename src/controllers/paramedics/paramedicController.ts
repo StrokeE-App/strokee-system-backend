@@ -39,21 +39,18 @@ export const confirmEmergency = async (req: Request, res: Response, next: NextFu
 
         const result = await updateEmergencyPickUpFromCollection(emergencyId, pickupDate);
 
-        if (result.success) {
-            if (!result) {
-                res.status(404).json({
-                    message: "No se encontraron emergencias con ese Id",
-                });
-                return;
+        if (!result.success) {
+            if (result.message.includes("No se encontró una emergencia")) {
+                res.status(404).json({ message: result.message });
+            } else {
+                res.status(400).json({ message: result.message });
             }
-            res.status(200).json({
-                message: result.message,
-            });
-        } else {
-            res.status(400).json({
-                message: result.message,
-            });
+            return;
         }
+
+        res.status(200).json({
+            message: result.message,
+        });
     } catch (error) {
         next(error);
     }
@@ -72,21 +69,18 @@ export const cancelEmergency = async (req: Request, res: Response, next: NextFun
 
         const result = await cancelEmergencyCollection(emergencyId, pickupDate);
 
-        if (result.success) {
-            if (!result) {
-                res.status(404).json({
-                    message: "No se encontraron emergencias con ese Id",
-                });
-                return;
+        if (!result.success) {
+            if (result.message.includes("No se encontró una emergencia")) {
+                res.status(404).json({ message: result.message });
+            } else {
+                res.status(400).json({ message: result.message });
             }
-            res.status(200).json({
-                message: result.message,
-            });
-        } else {
-            res.status(400).json({
-                message: result.message,
-            });
+            return;
         }
+
+        res.status(200).json({
+            message: result.message,
+        });
     } catch (error) {
         next(error);
     }
