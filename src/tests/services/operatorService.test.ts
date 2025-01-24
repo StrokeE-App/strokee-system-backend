@@ -1,11 +1,22 @@
-import { addOperatorIntoCollection } from '../../services/operators/operatorService';
+import { 
+    addOperatorIntoCollection,
+    cancelEmergencyCollectionOperator,
+    updateEmergencyPickUpFromCollectionOperator
+ } from '../../services/operators/operatorService';
 import { firebaseAdmin } from '../../config/firebase-config';
 import operatorModel from '../../models/usersModels/operatorModel';
 import rolesModel from '../../models/usersModels/rolesModel';
+import emergencyModel from '../../models/emergencyModel';
+import * as messagePublisher from '../../services/publisherService';
+
 
 jest.mock('../../models/usersModels/operatorModel');
 jest.mock('../../models/usersModels/rolesModel');
 jest.mock('../../config/firebase-config');
+jest.mock('../../services/publisherService', () => ({
+    ...jest.requireActual('../../services/publisherService'),
+    publishToExchange: jest.fn() 
+}));
 
 describe('addOperatorIntoCollection', () => {
     it('should return an error when a required field is missing', async () => {
@@ -132,5 +143,70 @@ describe('addOperatorIntoCollection', () => {
 
         expect(result.success).toBe(false);
         expect(result.message).toBe('No se realizaron cambios en la base de datos.');
+    });
+
+    describe('updateEmergencyPickUpFromCollectionOperator', () => {
+        it('should return an error when emergencyId is missing', async () => {
+            const result = await updateEmergencyPickUpFromCollectionOperator('', 'ambulance123');
+            expect(result.success).toBe(false);
+            expect(result.message).toBe('El ID de emergencia es obligatorio.');
+        });
+    
+        it('should return an error when ambulanceId is missing', async () => {
+            const result = await updateEmergencyPickUpFromCollectionOperator('emergency123', '');
+            expect(result.success).toBe(false);
+            expect(result.message).toBe('El ID de la ambulancia es obligatoria.');
+        });
+    
+        it('should update the emergency and publish a message successfully', async () => {
+            emergencyModel.updateOne = jest.fn().mockResolvedValue({ nModified: 1 });
+            jest.spyOn(messagePublisher, 'publishToExchange').mockResolvedValue(undefined);
+    
+            const result = await updateEmergencyPickUpFromCollectionOperator('emergency123', 'ambulance123');
+            expect(result.success).toBe(true);
+            expect(result.message).toBe('Emergencia confirmada y mensaje enviado.');
+            expect(emergencyModel.updateOne).toHaveBeenCalledWith(
+                { emergencyId: 'emergency123' },
+                { $set: { status: 'ACTIVE', ambulanceId: 'ambulance123' } },
+                { upsert: false }
+            );
+        });
+    
+        it('should handle errors during update or message publishing', async () => {
+            emergencyModel.updateOne = jest.fn().mockRejectedValue(new Error('Database error'));
+    
+            const result = await updateEmergencyPickUpFromCollectionOperator('emergency123', 'ambulance123');
+            expect(result.success).toBe(false);
+            expect(result.message).toContain('Error al actualizar la emergencia: Database error');
+        });
+    });
+    
+    describe('cancelEmergencyCollectionOperator', () => {
+        it('should return an error when emergencyId is missing', async () => {
+            const result = await cancelEmergencyCollectionOperator('');
+            expect(result.success).toBe(false);
+            expect(result.message).toBe('El ID de emergencia es obligatorio.');
+        });
+    
+        it('should cancel the emergency successfully', async () => {
+            emergencyModel.updateOne = jest.fn().mockResolvedValue({ nModified: 1 });
+    
+            const result = await cancelEmergencyCollectionOperator('emergency123');
+            expect(result.success).toBe(true);
+            expect(result.message).toBe('Emergencia stroke descartada.');
+            expect(emergencyModel.updateOne).toHaveBeenCalledWith(
+                { emergencyId: 'emergency123' },
+                { $set: { status: 'CANCELLED' } },
+                { upsert: false }
+            );
+        });
+    
+        it('should handle errors during cancellation', async () => {
+            emergencyModel.updateOne = jest.fn().mockRejectedValue(new Error('Database error'));
+    
+            const result = await cancelEmergencyCollectionOperator('emergency123');
+            expect(result.success).toBe(false);
+            expect(result.message).toContain('Error al descartar la emergencia: Database error');
+        });
     });
 });
