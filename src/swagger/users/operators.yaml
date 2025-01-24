@@ -69,3 +69,109 @@ paths:
                     description: A message indicating an error occurred.
       tags:
         - Operator
+  /operator/confirm-emergency:
+    post:
+      summary: Confirmar una emergencia asignando una ambulancia
+      tags:
+       - Operator
+      operationId: confirmEmergencyOperator
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                emergencyId:
+                  type: string
+                  example: 42f059dc-04a4-4222-9de1-a3a4be4ba160
+                  description: El ID de la emergencia a confirmar.
+                ambulanceId:
+                  type: string
+                  example: AMB123
+                  description: El ID de la ambulancia asignada.
+              required:
+                - emergencyId
+                - ambulanceId
+      responses:
+        "200":
+          description: Emergencia confirmada con éxito
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Emergencia confirmada con éxito."
+        "400":
+          description: Entrada o solicitud no válida
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Por favor, ingresar un emergencyId y un ambulanceId válido."
+        "404":
+          description: Emergencia no encontrada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "No se encontró una emergencia con el ID proporcionado."
+
+  /operator/cancel-emergency:
+    post:
+      summary: Cancelar una emergencia
+      operationId: cancelEmergencyOperator
+      tags:
+        - Operator
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                emergencyId:
+                  type: string
+                  example: 42f059dc-04a4-4222-9de1-a3a4be4ba160
+                  description: El ID de la emergencia a cancelar.
+              required:
+                - emergencyId
+      responses:
+        "200":
+          description: Emergencia cancelada con éxito
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Emergencia cancelada con éxito."
+        "400":
+          description: Entrada o solicitud no válida
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Por favor, ingresar un emergencyId válido."
+        "404":
+          description: Emergencia no encontrada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "No se encontró una emergencia con el ID proporcionado."
