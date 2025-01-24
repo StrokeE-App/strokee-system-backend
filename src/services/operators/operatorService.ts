@@ -1,5 +1,7 @@
 import operatorModel from "../../models/usersModels/operatorModel";
 import rolesModel from "../../models/usersModels/rolesModel";
+import { publishToExchange } from "../publisherService";
+import emergencyModel from "../../models/emergencyModel";
 import { isValidFirstName, isValidLastName, isValidEmail, isValidPassword } from "../utils";
 import { firebaseAdmin } from "../../config/firebase-config";
 
@@ -98,5 +100,74 @@ export const addOperatorIntoCollection = async (
         const errorMessage = error instanceof Error ? error.message : "Error desconocido";
         console.error(`Error al agregar al Operador: ${errorMessage}`);
         return { success: false, message: `Error al agregar al Operador: ${errorMessage}` };
+    }
+};
+
+export const updateEmergencyPickUpFromCollectionOperator = async (
+    emergencyId: string, ambulanceId: string
+) => {
+    try {
+        if (!emergencyId) {
+            return { success: false, message: "El ID de emergencia es obligatorio." };
+        }
+
+        if (!ambulanceId) {
+            return { success: false, message: "El ID de la ambulancia es obligatoria." };
+        }
+
+        const updateResult = await emergencyModel.updateOne(
+            { emergencyId },
+            { $set: { status: "ACTIVE", ambulanceId: ambulanceId } },
+            { upsert: false }
+        );
+
+        if (updateResult.matchedCount === 0) {
+            return { success: false, message: "No se encontró una emergencia con ese ID." };
+        }
+
+        if (updateResult.modifiedCount === 0) {
+            return { success: false, message: "No se realizaron cambios en la emergencia." };
+        }
+
+        const message = {
+            emergencyId,
+            status: "ACTIVE",
+        };
+
+        await publishToExchange("operator_exchange", "emergency_started_queue", message);
+
+        return { success: true, message: "Emergencia confirmada y mensaje enviado." };
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Error desconocido";
+        console.error(`Error al actualizar la emergencia [ID: ${emergencyId}]: ${errorMessage}`);
+        return { success: false, message: `Error al actualizar la emergencia: ${errorMessage}` };
+    }
+};
+
+export const cancelEmergencyCollectionOperator = async (emergencyId: string) => {
+    try {
+        if (!emergencyId) {
+            return { success: false, message: "El ID de emergencia es obligatorio." };
+        }
+
+        const updateResult = await emergencyModel.updateOne(
+            { emergencyId },
+            { $set: { status: "CANCELLED" } },
+            { upsert: false }
+        );
+
+        if (updateResult.matchedCount === 0) {
+            return { success: false, message: "No se encontró una emergencia con ese ID." };
+        }
+
+        if (updateResult.modifiedCount === 0) {
+            return { success: false, message: "No se realizaron cambios en la emergencia." };
+        }
+
+        return { success: true, message: "Emergencia stroke descartada." };
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Error desconocido";
+        console.error(`Error al descartar la emergencia de stroke [ID: ${emergencyId}]: ${errorMessage}`);
+        return { success: false, message: `Error al descartar la emergencia: ${errorMessage}` };
     }
 };

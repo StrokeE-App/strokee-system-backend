@@ -125,11 +125,19 @@ export const updateEmergencyPickUpFromCollection = async (
             return { success: false, message: "La fecha de recogida no es válida." };
         }
 
-        await emergencyModel.updateOne(
+        const updateResult = await emergencyModel.updateOne(
             { emergencyId },
             { $set: { pickupDate: parsedPickUpDate.toISOString() } },
-            { upsert: true }
+            { upsert: false }
         );
+
+        if (updateResult.matchedCount === 0) {
+            return { success: false, message: "No se encontró una emergencia con ese ID." };
+        }
+
+        if (updateResult.modifiedCount === 0) {
+            return { success: false, message: "No se realizaron cambios en la emergencia." };
+        }
 
         const message = {
             emergencyId,
@@ -161,11 +169,19 @@ export const cancelEmergencyCollection = async (emergencyId: string, pickupDate:
             return { success: false, message: "La fecha de recogida no es válida." };
         }
 
-        await emergencyModel.updateOne(
+        const updateResult = await emergencyModel.updateOne(
             { emergencyId },
             { $set: { pickupDate: parsedPickUpDate.toISOString(), status: "CANCELLED" } },
-            { upsert: true }
+            { upsert: false }
         );
+
+        if (updateResult.matchedCount === 0) {
+            return { success: false, message: "No se encontró una emergencia con ese ID." };
+        }
+
+        if (updateResult.modifiedCount === 0) {
+            return { success: false, message: "No se realizaron cambios en la emergencia." };
+        }
 
         return { success: true, message: "Emergencia stroke descartada." };
     } catch (error) {

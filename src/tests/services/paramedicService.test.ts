@@ -177,7 +177,7 @@ describe('Paramedic', () => {
             expect(mockUpdate).toHaveBeenCalledWith(
                 { emergencyId: 'emergency123' },
                 { $set: { pickupDate: '2025-01-01T10:00:00.000Z' } },
-                { upsert: true }
+                { upsert: false }
             );
         });
 
@@ -220,7 +220,7 @@ describe('Paramedic', () => {
             expect(mockUpdate).toHaveBeenCalledWith(
                 { emergencyId: 'emergency123' },
                 { $set: { pickupDate: '2025-01-01T10:00:00.000Z', status: 'CANCELLED' } },
-                { upsert: true }
+                { upsert: false }
             );
         });
 
