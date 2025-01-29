@@ -102,7 +102,7 @@ export const addParamedicIntoCollection = async (
             return { success: false, message: 'No se realizaron cambios en la base de datos.' };
         }
     } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "Error desconocido";
+        const errorMessage = error instanceof Error ? error.message : "Error";
         console.error(`Error al agregar al paramedico: ${errorMessage}`);
         return { success: false, message: `Error al agregar al paramedico: ${errorMessage}` };
     }
@@ -149,7 +149,7 @@ export const updateEmergencyPickUpFromCollection = async (
 
         return { success: true, message: "Emergencia confirmada y mensaje enviado." };
     } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "Error desconocido";
+        const errorMessage = error instanceof Error ? error.message : "Error";
         console.error(`Error al actualizar la hora de recogida del paciente [ID: ${emergencyId}]: ${errorMessage}`);
         return { success: false, message: `Error al actualizar la hora de recogida: ${errorMessage}` };
     }
@@ -185,7 +185,7 @@ export const cancelEmergencyCollection = async (emergencyId: string, pickupDate:
 
         return { success: true, message: "Emergencia stroke descartada." };
     } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "Error desconocido";
+        const errorMessage = error instanceof Error ? error.message : "Error";
         console.error(`Error al descartar la emergencia de stroke [ID: ${emergencyId}]: ${errorMessage}`);
         return { success: false, message: `Error al descartar la emergencia: ${errorMessage}` };
     }

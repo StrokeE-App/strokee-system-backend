@@ -97,7 +97,7 @@ export const addOperatorIntoCollection = async (
             return { success: false, message: 'No se realizaron cambios en la base de datos.' };
         }
     } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "Error desconocido";
+        const errorMessage = error instanceof Error ? error.message : "Error";
         console.error(`Error al agregar al Operador: ${errorMessage}`);
         return { success: false, message: `Error al agregar al Operador: ${errorMessage}` };
     }
@@ -132,13 +132,14 @@ export const updateEmergencyPickUpFromCollectionOperator = async (
         const message = {
             emergencyId,
             status: "ACTIVE",
+            ambulanceId
         };
 
         await publishToExchange("operator_exchange", "emergency_started_queue", message);
 
         return { success: true, message: "Emergencia confirmada y mensaje enviado." };
     } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "Error desconocido";
+        const errorMessage = error instanceof Error ? error.message : "Error";
         console.error(`Error al actualizar la emergencia [ID: ${emergencyId}]: ${errorMessage}`);
         return { success: false, message: `Error al actualizar la emergencia: ${errorMessage}` };
     }
@@ -166,7 +167,7 @@ export const cancelEmergencyCollectionOperator = async (emergencyId: string) => 
 
         return { success: true, message: "Emergencia stroke descartada." };
     } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "Error desconocido";
+        const errorMessage = error instanceof Error ? error.message : "Error";
         console.error(`Error al descartar la emergencia de stroke [ID: ${emergencyId}]: ${errorMessage}`);
         return { success: false, message: `Error al descartar la emergencia: ${errorMessage}` };
     }

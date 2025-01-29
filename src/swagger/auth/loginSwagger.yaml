@@ -73,7 +73,7 @@ paths:
                     example: "Error al loguear usuario."
                   error:
                     type: string
-                    example: "Error desconocido."
+                    example: "Error."
 
   /logout:
     post:

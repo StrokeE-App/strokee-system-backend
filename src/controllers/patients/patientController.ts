@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { getAllPatientsFromCollection, addPatientIntoPatientCollection } from "../../services/patients/patientService";
+import { getAllPatientsFromCollection, addPatientIntoPatientCollection, addEmergencyToCollection } from "../../services/patients/patientService";
 
 export const registerPatient = async (req: Request, res: Response, next: NextFunction) => {
     const {
@@ -59,13 +59,34 @@ export const getAllPatients = async (req: Request, res: Response) => {
         if (error instanceof Error) {
             res.status(500).json({
                 message: "No fue posible obtener todos los pacientes",
-                error: error.message || "Error desconocido.",
+                error: error.message || "Error.",
             });
         } else {
             res.status(500).json({
                 message: "Error no fue posible obtener todos los pacientes",
-                error: "Error desconocido.",
+                error: "Error.",
             });
         }
     }
+}
+
+export const creatEmergency = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { patientId } = req.body
+
+        const result = await addEmergencyToCollection(patientId)
+
+        if (result.success) {
+            res.status(201).json({
+                message: result.message,
+                emergencyId: result.emergencyId,
+            });
+        } else {
+            res.status(400).json({
+                message: result.message,
+            });
+        }
+    }catch (error) {
+        next(error);
+    }  
 }
