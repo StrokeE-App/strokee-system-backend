@@ -1,9 +1,10 @@
-import { registerPatient } from '../../controllers/patients/patientController';
-import { addPatientIntoPatientCollection } from '../../services/patients/patientService';
+import { registerPatient, creatEmergency } from '../../controllers/patients/patientController';
+import { addPatientIntoPatientCollection, addEmergencyToCollection } from '../../services/patients/patientService';
 import { Request, Response, NextFunction } from 'express';
 
 jest.mock('../../services/patients/patientService', () => ({
   addPatientIntoPatientCollection: jest.fn(),
+  addEmergencyToCollection: jest.fn(),
 }));
 
 describe('registerPatient Controller', () => {
@@ -60,10 +61,44 @@ describe('registerPatient Controller', () => {
   });
 
   it('should call next with an error if addPatientIntoPatientCollection throws an error', async () => {
-    const errorMessage = 'Error desconocido al agregar al paciente.';
+    const errorMessage = 'Error al agregar al paciente.';
     (addPatientIntoPatientCollection as jest.Mock).mockRejectedValue(new Error(errorMessage));
 
     await registerPatient(req as Request, res as Response, next);
+
+    expect(next).toHaveBeenCalledWith(new Error(errorMessage));
+  });
+
+  it('should return 201 and the emergencyId if creation is successful', async () => {
+    const result = { success: true, message: 'Emergencia creada exitosamente.', emergencyId: 'mocked-uuid' };
+    (addEmergencyToCollection as jest.Mock).mockResolvedValue(result);
+
+    await creatEmergency(req as Request, res as Response, next);
+
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(res.json).toHaveBeenCalledWith({
+      message: result.message,
+      emergencyId: result.emergencyId,
+    });
+  });
+
+  it('should return 400 if the emergency could not be created', async () => {
+    const result = { success: false, message: 'No se encontró un paciente con ese ID.' };
+    (addEmergencyToCollection as jest.Mock).mockResolvedValue(result);
+
+    await creatEmergency(req as Request, res as Response, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      message: result.message,
+    });
+  });
+
+  it('should call next with an error if addEmergencyToCollection throws an error', async () => {
+    const errorMessage = 'Error al crear la emergencia.';
+    (addEmergencyToCollection as jest.Mock).mockRejectedValue(new Error(errorMessage));
+
+    await creatEmergency(req as Request, res as Response, next);
 
     expect(next).toHaveBeenCalledWith(new Error(errorMessage));
   });

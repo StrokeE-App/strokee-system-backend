@@ -99,4 +99,4 @@ paths:
                   properties:
                     message:
                       type: string
-                      example: 'Error desconocido al consultar la emergencia.'
+                      example: 'Error al consultar la emergencia.'

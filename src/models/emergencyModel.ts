@@ -22,12 +22,12 @@ const EmergencySchema: Schema = new Schema (
     {
         emergencyId: { type: String, required: true, unique: true },
         startDate: { type: Date, required: true },
-        pickupDate: { type: Date, required: true },
-        deliveredDate: { type: Date, required: true },
+        pickupDate: { type: Date, required: false },
+        deliveredDate: { type: Date, required: false },
         patientId: { type: String, required: true },
-        ambulanceId: { type: String, required: true },
-        nihScale: { type: String, required: true },
-        status: { type: String, required: true, default: "ACTIVE" },
+        ambulanceId: { type: String, required: false },
+        nihScale: { type: String, required: false },
+        status: { type: String, required: true, default: "PENDING" },
     },
     {
         timestamps: true,

@@ -61,7 +61,7 @@ describe('Paramedic tests', () => {
     });
 
     it('should call next with an error if addParamedicIntoCollection throws an error', async () => {
-      const errorMessage = 'Error desconocido al agregar al paramédico.';
+      const errorMessage = 'Error al agregar al paramédico.';
       (addParamedicIntoCollection as jest.Mock).mockRejectedValue(new Error(errorMessage));
 
       await registerParamedic(req as Request, res as Response, next);
@@ -125,7 +125,7 @@ describe('Paramedic tests', () => {
     });
 
     it('should call next with an error if updateEmergencyPickUpFromCollection throws an error', async () => {
-      const errorMessage = 'Error desconocido al confirmar la emergencia.';
+      const errorMessage = 'Error al confirmar la emergencia.';
       (updateEmergencyPickUpFromCollection as jest.Mock).mockRejectedValue(new Error(errorMessage));
 
       await confirmEmergency(req as Request, res as Response, next);
@@ -189,7 +189,7 @@ describe('Paramedic tests', () => {
     });
 
     it('should call next with an error if cancelEmergencyCollection throws an error', async () => {
-      const errorMessage = 'Error desconocido al cancelar la emergencia.';
+      const errorMessage = 'Error al cancelar la emergencia.';
       (cancelEmergencyCollection as jest.Mock).mockRejectedValue(new Error(errorMessage));
 
       await cancelEmergency(req as Request, res as Response, next);

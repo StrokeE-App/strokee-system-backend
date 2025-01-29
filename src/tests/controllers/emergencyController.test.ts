@@ -62,7 +62,7 @@ describe('getEmergency Controller', () => {
     });
 
     it('should call next with an error if getEmergencyFromCollection throws an error', async () => {
-        const errorMessage = 'Error desconocido al consultar la emergencia.';
+        const errorMessage = 'Error al consultar la emergencia.';
         (getEmergencyFromCollection as jest.Mock).mockRejectedValue(new Error(errorMessage));
 
         await getEmergency(req as Request, res as Response, next);

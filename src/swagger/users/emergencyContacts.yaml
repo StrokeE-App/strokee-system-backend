@@ -76,7 +76,7 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: 'Error desconocido al agregar los contactos de emergencia.'
+                    example: 'Error al agregar los contactos de emergencia.'
   /emergency-contacts/validate:
     post:
       summary: Validar una lista de contactos de emergencia
@@ -154,4 +154,4 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: 'Error desconocido al validar los contactos de emergencia.'
+                    example: 'Error al validar los contactos de emergencia.'

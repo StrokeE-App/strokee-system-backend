@@ -69,7 +69,7 @@ export const addEmergencyContactsIntoCollection = async (
         console.error("Error al agregar los contactos de emergencia:", error);
         return {
             success: false,
-            message: `Hubo un error al procesar la solicitud: ${(error as any).message || 'Error desconocido.'}`,
+            message: `Hubo un error al procesar la solicitud: ${(error as any).message || 'Error'}`,
             duplicateEmails: [],
             duplicatePhones: []
         };

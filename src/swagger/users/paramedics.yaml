@@ -71,7 +71,7 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: Error desconocido al registrar el paramédico.
+                    example: Error al registrar el paramédico.
   /paramedic/confirm-stroke:
     post:
       summary: Confirmar emergencia y asignar fecha de recogida.
@@ -135,7 +135,7 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: "Error desconocido al procesar la emergencia."
+                    example: "Error al procesar la emergencia."
   /paramedic/discard-stroke:
     post:
       summary: Cancelar una emergencia.
@@ -199,4 +199,4 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: "Error desconocido al procesar la cancelación de la emergencia."
+                    example: "Error al procesar la cancelación de la emergencia."

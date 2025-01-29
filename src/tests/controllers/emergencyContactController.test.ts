@@ -66,7 +66,7 @@ describe('registerEmergencyContacts Controller', () => {
   });
 
   it('debería llamar a next con un error si addEmergencyContactsIntoCollection lanza un error', async () => {
-    const errorMessage = 'Error desconocido al agregar contactos de emergencia.';
+    const errorMessage = 'Error al agregar contactos de emergencia.';
     (addEmergencyContactsIntoCollection as jest.Mock).mockRejectedValue(new Error(errorMessage));
 
     await registerEmergencyContacts(req as Request, res as Response, next);
