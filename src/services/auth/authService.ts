@@ -21,7 +21,7 @@ export const createSessionCookie = async (token: string): Promise<{ sessionCooki
             } else if (e.message.includes('auth/id-token-expired')) {
                 console.error("El token de ID proporcionado ha expirado.");
             } else {
-                console.error("Ocurrió un error desconocido durante la autenticación:", e.message);
+                console.error("Ocurrió un error durante la autenticación:", e.message);
             }
         } else {
             console.error("Ocurrió un error inesperado durante la autenticación.");
@@ -47,10 +47,10 @@ export const authenticateUser = async (email: string, password: string): Promise
             } else if (e.message.includes('auth/wrong-password')) {
                 console.log("Contraseña incorrecta.");
             } else {
-                console.log("Error desconocido:", e.message);
+                console.log("Error:", e.message);
             }
         } else {
-            console.log("Error desconocido al autenticar.");
+            console.log("Error al autenticar.");
         }
 
         return null;

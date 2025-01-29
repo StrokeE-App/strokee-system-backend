@@ -50,7 +50,7 @@ export const getEmergencyFromCollection = async (emergencyId: string) => {
         return { success: true, data: emergency[0], message: "Emergencia encontrada" }; 
 
     } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "Error desconocido";
+        const errorMessage = error instanceof Error ? error.message : "Error";
         console.error(`Error al consultar emergencia: ${errorMessage}`);
         return { success: false, message: `Error al consultar la emergencia: ${errorMessage}` };
     }
