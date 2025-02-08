@@ -1,77 +1,45 @@
 import { IEmergencyContact } from "../../models/usersModels/emergencyContactModel";
 import patientModel from "../../models/usersModels/patientModel";
+import patientEmergencyContactModel from "../../models/usersModels/patientEmergencyContact";
 import { firebaseAdmin } from "../../config/firebase-config";
 import { validateEmergencyContact } from "../utils";
+import { v4 as uuidv4 } from 'uuid';
 
-export const addEmergencyContactsIntoCollection = async (
-    tokenPatientId: string,
-    newContacts: IEmergencyContact[]
-): Promise<{ success: boolean, message: string, duplicateEmails: string[], duplicatePhones: string[] }> => {
+export const addEmergencyContactIntoCollection = async (
+    patientId: string,
+    newContact: IEmergencyContact
+): Promise<{ success: boolean, message?: string }> => {
     try {
-        const decodedToken = await firebaseAdmin.verifySessionCookie(tokenPatientId, true);
-        const patientId = decodedToken.uid;
-        const patientExists = await firebaseAdmin.getUser(patientId).catch((error) => {
-            if ((error as any).code === 'auth/user-not-found') {
-                return null;
-            } else {
-                throw error;
-            }
-        });
 
-        if (!patientExists) {
+        const patientRecord = await patientModel.findOne({ patientId });
+
+        if (!patientRecord) {
             return {
                 success: false,
                 message: `El paciente con ID ${patientId} no existe.`,
-                duplicateEmails: [],
-                duplicatePhones: []
             };
         }
 
-        const patientRecord = await patientModel.findOne({ patientId });
-        const existingContacts = patientRecord ? patientRecord.emergencyContact || [] : [];
+        validateEmergencyContact(newContact)
 
-        const duplicatePhoneContacts = newContacts.filter(newContact =>
-            existingContacts.some((contact: { phoneNumber: string; }) => contact.phoneNumber === newContact.phoneNumber)
-        );
+        newContact.emergencyContactId = uuidv4();
 
-        const duplicateEmailContacts = newContacts.filter(newContact =>
-            existingContacts.some((contact: { email: string; }) => contact.email === newContact.email)
-        );
-
-        const duplicatePhoneNumbers = duplicatePhoneContacts.map(c => c.phoneNumber);
-        const duplicateEmails = duplicateEmailContacts.map(c => c.email);
-
-        if (duplicatePhoneNumbers.length > 0 || duplicateEmails.length > 0) {
-            return {
-                success: false,
-                message: "Algunos contactos ya existen con el mismo número de teléfono o correo electrónico.",
-                duplicateEmails,
-                duplicatePhones: duplicatePhoneNumbers
-            };
-        }
-
-        newContacts.forEach(contact => validateEmergencyContact(contact));
-
-        await patientModel.updateOne(
+        await patientEmergencyContactModel.updateOne(
             { patientId },
-            { $addToSet: { emergencyContact: { $each: newContacts } } },
+            { $push: { emergencyContact: newContact } },
             { upsert: true }
         );
 
         return {
             success: true,
-            message: "Contactos de emergencia agregados exitosamente.",
-            duplicateEmails: [],
-            duplicatePhones: []
+            message: "Contacto de emergencia agregado exitosamente.",
         };
 
     } catch (error) {
-        console.error("Error al agregar los contactos de emergencia:", error);
+        console.error("Error al agregar contacto de emergencia:", error);
         return {
             success: false,
             message: `Hubo un error al procesar la solicitud: ${(error as any).message || 'Error'}`,
-            duplicateEmails: [],
-            duplicatePhones: []
         };
     }
 };
@@ -86,6 +54,7 @@ export const validateEmergencyContactData = (contacts: IEmergencyContact[]): {
     const emailCount: Record<string, number> = {};
 
     try {
+        console.log(contacts)
         contacts.forEach(contact => validateEmergencyContact(contact));
 
         contacts.forEach(contact => {

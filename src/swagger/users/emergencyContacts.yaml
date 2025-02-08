@@ -1,10 +1,10 @@
 paths:
-  /emergency-contacts/register:
+  /patient/emergency-contacts/add:
     post:
       summary: Registrar contactos de emergencia para un paciente
       description: Permite registrar uno o más contactos de emergencia para un paciente en la base de datos.
       tags:
-        - Emergency Contacts
+        - Patients
       security:
         - BearerAuth: []
       requestBody:
@@ -14,9 +14,10 @@ paths:
             schema:
               type: object
               properties:
-                contacts:
-                  type: array
-                  items:
+                patientId:
+                  type: string
+                  example: 'patient123'
+                  contact:
                     type: object
                     properties:
                       firstName:
@@ -38,7 +39,7 @@ paths:
                 - contacts
       responses:
         '201':
-          description: Contactos de emergencia registrados exitosamente.
+          description: Contacto de emergencia registrado exitosamente.
           content:
             application/json:
               schema:
@@ -46,9 +47,9 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: 'Contactos de emergencia agregados exitosamente.'
+                    example: 'Contacto de emergencia agregado exitosamente.'
         '400':
-          description: Error al registrar los contactos de emergencia debido a datos incorrectos o duplicados.
+          description: Error al registrar contacto de emergencia debido a datos incorrectos o duplicados.
           content:
             application/json:
               schema:
@@ -56,17 +57,7 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: 'Algunos contactos ya existen con el mismo número de teléfono o correo electrónico.'
-                  duplicateEmails:
-                    type: array
-                    items:
-                      type: string
-                      example: 'john.doe@example.com'
-                  duplicatePhones:
-                    type: array
-                    items:
-                      type: string
-                      example: '9876543210'
+                    example: 'Hubo un error al procesar la solicitud: Cada contacto debe tener un nombre, apellido, un número de teléfono y correo electrónico.'
         '500':
           description: Error interno del servidor.
           content:
@@ -76,13 +67,13 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: 'Error al agregar los contactos de emergencia.'
-  /emergency-contacts/validate:
+                    example: 'Error al agregar contacto de emergencia.'
+  /patient/emergency-contacts/validate:
     post:
       summary: Validar una lista de contactos de emergencia
       description: Valida una lista de contactos de emergencia para asegurarse de que no haya errores de formato ni duplicados.
       tags:
-        - Emergency Contacts
+        - Patients
       security:
         - BearerAuth: []
       requestBody:

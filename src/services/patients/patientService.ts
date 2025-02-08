@@ -1,5 +1,7 @@
 import Patient from "../../models/usersModels/patientModel";
 import emergencyModel from "../../models/emergencyModel";
+import patientEmergencyContactModel from "../../models/usersModels/patientEmergencyContact";
+import mongoose from 'mongoose';
 import rolesModel from "../../models/usersModels/rolesModel";
 import { v4 as uuidv4 } from 'uuid';
 import { publishToExchange } from "../publisherService";
@@ -54,27 +56,22 @@ export const addPatientIntoPatientCollection = async (
     medications: string[],
     conditions: string[]
 ): Promise<{ success: boolean, message: string, patientId?: string, duplicateEmails?: string[], duplicatePhones?: string[] }> => {
+    
+    const session = await mongoose.startSession(); // Cambiado a mongoose.startSession()
+    session.startTransaction();
+
+    let patientRecord: { uid: string } | undefined;
+
     try {
         const missingField = validatePatientFields(
-            firstName,
-            lastName,
-            email,
-            password,
-            phoneNumber,
-            age,
-            birthDate,
-            weight,
-            height,
-            emergencyContact,
-            medications,
-            conditions
+            firstName, lastName, email, password, phoneNumber, age, birthDate, weight, height, emergencyContact, medications, conditions
         );
 
         if (missingField) {
             throw new Error(`El campo ${missingField} es requerido.`);
         }
 
-        const existingPatient = await Patient.findOne({ email });
+        const existingPatient = await Patient.findOne({ email }).session(session);
         if (existingPatient) {
             return {
                 success: false,
@@ -92,9 +89,13 @@ export const addPatientIntoPatientCollection = async (
             };
         }
 
-        const patientRecord = await firebaseAdmin.createUser({ email, password });
+        for (const contact of emergencyContact) {
+            contact.emergencyContactId = uuidv4();
+        }
+
+        patientRecord = await firebaseAdmin.createUser({ email, password });
         if (!patientRecord.uid) {
-            throw new Error('No se pudo crear el usuario en Firebase.');
+            throw new Error("No se pudo crear el usuario en Firebase.");
         }
 
         const newPatient = {
@@ -107,7 +108,6 @@ export const addPatientIntoPatientCollection = async (
             birthDate,
             weight,
             height,
-            emergencyContact,
             medications,
             conditions,
             isDeleted: false,
@@ -115,35 +115,53 @@ export const addPatientIntoPatientCollection = async (
 
         const result = await Patient.updateOne(
             { patientId: patientRecord.uid, isDeleted: false },
-            newPatient,
-            { upsert: true }
+            { $set: newPatient },
+            { upsert: true, session }
         );
 
         const newRole = {
             userId: patientRecord.uid,
             role: "patient",
             isDeleted: false,
-        }
+        };
 
         const addRole = await rolesModel.updateOne(
             { userId: patientRecord.uid, isDeleted: false },
-            newRole,
-            { upsert: true }
+            { $set: newRole },
+            { upsert: true, session }
         );
 
         if (result.modifiedCount === 0 && addRole.modifiedCount === 0) {
-            return { success: true, message: 'Paciente agregado exitosamente.', patientId: patientRecord.uid };
-        } else {
-            return { success: true, message: 'Paciente actualizado exitosamente.', patientId: patientRecord.uid };
+            await new patientEmergencyContactModel({
+                patientId: patientRecord.uid,
+                emergencyContact
+            }).save({ session });
         }
 
+        await session.commitTransaction();
+        session.endSession();
+
+        return { success: true, message: "Paciente agregado exitosamente.", patientId: patientRecord.uid };
+
     } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "Error";
+        const errorMessage = error instanceof Error ? error.message : "Error desconocido";
         console.error(`Error al agregar al paciente: ${errorMessage}`);
+
+        await session.abortTransaction();
+        session.endSession();
+
+        if (patientRecord && patientRecord.uid) {
+            try {
+                await firebaseAdmin.deleteUser(patientRecord.uid);
+                console.log("Usuario eliminado de Firebase debido a un error en la base de datos.");
+            } catch (firebaseError) {
+                console.error("Error al eliminar usuario de Firebase:", firebaseError);
+            }
+        }
+
         return { success: false, message: `Error al agregar al paciente: ${errorMessage}` };
     }
 };
-
 export const getAllPatientsFromCollection = async () => {
     try {
 
@@ -198,6 +216,48 @@ export const addEmergencyToCollection = async (patientId: string): Promise<{ suc
         const errorMessage = error instanceof Error ? error.message : "Error";
         console.error(`Error al agregar la emergencia: ${errorMessage}`);
         return { success: false, message: `Error al agregar la emergencia: ${errorMessage}` };
+    }
+}
+
+export const getAllEmergencyContactFromCollection = async (patientId: string) => {
+    try {
+
+        if (!patientId) {
+            return { success: false, message: "El ID del paciente es obligatorio." };
+        }
+
+        const existingPatient = await patientEmergencyContactModel.findOne({ patientId: patientId }, { _id: 0, emergencyContact: 1 });
+        if (!existingPatient) {
+            return { success: true, message: "No se encontró un paciente con ese ID.", data: null };
+        }
+
+        return { success: true, message: "Contactos de emergencia obtenidos exitosamente.", data: existingPatient.emergencyContact };
+
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Error";
+        console.error(`Error encontrar contactos de emergencia: ${errorMessage}`);
+        return { success: false, message: `Error encontrar contactos de emergencia: ${errorMessage}` };
+    }
+}
+
+export const getEmergencyContactFromCollection = async (emergencyContactId: string) => {
+    try {
+
+        if (!emergencyContactId) {
+            return { success: false, message: "El ID del paciente es obligatorio." };
+        }
+
+        const existingPatient = await Patient.findOne({ patientId: emergencyContactId }, { _id: 0, emergencyContact: 1 });
+        if (!existingPatient) {
+            return { success: true, message: "No se encontró un paciente con ese ID.", data: null };
+        }
+
+        return { success: true, message: "Contactos de emergencia obtenidos exitosamente.", data: existingPatient.emergencyContact };
+
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Error";
+        console.error(`Error encontrar contactos de emergencia: ${errorMessage}`);
+        return { success: false, message: `Error encontra contacto de emergencia: ${errorMessage}` };
     }
 }
 
