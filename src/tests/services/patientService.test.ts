@@ -1,12 +1,15 @@
 import { addPatientIntoPatientCollection, addEmergencyToCollection } from '../../services/patients/patientService';
 import Patient from '../../models/usersModels/patientModel';
 import rolesModel from '../../models/usersModels/rolesModel';
+import patientEmergencyContactModel from '../../models/usersModels/patientEmergencyContact';
 import emergencyModel from '../../models/emergencyModel';
 import { publishToExchange } from '../../services/publisherService';
 import { firebaseAdmin } from "../../config/firebase-config";
+import mongoose from 'mongoose';    
 import { v4 as uuidv4 } from 'uuid';
 
 jest.mock('../../models/usersModels/patientModel');
+jest.mock('../../models/usersModels/patientEmergencyContact');
 jest.mock('../../models/emergencyModel');
 jest.mock('../../services/publisherService', () => ({
     publishToExchange: jest.fn().mockResolvedValue(undefined), // Simula que no falla
@@ -15,6 +18,19 @@ jest.mock('../../config/firebase-config');
 jest.mock('uuid', () => ({
     v4: jest.fn(() => 'mocked-uuid')  // Mockea la función para que siempre devuelva 'mocked-uuid'
 }));
+
+jest.mock('mongoose', () => {
+    const actualMongoose = jest.requireActual('mongoose');
+    return {
+        ...actualMongoose,
+        startSession: jest.fn().mockResolvedValue({
+            startTransaction: jest.fn(),
+            commitTransaction: jest.fn(),
+            abortTransaction: jest.fn(),
+            endSession: jest.fn(),
+        }),
+    };
+});
 
 describe('addPatientIntoPatientCollection', () => {
 
@@ -39,8 +55,9 @@ describe('addPatientIntoPatientCollection', () => {
     });
 
     it('should return an error if the email is already registered', async () => {
-        Patient.findOne = jest.fn().mockResolvedValue({ email: 'johndoe@example.com' }); // Mocked existing patient
-    
+        Patient.findOne = jest.fn().mockImplementation(() => ({
+            session: jest.fn().mockResolvedValue({ email: 'johndoe@example.com' })
+        }));    
         const result = await addPatientIntoPatientCollection(
             'John',
             'Doe',
@@ -53,6 +70,7 @@ describe('addPatientIntoPatientCollection', () => {
             175,
             [
                 {
+                    emergencyContactId: "contact1",
                     firstName: "Jane",
                     lastName: "caceres",
                     email: "jane.doe@example.com",
@@ -70,8 +88,13 @@ describe('addPatientIntoPatientCollection', () => {
     });
 
     it('should return an error when Firebase user creation fails', async () => {
-        Patient.findOne = jest.fn().mockResolvedValue(null); // No existing patient
-        firebaseAdmin.createUser = jest.fn().mockResolvedValue({}); // Firebase creates user but without UID
+
+        Patient.findOne = jest.fn().mockImplementation(() => ({
+            session: jest.fn().mockResolvedValue(null)
+        }));    
+        firebaseAdmin.createUser = jest.fn().mockImplementation(() => ({
+            session: jest.fn().mockResolvedValue({})
+        }));    
     
         const result = await addPatientIntoPatientCollection(
             'John',
@@ -93,13 +116,16 @@ describe('addPatientIntoPatientCollection', () => {
     });
 
     it("should return success when the patient is added successfully", async () => {
-        Patient.findOne = jest.fn().mockResolvedValue(null);
-        
+        Patient.findOne = jest.fn().mockImplementation(() => ({
+            session: jest.fn().mockResolvedValue(null)
+        }));    
+    
         firebaseAdmin.createUser = jest.fn().mockResolvedValue({ uid: "patient123" });
     
-        Patient.updateOne = jest.fn().mockResolvedValue({ upsertedCount: 1 });
+        Patient.updateOne = jest.fn().mockResolvedValue({ modifiedCount: 1 });
+        rolesModel.updateOne = jest.fn().mockResolvedValue({ modifiedCount: 1 });
     
-        rolesModel.updateOne = jest.fn().mockResolvedValue({ modifiedCount: 0 });
+        patientEmergencyContactModel.prototype.save = jest.fn().mockResolvedValue({});
     
         const result = await addPatientIntoPatientCollection(
             "John",
@@ -117,17 +143,21 @@ describe('addPatientIntoPatientCollection', () => {
         );
     
         expect(result.success).toBe(true);
-        expect(result.message).toBe("Paciente actualizado exitosamente.");
+        expect(result.message).toBe("Paciente agregado exitosamente.");
         expect(result.patientId).toBe("patient123");
     });
 
     it('should return success but with no changes when patient is already up-to-date', async () => {
-        Patient.findOne = jest.fn().mockResolvedValue(null); // No existing patient
-        firebaseAdmin.createUser = jest.fn().mockResolvedValue({ uid: 'patient123' }); // Firebase user created with UID
+        Patient.findOne = jest.fn().mockImplementation(() => ({
+            session: jest.fn().mockResolvedValue(null)
+        }));    
     
-        Patient.updateOne = jest.fn().mockResolvedValue({ modifiedCount: 1 }); // Mock no changes made
-
+        firebaseAdmin.createUser = jest.fn().mockResolvedValue({ uid: "patient123" });
+    
+        Patient.updateOne = jest.fn().mockResolvedValue({ modifiedCount: 1 });
         rolesModel.updateOne = jest.fn().mockResolvedValue({ modifiedCount: 0 });
+    
+        patientEmergencyContactModel.prototype.save = jest.fn().mockResolvedValue({});
     
         const result = await addPatientIntoPatientCollection(
             'John',
@@ -145,7 +175,7 @@ describe('addPatientIntoPatientCollection', () => {
         );
     
         expect(result.success).toBe(true);
-        expect(result.message).toBe('Paciente actualizado exitosamente.');
+        expect(result.message).toBe('Paciente agregado exitosamente.');
     });
 
     describe('addEmergencyToCollection', () => {

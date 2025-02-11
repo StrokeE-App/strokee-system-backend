@@ -1,98 +1,138 @@
-import { registerEmergencyContacts } from '../../controllers/patients/emergencyContactsController';
-import { addEmergencyContactsIntoCollection } from '../../services/patients/emergencyContactsService';
+import { getEmergencyContact, updateEmergencyContact, deleteEmergencyContact } from '../../controllers/patients/emergencyContactsController';
+import { getEmergencyContactFromCollection, updateEmergencyContactFromCollection, deleteEmergencyContactFromCollection } from '../../services/patients/emergencyContactsService';
 import { Request, Response, NextFunction } from 'express';
 
 jest.mock('../../services/patients/emergencyContactsService', () => ({
-  addEmergencyContactsIntoCollection: jest.fn(),
+    getEmergencyContactFromCollection: jest.fn(),
+    updateEmergencyContactFromCollection: jest.fn(),
+    deleteEmergencyContactFromCollection: jest.fn(),
 }));
 
-interface CustomRequest extends Request {
-  userId: string;
-  cookies: { session_token?: string };
-}
+describe('Emergency Contacts Controller', () => {
+    let req: Partial<Request>;
+    let res: Partial<Response>;
+    let next: NextFunction;
 
-describe('registerEmergencyContacts Controller', () => {
-  let req: Partial<CustomRequest>;
-  let res: Partial<Response>;
-  let next: NextFunction;
-
-  beforeEach(() => {
-    req = {
-      body: {
-        contacts: [
-          {
-            firstName: 'Jane',
-            lastName: 'Doe',
-            phoneNumber: '1234567890',
-            email: 'jane.doe@example.com',
-            relationship: 'sister',
-          },
-        ],
-      },
-      userId: 'mockUserId',
-      cookies: { session_token: 'mockToken' }, // Mock de la cookie
-    };
-    res = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn(),
-    };
-    next = jest.fn();
-  });
-
-  it('debería devolver 201 y mensaje de éxito si los contactos se agregan correctamente', async () => {
-    const result = { success: true, message: 'Contactos de emergencia agregados exitosamente.', duplicateEmails: [], duplicatePhones: [] };
-    (addEmergencyContactsIntoCollection as jest.Mock).mockResolvedValue(result);
-
-    await registerEmergencyContacts(req as Request, res as Response, next);
-
-    expect(res.status).toHaveBeenCalledWith(201);
-    expect(res.json).toHaveBeenCalledWith({
-      message: result.message,
+    beforeEach(() => {
+        req = { params: {} };
+        res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+        };
+        next = jest.fn();
     });
-  });
 
-  it('debería devolver 400 y mensaje de error si los contactos no se agregan por duplicados', async () => {
-    const result = { success: false, message: 'Algunos contactos ya existen.', duplicateEmails: ['jane.doe@example.com'], duplicatePhones: [] };
-    (addEmergencyContactsIntoCollection as jest.Mock).mockResolvedValue(result);
+    describe('getEmergencyContact', () => {
+        beforeEach(() => {
+            req.params = { patientId: 'PATIENT123', contactId: 'CONTACT123' };
+        });
 
-    await registerEmergencyContacts(req as Request, res as Response, next);
+        it('should return 200 and the emergency contact when found', async () => {
+            const contactMock = { firstName: 'Alice', lastName: 'Smith', phoneNumber: '5551234567' };
+            (getEmergencyContactFromCollection as jest.Mock).mockResolvedValue(contactMock);
 
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({
-      message: result.message,
-      duplicateEmails: result.duplicateEmails,
-      duplicatePhones: result.duplicatePhones,
+            await getEmergencyContact(req as Request, res as Response, next);
+
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith({
+                message: 'Contacto de emergencia obtenido exitosamente.',
+                data: contactMock,
+            });
+        });
+
+        it('should return 400 if the contact is not found', async () => {
+            (getEmergencyContactFromCollection as jest.Mock).mockResolvedValue(null);
+
+            await getEmergencyContact(req as Request, res as Response, next);
+
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({
+                message: 'No se pudo obtener el contacto de emergencia.',
+            });
+        });
+
+        it('should call next with an error if service throws an error', async () => {
+            const error = new Error('Database error');
+            (getEmergencyContactFromCollection as jest.Mock).mockRejectedValue(error);
+
+            await getEmergencyContact(req as Request, res as Response, next);
+
+            expect(next).toHaveBeenCalledWith(error);
+        });
     });
-  });
 
-  it('debería llamar a next con un error si addEmergencyContactsIntoCollection lanza un error', async () => {
-    const errorMessage = 'Error al agregar contactos de emergencia.';
-    (addEmergencyContactsIntoCollection as jest.Mock).mockRejectedValue(new Error(errorMessage));
+    describe('updateEmergencyContact', () => {
+        beforeEach(() => {
+            req.params = { patientId: 'PATIENT123', contactId: 'CONTACT123' };
+            req.body = { contact: { firstName: 'Bob', lastName: 'Jones', phoneNumber: '5559876543' } };
+        });
 
-    await registerEmergencyContacts(req as Request, res as Response, next);
+        it('should return 200 when the emergency contact is updated successfully', async () => {
+            (updateEmergencyContactFromCollection as jest.Mock).mockResolvedValue({ success: true, message: 'Contacto de emergencia actualizado exitosamente.' });
 
-    expect(next).toHaveBeenCalledWith(new Error(errorMessage));
-  });
+            await updateEmergencyContact(req as Request, res as Response, next);
 
-  it('debería devolver 400 si el formato de los contactos es incorrecto', async () => {
-    req.body.contacts = [];
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith({
+                message: 'Contacto de emergencia actualizado exitosamente.',
+            });
+        });
 
-    await registerEmergencyContacts(req as Request, res as Response, next);
+        it('should return 400 if the update fails', async () => {
+            (updateEmergencyContactFromCollection as jest.Mock).mockResolvedValue({ success: false, message: 'No se pudo actualizar el contacto de emergencia.' });
 
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({
-      message: 'Faltan contactos válidos o el formato es incorrecto.',
+            await updateEmergencyContact(req as Request, res as Response, next);
+
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({
+                message: 'No se pudo actualizar el contacto de emergencia.',
+            });
+        });
+
+        it('should call next with an error if service throws an error', async () => {
+            const error = new Error('Database error');
+            (updateEmergencyContactFromCollection as jest.Mock).mockRejectedValue(error);
+
+            await updateEmergencyContact(req as Request, res as Response, next);
+
+            expect(next).toHaveBeenCalledWith(error);
+        });
     });
-  });
 
-  it('debería devolver 401 si no se encuentra la cookie de sesión', async () => {
-    req.cookies = {}; // Eliminamos la cookie para simular que no existe
+    describe('deleteEmergencyContact', () => {
+        beforeEach(() => {
+            req.params = { contactId: 'CONTACT123' };
+        });
 
-    await registerEmergencyContacts(req as Request, res as Response, next);
+        it('should return 200 when the emergency contact is deleted successfully', async () => {
+            (deleteEmergencyContactFromCollection as jest.Mock).mockResolvedValue({ success: true, message: 'Contacto de emergencia eliminado exitosamente.' });
 
-    expect(res.status).toHaveBeenCalledWith(401);
-    expect(res.json).toHaveBeenCalledWith({
-      message: 'No autorizado: cookie no encontrada',
+            await deleteEmergencyContact(req as Request, res as Response, next);
+
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith({
+                message: 'Contacto de emergencia eliminado exitosamente.',
+            });
+        });
+
+        it('should return 400 if the deletion fails', async () => {
+            (deleteEmergencyContactFromCollection as jest.Mock).mockResolvedValue({ success: false, message: 'No se pudo eliminar el contacto de emergencia.' });
+
+            await deleteEmergencyContact(req as Request, res as Response, next);
+
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({
+                message: 'No se pudo eliminar el contacto de emergencia.',
+            });
+        });
+
+        it('should call next with an error if service throws an error', async () => {
+            const error = new Error('Database error');
+            (deleteEmergencyContactFromCollection as jest.Mock).mockRejectedValue(error);
+
+            await deleteEmergencyContact(req as Request, res as Response, next);
+
+            expect(next).toHaveBeenCalledWith(error);
+        });
     });
-  });
 });

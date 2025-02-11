@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { getAllPatientsFromCollection, addPatientIntoPatientCollection, addEmergencyToCollection } from "../../services/patients/patientService";
+import { getAllPatientsFromCollection, addPatientIntoPatientCollection, addEmergencyToCollection, getAllEmergencyContactFromCollection } from "../../services/patients/patientService";
 
 export const registerPatient = async (req: Request, res: Response, next: NextFunction) => {
     const {
@@ -89,4 +89,40 @@ export const creatEmergency = async (req: Request, res: Response, next: NextFunc
     }catch (error) {
         next(error);
     }  
+}
+
+export const getPatientEmergencyContacts = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { patientId } = req.params
+
+        if (!patientId) {
+            res.status(400).json({
+                message: "Por favor, ingresar un patientId",
+            });
+        }
+
+        const result = await getAllEmergencyContactFromCollection(patientId)
+
+        console.log(result) 
+
+        if (result.success) {
+            if(!result.data) {
+                res.status(404).json({ message: result.message });
+                return
+            }
+            res.status(200).json({
+                message: result.message,
+                data: result.data
+            })
+            return
+        }else{
+            res.status(400).json({
+                message: result.message,
+            });
+        }
+
+
+    }catch (error) {
+        next(error);
+    }
 }
