@@ -176,3 +176,72 @@ paths:
                   message:
                     type: string
                     example: "Algo salió mal, por favor intenta de nuevo más tarde."
+  /patient/emergency-contacts/{patientId}:
+    get:
+      summary: Obtener todos los contactos de emergencia de un paciente
+      description: Recupera la lista de contactos de emergencia asociados a un paciente.
+      tags:
+        - Patients
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          description: ID del paciente
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Contactos de emergencia obtenidos exitosamente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Contactos de emergencia obtenidos exitosamente."
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        firstName:
+                          type: string
+                          example: "Carlos"
+                        lastName:
+                          type: string
+                          example: "Doe"
+                        email:
+                          type: string
+                          example: "john.doe@example.com"
+                        phoneNumber:
+                          type: string
+                          example: "1234767890"
+                        relationship:
+                          type: string
+                          example: "Friend"
+                        emergencyContactId:
+                          type: string
+                          example: "5e30e6e1-3a7d-49de-af99-da12879865eb"
+        "400":
+          description: El ID del paciente no fue proporcionado o es inválido.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Por favor, ingresar un patientId."
+        "404":
+          description: No se encontraron contactos de emergencia para el paciente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "No se encontraron contactos de emergencia."
+        "500":
+          description: Error interno del servidor.

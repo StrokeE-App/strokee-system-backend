@@ -17,24 +17,24 @@ paths:
                 patientId:
                   type: string
                   example: 'patient123'
-                  contact:
-                    type: object
-                    properties:
-                      firstName:
-                        type: string
-                        example: 'Jane'
-                      lastName:
-                        type: string
-                        example: 'Doe'
-                      phoneNumber:
-                        type: string
-                        example: '1234567890'
-                      email:
-                        type: string
-                        example: 'jane.doe@example.com'
-                      relationship:
-                        type: string
-                        example: 'sister'
+                contact:
+                  type: object
+                  properties:
+                    firstName:
+                      type: string
+                      example: 'Jane'
+                    lastName:
+                      type: string
+                      example: 'Doe'
+                    phoneNumber:
+                      type: string
+                      example: '1234567890'
+                    email:
+                      type: string
+                      example: 'jane.doe@example.com'
+                    relationship:
+                      type: string
+                      example: 'sister'
               required:
                 - contacts
       responses:
@@ -146,3 +146,165 @@ paths:
                   message:
                     type: string
                     example: 'Error al validar los contactos de emergencia.'
+  /patient/emergency-contacts/{patientId}/{contactId}:
+    get:
+      summary: Obtener un contacto de emergencia
+      description: Obtiene la información de un contacto de emergencia específico de un paciente.
+      tags:
+        - Patients
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          description: ID del paciente
+          schema:
+            type: string
+        - name: contactId
+          in: path
+          required: true
+          description: ID del contacto de emergencia
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Contacto de emergencia obtenido exitosamente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Contacto de emergencia obtenido exitosamente."
+                  data:
+                    type: object
+                    properties:
+                      firstName:
+                        type: string
+                        example: "Alice"
+                      lastName:
+                        type: string
+                        example: "Smith"
+                      phoneNumber:
+                        type: string
+                        example: "5551234567"
+                      email:
+                        type: string
+                        example: "alice.smith@example.com"
+                      relationship:
+                        type: string
+                        example: "sister"
+        "400":
+          description: No se pudo obtener el contacto de emergencia.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "No se pudo obtener el contacto de emergencia."
+        "500":
+          description: Error interno del servidor.
+
+    put:
+      summary: Actualizar un contacto de emergencia
+      description: Actualiza la información de un contacto de emergencia de un paciente.
+      tags:
+        - Patients
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          description: ID del paciente
+          schema:
+            type: string
+        - name: contactId
+          in: path
+          required: true
+          description: ID del contacto de emergencia
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                contact:
+                  type: object
+                  properties:
+                    firstName:
+                      type: string
+                      example: "Bob"
+                    lastName:
+                      type: string
+                      example: "Jones"
+                    phoneNumber:
+                      type: string
+                      example: "5559876543"
+                    email:
+                      type: string
+                      example: "bob.jones@example.com"
+                    relationship:
+                      type: string
+                      example: "brother"
+      responses:
+        "200":
+          description: Contacto de emergencia actualizado exitosamente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Contacto de emergencia actualizado exitosamente."
+        "400":
+          description: No se pudo actualizar el contacto de emergencia.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "No se pudo actualizar el contacto de emergencia."
+        "500":
+          description: Error interno del servidor.
+    delete:
+      summary: Eliminar un contacto de emergencia
+      description: Elimina un contacto de emergencia específico.
+      tags:
+        - Patients
+      parameters:
+        - name: contactId
+          in: path
+          required: true
+          description: ID del contacto de emergencia
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Contacto de emergencia eliminado exitosamente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Contacto de emergencia eliminado exitosamente."
+        "400":
+          description: No se pudo eliminar el contacto de emergencia.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "No se pudo eliminar el contacto de emergencia."
+        "500":
+          description: Error interno del servidor.
