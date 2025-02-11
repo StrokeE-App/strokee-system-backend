@@ -11,7 +11,6 @@ export interface IPatient extends Document {
   birthDate: Date;
   weight: number;
   height: number;
-  emergencyContact: IEmergencyContact[];
   medications: string[];
   conditions: string[];
   isDeleted: boolean;
@@ -28,7 +27,6 @@ const PatientSchema: Schema = new Schema(
     birthDate: { type: Date, required: true },
     weight: { type: Number, required: true },
     height: { type: Number, required: true },
-    emergencyContact: { type: [Object], default: [] },
     medications: { type: [String], default: [] },
     conditions: { type: [String], default: [] },
     isDeleted: { type: Boolean, default: false },

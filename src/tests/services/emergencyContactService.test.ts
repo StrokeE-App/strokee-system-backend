@@ -1,129 +1,160 @@
-import { addEmergencyContactsIntoCollection } from '../../services/patients/emergencyContactsService';
+import { addEmergencyContactIntoCollection, getEmergencyContactFromCollection, updateEmergencyContactFromCollection, deleteEmergencyContactFromCollection  } from '../../services/patients/emergencyContactsService';
 import patientModel from '../../models/usersModels/patientModel';
-import { firebaseAdmin } from '../../config/firebase-config';
+import patientEmergencyContactModel from '../../models/usersModels/patientEmergencyContact';
+import { IEmergencyContact } from '../../models/usersModels/emergencyContactModel';
 
-jest.mock('../../config/firebase-config', () => ({
-    firebaseAdmin: {
-        getUser: jest.fn(),
-        verifySessionCookie: jest.fn(),
-    },
+jest.mock('../../models/usersModels/patientModel');
+jest.mock('../../models/usersModels/patientEmergencyContact');
+jest.mock('uuid', () => ({
+    v4: jest.fn(() => 'mocked-uuid'),
 }));
 
-jest.mock('../../models/usersModels/patientModel', () => ({
-    findOne: jest.fn(),
-    updateOne: jest.fn(),
-}));
+describe('addEmergencyContactIntoCollection', () => {
+    it('should return an error if the patient does not exist', async () => {
+        (patientModel.findOne as jest.Mock).mockResolvedValue(null);
 
-describe('addEmergencyContactsIntoCollection', () => {
-    beforeEach(() => {
-        jest.clearAllMocks();
+        const result = await addEmergencyContactIntoCollection('invalid_patient_id', {
+            firstName: 'Alice',
+            lastName: 'Smith',
+            email: 'alice@example.com',
+            phoneNumber: '5551234567',
+            relationship: 'Sister',
+            emergencyContactId: '',
+            isDeleted: false,
+        });
+
+        expect(result.success).toBe(false);
+        expect(result.message).toBe('El paciente con ID invalid_patient_id no existe.');
     });
 
-    it('debería agregar contactos de emergencia exitosamente', async () => {
-        (firebaseAdmin.verifySessionCookie as jest.Mock).mockResolvedValue({
-            uid: 'existingPatientId',
-        });
+    it('should add an emergency contact successfully', async () => {
+        (patientModel.findOne as jest.Mock).mockResolvedValue({ patientId: 'valid_patient_id' });
+        (patientEmergencyContactModel.updateOne as jest.Mock).mockResolvedValue({ acknowledged: true });
 
-        (firebaseAdmin.getUser as jest.Mock).mockResolvedValue({
-            uid: 'existingPatientId',
-        });
+        const newContact: IEmergencyContact = {
+            firstName: 'Alice',
+            lastName: 'Smith',
+            email: 'alice@example.com',
+            phoneNumber: '5551234567',
+            relationship: 'Sister',
+            emergencyContactId: '',
+            isDeleted: false, // Add this property
+        };
 
-        (patientModel.findOne as jest.Mock).mockResolvedValue({
-            patientId: 'existingPatientId',
-            emergencyContact: [],
-        });
+        const result = await addEmergencyContactIntoCollection('valid_patient_id', newContact);
 
-        (patientModel.updateOne as jest.Mock).mockResolvedValue({});
-
-        const newContacts = [
-            {
-                firstName: 'Jane',
-                lastName: 'Doe',
-                phoneNumber: '1234567890',
-                email: 'jane.doe@example.com',
-                relationship: 'sister',
-                isDeleted: false,
-            },
-        ];
-
-        const result = await addEmergencyContactsIntoCollection('existingPatientId', newContacts);
-
-        expect(firebaseAdmin.verifySessionCookie).toHaveBeenCalledWith('existingPatientId', true);
-        expect(firebaseAdmin.getUser).toHaveBeenCalledWith('existingPatientId');
-        expect(patientModel.findOne).toHaveBeenCalledWith({ patientId: 'existingPatientId' });
-        expect(patientModel.updateOne).toHaveBeenCalledWith(
-            { patientId: 'existingPatientId' },
-            { $addToSet: { emergencyContact: { $each: newContacts } } },
+        expect(patientEmergencyContactModel.updateOne).toHaveBeenCalledWith(
+            { patientId: 'valid_patient_id' },
+            { $push: { emergencyContact: { ...newContact, emergencyContactId: 'mocked-uuid' } } },
             { upsert: true }
         );
-        expect(result).toEqual({
+
+        expect(result.success).toBe(true);
+        expect(result.message).toBe('Contacto de emergencia agregado exitosamente.');
+    });
+
+    it('should return the emergency contact if found', async () => {
+        const mockContact = {
+            emergencyContactId: '5a56349c-17da-4681-bbfe-a85795543b3b',
+            firstName: 'John',
+            lastName: 'Doe',
+            phoneNumber: '123456789',
+            relationship: 'Brother'
+        };
+
+        (patientEmergencyContactModel.aggregate as jest.Mock).mockResolvedValue([mockContact]);
+
+        const result = await getEmergencyContactFromCollection('mocked-patientId', '5a56349c-17da-4681-bbfe-a85795543b3b');
+
+        expect(result).toEqual(mockContact);
+    });
+
+    it('should return null if an error occurs', async () => {
+        (patientEmergencyContactModel.aggregate as jest.Mock).mockRejectedValue(new Error('DB Error'));
+
+        const result = await getEmergencyContactFromCollection('invalid-patientId', 'invalid-id');
+
+        expect(result).toBeNull();
+    });
+
+    it('should update an emergency contact successfully', async () => {
+        (patientEmergencyContactModel.updateOne as jest.Mock).mockResolvedValue({ modifiedCount: 1 });
+
+        const updatedContact = {
+            firstName: 'John',
+            lastName: 'Doe',
+            email: 'johndoe@example.com',
+            phoneNumber: '1234767890',
+            relationship: 'Brother',
+            emergencyContactId: '',
+            isDeleted: false
+        };
+
+        const result = await updateEmergencyContactFromCollection('mocked-patientId', '5a56349c-17da-4681-bbfe-a85795543b3b', updatedContact);
+
+        expect(result.success).toBe(true);
+        expect(result.message).toBe('Contacto de emergencia actualizado exitosamente.');
+    });
+
+    it('should return an error message if the update fails', async () => {
+        (patientEmergencyContactModel.updateOne as jest.Mock).mockResolvedValue({ modifiedCount: 0 });
+
+        const updatedContact = {
+            firstName: 'Jane',
+            lastName: 'Doe',
+            email: 'janedoe@example.com',
+            phoneNumber: '1234767890',
+            relationship: 'Sister',
+            emergencyContactId: '',
+            isDeleted: false
+        };
+
+        const result = await updateEmergencyContactFromCollection('mocked-patientId', 'invalid-id', updatedContact);
+
+        expect(result.success).toBe(false);
+        expect(result.message).toBe('No se pudo actualizar el contacto de emergencia.');
+    });
+
+    it('debería eliminar un contacto de emergencia exitosamente', async () => {
+        (patientEmergencyContactModel.updateOne as jest.Mock).mockResolvedValue({ modifiedCount: 1 });
+
+        const response = await deleteEmergencyContactFromCollection('12345', '12345');
+
+        expect(response).toEqual({
             success: true,
-            message: 'Contactos de emergencia agregados exitosamente.',
-            duplicateEmails: [],
-            duplicatePhones: [],
+            message: 'Contacto de emergencia eliminado exitosamente.',
         });
+
+        expect(patientEmergencyContactModel.updateOne).toHaveBeenCalledWith(
+            { patientId: '12345',"emergencyContact.emergencyContactId": '12345' },
+            { $pull: { emergencyContact: { emergencyContactId: '12345' } } }
+        );
     });
 
-    it('debería retornar error si el paciente no existe', async () => {
-        (firebaseAdmin.verifySessionCookie as jest.Mock).mockResolvedValue({
-            uid: 'nonExistentPatientId',
-        });
+    it('debería retornar un error si no se encuentra el contacto de emergencia', async () => {
+        (patientEmergencyContactModel.updateOne as jest.Mock).mockResolvedValue({ modifiedCount: 0 });
 
-        (firebaseAdmin.getUser as jest.Mock).mockRejectedValue({ code: 'auth/user-not-found' });
+        const response = await deleteEmergencyContactFromCollection('12345','12345');
 
-        const result = await addEmergencyContactsIntoCollection('nonExistentPatientId', []);
-
-        expect(firebaseAdmin.verifySessionCookie).toHaveBeenCalledWith('nonExistentPatientId', true);
-        expect(firebaseAdmin.getUser).toHaveBeenCalledWith('nonExistentPatientId');
-        expect(result).toEqual({
+        expect(response).toEqual({
             success: false,
-            message: 'El paciente con ID nonExistentPatientId no existe.',
-            duplicateEmails: [],
-            duplicatePhones: [],
+            message: 'No se pudo eliminar el contacto de emergencia.',
         });
+
+        expect(patientEmergencyContactModel.updateOne).toHaveBeenCalledWith(
+            { patientId: '12345', "emergencyContact.emergencyContactId": '12345' },
+            { $pull: { emergencyContact: { emergencyContactId: '12345' } } }
+        );
     });
 
-    it('debería retornar error si hay contactos duplicados', async () => {
-        (firebaseAdmin.verifySessionCookie as jest.Mock).mockResolvedValue({
-            uid: 'existingPatientId',
-        });
+    it('debería manejar errores inesperados', async () => {
+        (patientEmergencyContactModel.updateOne as jest.Mock).mockRejectedValue(new Error('Error de base de datos'));
 
-        (firebaseAdmin.getUser as jest.Mock).mockResolvedValue({
-            uid: 'existingPatientId',
-        });
+        const response = await deleteEmergencyContactFromCollection('12345', '12345');
 
-        (patientModel.findOne as jest.Mock).mockResolvedValue({
-            patientId: 'existingPatientId',
-            emergencyContact: [
-                {
-                    firstName: 'Jane',
-                    lastName: 'Doe',
-                    phoneNumber: '1234567890',
-                    email: 'jane.doe@example.com',
-                    relationship: 'sister',
-                    isDeleted: false,
-                },
-            ],
-        });
-
-        const newContacts = [
-            {
-                firstName: 'Jane',
-                lastName: 'Doe',
-                phoneNumber: '1234567890',
-                email: 'jane.doe@example.com',
-                relationship: 'sister',
-                isDeleted: false,
-            },
-        ];
-
-        const result = await addEmergencyContactsIntoCollection('existingPatientId', newContacts);
-
-        expect(result).toEqual({
+        expect(response).toEqual({
             success: false,
-            message: 'Algunos contactos ya existen con el mismo número de teléfono o correo electrónico.',
-            duplicateEmails: ['jane.doe@example.com'],
-            duplicatePhones: ['1234567890'],
+            message: 'Error al eliminar el contacto de emergencia: Error de base de datos',
         });
     });
 });
