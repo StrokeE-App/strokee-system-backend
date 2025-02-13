@@ -1,4 +1,4 @@
-import { addPatientIntoPatientCollection, addEmergencyToCollection } from '../../services/patients/patientService';
+import { addPatientIntoPatientCollection, addEmergencyToCollection, updatePatientFromCollection } from '../../services/patients/patientService';
 import Patient from '../../models/usersModels/patientModel';
 import rolesModel from '../../models/usersModels/rolesModel';
 import patientEmergencyContactModel from '../../models/usersModels/patientEmergencyContact';
@@ -229,5 +229,77 @@ describe('addPatientIntoPatientCollection', () => {
             expect(result.message).toContain('Error al agregar la emergencia: Database error');
         });
     });
+
+    it("debe devolver un error si el ID del paciente no se proporciona", async () => {
+        const result = await updatePatientFromCollection("", {
+            firstName: "John",
+            lastName: "Doe",
+            phoneNumber: "123456789",
+            age: 30,
+            birthDate: '1995-05-15',
+            weight: 70,
+            height: 175,
+            medications: ["medication1"],
+            conditions: ["condition1"],
+        });
+
+        expect(result.success).toBe(false);
+        expect(result.message).toBe("El ID del paciente es obligatorio.");
+    });
+
+    it("debe devolver un error si el paciente no existe", async () => {
+        (Patient.findOne as jest.Mock).mockResolvedValue(null);
+
+        const result = await updatePatientFromCollection("12345", {
+            firstName: "John",
+            lastName: "Doe",
+            phoneNumber: "1234567890",
+            age: 30,
+            birthDate: '01/05/2020',
+            weight: 70,
+            height: 175,
+            medications: ["medication1"],
+            conditions: ["condition1"]
+        });
+
+        expect(result.success).toBe(false);
+        expect(result.message).toBe("No se encontró un paciente con ese ID.");
+    });
+
+    it("debe actualizar correctamente un paciente existente", async () => {
+        const mockPatient = {
+            _id: "12345",
+            firstName: "Old Name",
+            lastName: "Old Last",
+            phoneNumber: "000000000",
+            age: 25,
+            birthDate: '01/05/2020',
+            weight: 65,
+            height: 170,
+            medications: [],
+            conditions: [],
+            isDeleted: false,
+            save: jest.fn().mockResolvedValue(true), // Simulamos la función de Mongoose
+        };
+
+        (Patient.findOne as jest.Mock).mockResolvedValue(mockPatient);
+
+        const result = await updatePatientFromCollection("12345", {
+            firstName: "John",
+            lastName: "Doe",
+            phoneNumber: "1234567890",
+            age: 30,
+            birthDate: '01/05/2020',
+            weight: 70,
+            height: 175,
+            medications: ["medication1"],
+            conditions: ["condition1"], 
+        });
+
+        expect(result.success).toBe(true);
+        expect(result.message).toBe("Paciente actualizado correctamente");
+        expect(mockPatient.save).toHaveBeenCalled();
+    });
+
 
 });

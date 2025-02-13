@@ -1,10 +1,11 @@
-import { registerPatient, creatEmergency } from '../../controllers/patients/patientController';
-import { addPatientIntoPatientCollection, addEmergencyToCollection } from '../../services/patients/patientService';
+import { registerPatient, creatEmergency, updatePatient } from '../../controllers/patients/patientController';
+import { addPatientIntoPatientCollection, addEmergencyToCollection, updatePatientFromCollection } from '../../services/patients/patientService';
 import { Request, Response, NextFunction } from 'express';
 
 jest.mock('../../services/patients/patientService', () => ({
   addPatientIntoPatientCollection: jest.fn(),
   addEmergencyToCollection: jest.fn(),
+  updatePatientFromCollection: jest.fn(),
 }));
 
 describe('registerPatient Controller', () => {
@@ -14,6 +15,7 @@ describe('registerPatient Controller', () => {
 
   beforeEach(() => {
     req = {
+      params: { patientId: "12345" },
       body: {
         firstName: 'John',
         lastName: 'Doe',
@@ -99,6 +101,35 @@ describe('registerPatient Controller', () => {
     (addEmergencyToCollection as jest.Mock).mockRejectedValue(new Error(errorMessage));
 
     await creatEmergency(req as Request, res as Response, next);
+
+    expect(next).toHaveBeenCalledWith(new Error(errorMessage));
+  });
+
+  it("debería devolver 200 si la actualización del paciente es exitosa", async () => {
+    const result = { success: true, message: "Paciente actualizado correctamente." };
+    (updatePatientFromCollection as jest.Mock).mockResolvedValue(result);
+
+    await updatePatient(req as Request, res as Response, next);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({ message: result.message });
+  });
+
+  it("debería devolver 400 si la actualización falla", async () => {
+    const result = { success: false, message: "No se encontró un paciente con ese ID." };
+    (updatePatientFromCollection as jest.Mock).mockResolvedValue(result);
+
+    await updatePatient(req as Request, res as Response, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ message: result.message });
+  });
+
+  it("debería llamar a next con un error si updatePatientFromCollection lanza una excepción", async () => {
+    const errorMessage = "Error al actualizar el paciente.";
+    (updatePatientFromCollection as jest.Mock).mockRejectedValue(new Error(errorMessage));
+
+    await updatePatient(req as Request, res as Response, next);
 
     expect(next).toHaveBeenCalledWith(new Error(errorMessage));
   });
