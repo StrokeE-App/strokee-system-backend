@@ -1,5 +1,11 @@
 import { Router } from "express";
-import { getAllPatients, registerPatient, creatEmergency, getPatientEmergencyContacts } from "../controllers/patients/patientController";
+import { 
+    getAllPatients, 
+    registerPatient, 
+    creatEmergency, 
+    getPatientEmergencyContacts,
+    updatePatient
+ } from "../controllers/patients/patientController";
 import { validateListofEmergencyContacts, addEmergencyContact, getEmergencyContact, updateEmergencyContact, deleteEmergencyContact } from "../controllers/patients/emergencyContactsController";
 import { verifyTokenWithRole } from "../middlewares/authMiddleware"
 const router = Router()
@@ -12,6 +18,7 @@ router.post("/register", registerPatient);
 router.post("/start-emergency", verifyTokenWithRole(['patient']), creatEmergency);
 router.post("/emergency-contacts/validate", validateListofEmergencyContacts);
 router.put("/emergency-contacts/:patientId/:contactId", verifyTokenWithRole(['admin', 'patient']), updateEmergencyContact);
+router.put("/update/:patientId", verifyTokenWithRole(['admin', 'patient']), updatePatient);
 router.delete("/emergency-contacts/:patientId/:contactId", verifyTokenWithRole(['admin', 'patient']), deleteEmergencyContact);
 
 

@@ -1,6 +1,6 @@
 import { createSessionCookie } from "../../services/auth/authService";
 import { Request, Response, NextFunction } from "express";
-import { authenticateUser } from "../../services/auth/authService";
+import { authenticateUser, updateEmail, updatePassword } from "../../services/auth/authService";
 
 
 export const loginUser = async (req: Request, res: Response, next: NextFunction) => {
@@ -65,3 +65,43 @@ export const getToken = async (req: Request, res: Response, next: NextFunction):
     }
 
 };
+
+export const updateEmailController = async (req: Request, res: Response, next: NextFunction) => {
+    const { userId } = req.params;
+    const { newEmail, userType } = req.body;
+
+    try {
+        const result = await updateEmail(userId, newEmail, userType);
+        if (result.success) {
+            res.status(200).json({
+                message: result.message,
+            });
+        } else {
+            res.status(400).json({
+                message: result.message,
+            });
+        }
+    } catch (error) {
+        next(error);
+    }
+}
+
+export const updatePasswordController = async (req: Request, res: Response, next: NextFunction) => {
+    const { userId } = req.params;
+    const { newPassword } = req.body;
+
+    try {
+        const result = await updatePassword(userId, newPassword);
+        if (result.success) {
+            res.status(200).json({
+                message: result.message,
+            });
+        } else {
+            res.status(400).json({
+                message: result.message,
+            });
+        }
+    } catch (error) {
+        next(error);
+    }
+}

@@ -8,7 +8,10 @@ import { publishToExchange } from "../publisherService";
 import { IEmergencyContact } from "../../models/usersModels/emergencyContactModel";
 import { firebaseAdmin } from "../../config/firebase-config";
 import { validateEmergencyContactData } from "./emergencyContactsService";
+import { patientSchema } from "../../validationSchemas/patientShemas";
+import { PatientUpdate } from "./patient.dto";
 import dotenv from "dotenv";
+import { object } from "joi";
 
 dotenv.config();
 
@@ -261,3 +264,42 @@ export const getEmergencyContactFromCollection = async (emergencyContactId: stri
     }
 }
 
+export const updatePatientFromCollection = async (patientId: string, patientData: PatientUpdate) => {
+    try {
+
+        if (!patientId) {
+            return { success: false, message: "El ID del paciente es obligatorio." };
+        }
+
+        const { error } = patientSchema.validate(patientData);
+        if (error) {
+            return { success: false, message: `Error de validación: ${error.details[0].message}` };
+        }
+
+        const existingPatient = await Patient.findOne({ patientId: patientId });
+        if (!existingPatient) {
+            return { success: false, message: "No se encontró un paciente con ese ID." };
+        }
+
+        const { firstName, lastName, phoneNumber, age, birthDate, weight, height, medications, conditions } = patientData;
+
+        existingPatient.firstName = firstName;
+        existingPatient.lastName = lastName;
+        existingPatient.phoneNumber = phoneNumber;
+        existingPatient.age = age;
+        existingPatient.birthDate = birthDate;
+        existingPatient.weight = weight;
+        existingPatient.height = height;
+        existingPatient.medications = medications;
+        existingPatient.conditions = conditions;
+
+        await existingPatient.save();
+
+        return { success: true, message: "Paciente actualizado correctamente" };
+
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Error";
+        console.error(`Error al actualizar el paciente: ${errorMessage}`);
+        return { success: false, message: `Error al actualizar el paciente: ${errorMessage}` };
+    }
+};
