@@ -1,14 +1,33 @@
-import { createSessionCookie } from "../../services/auth/authService";
+import { createSessionCookie, updateEmail } from "../../services/auth/authService";
 import { firebaseAdmin } from "../../config/firebase-config";
 
 jest.mock("../../config/firebase-config", () => ({
     firebaseAdmin: {
         verifyIdToken: jest.fn(),
         createSessionCookie: jest.fn(),
+        updateUser: jest.fn()
     },
 }));
 
+jest.mock('mongoose', () => {
+    const actualMongoose = jest.requireActual('mongoose');
+    return {
+        ...actualMongoose,
+        startSession: jest.fn().mockResolvedValue({
+            startTransaction: jest.fn(),
+            commitTransaction: jest.fn(),
+            abortTransaction: jest.fn(),
+            endSession: jest.fn(),
+        }),
+    };
+});
+
+const mockUserModel = {
+    findOneAndUpdate: jest.fn(),
+};
+
 describe("Auth Functions", () => {
+
     describe("createSessionCookie", () => {
         it("should return a valid session cookie and userId if token is valid", async () => {
             const token = "valid-token";

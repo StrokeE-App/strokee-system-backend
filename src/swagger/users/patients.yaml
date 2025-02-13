@@ -124,6 +124,99 @@ paths:
                   message:
                     type: string
                     example: 'Error al agregar al paciente.'
+  /patient/update/{patientId}:
+    put:
+      summary: Actualizar información de un paciente
+      description: Actualiza los datos de un paciente en la base de datos.
+      tags:
+        - Patients
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          description: ID del paciente a actualizar.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                  description: Nombre del paciente.
+                  example: "Carlos"
+                lastName:
+                  type: string
+                  description: Apellido del paciente.
+                  example: "Caceres"
+                phoneNumber:
+                  type: string
+                  description: Número de teléfono del paciente.
+                  example: "3057479364"
+                age:
+                  type: integer
+                  description: Edad del paciente.
+                  example: 21
+                birthDate:
+                  type: string
+                  format: date
+                  description: Fecha de nacimiento del paciente en formato MM/DD/YYYY.
+                  example: "02/29/2024"
+                weight:
+                  type: number
+                  format: float
+                  description: Peso del paciente en kilogramos.
+                  example: 74.5
+                height:
+                  type: integer
+                  description: Altura del paciente en centímetros.
+                  example: 101
+                medications:
+                  type: array
+                  description: Lista de medicamentos que toma el paciente.
+                  items:
+                    type: string
+                  example: ["dolex"]
+                conditions:
+                  type: array
+                  description: Condiciones médicas del paciente.
+                  items:
+                    type: string
+                  example: ["gripa", "Dolor de cabeza"]
+      responses:
+        200:
+          description: Paciente actualizado correctamente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Paciente actualizado exitosamente."
+        400:
+          description: Error al actualizar el paciente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "No se pudo actualizar el paciente."
+        500:
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Error interno del servidor."
   /patient/start-emergency:
     post:
       summary: Comenzar una emergencia

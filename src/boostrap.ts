@@ -10,6 +10,7 @@ import emergencyRoutes from './routes/emergencyRoutes'
 import operatorRoutes from './routes/operatorRoutes'
 import indexRoutes from './routes/indexRoute'
 import indexRoute from './routes/indexRoute'
+import creentialsRoute from './routes/creedentialsRoute'
 import errorHandler from "./middlewares/errorMiddleware"
 import dotenv from "dotenv";
 import cookieParser from 'cookie-parser';
@@ -59,6 +60,7 @@ app.use("/patient", patientsRoutes);
 app.use("/paramedic", paramedicsRoutes);
 app.use("/emergency", emergencyRoutes);
 app.use("/operator", operatorRoutes)
+app.use("/credentials", creentialsRoute)
 app.use("/", indexRoutes);
 app.use('/swagger', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 

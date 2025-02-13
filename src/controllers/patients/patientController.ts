@@ -1,5 +1,11 @@
 import { NextFunction, Request, Response } from "express";
-import { getAllPatientsFromCollection, addPatientIntoPatientCollection, addEmergencyToCollection, getAllEmergencyContactFromCollection } from "../../services/patients/patientService";
+import { 
+    getAllPatientsFromCollection, 
+    addPatientIntoPatientCollection, 
+    addEmergencyToCollection, 
+    getAllEmergencyContactFromCollection,
+    updatePatientFromCollection 
+} from "../../services/patients/patientService";
 
 export const registerPatient = async (req: Request, res: Response, next: NextFunction) => {
     const {
@@ -123,6 +129,25 @@ export const getPatientEmergencyContacts = async (req: Request, res: Response, n
 
 
     }catch (error) {
+        next(error);
+    }
+}
+
+export const updatePatient = async (req: Request, res: Response, next: NextFunction) => {
+    const { patientId } = req.params;
+    const patientData = req.body;
+    try {
+        const result = await updatePatientFromCollection(patientId, patientData);
+        if (result.success) {
+            res.status(200).json({
+                message: result.message,
+            });
+        } else {
+            res.status(400).json({
+                message: result.message,
+            });
+        }
+    } catch (error) {
         next(error);
     }
 }
