@@ -4,7 +4,9 @@ import rolesModel from "../../models/usersModels/rolesModel";
 import { publishToExchange } from "../publisherService";
 import { firebaseAdmin } from "../../config/firebase-config";
 import { isValidFirstName, isValidLastName, isValidEmail, isValidPassword } from "../utils";
-
+import { ParamedicUpdate } from "./paramedic.dto";
+import { paramedicSchema } from "../../validationSchemas/paramedicSchemas";
+ 
 export const validateParamedicFields = (
     ambulanceId: string,
     firstName: string,
@@ -190,3 +192,92 @@ export const cancelEmergencyCollection = async (emergencyId: string, pickupDate:
         return { success: false, message: `Error al descartar la emergencia: ${errorMessage}` };
     }
 };
+
+export const updateParamedicFromCollection = async (paramedicId: string, parameidcData: ParamedicUpdate) => {
+    try {
+
+        if (!paramedicId) {
+            return { success: false, message: "El ID del paramedico es obligatorio." };
+        }
+
+        const { error } = paramedicSchema.validate(parameidcData);
+        if (error) {
+            return { success: false, message: `Error de validación: ${error.details[0].message}` };
+        }
+
+        const existingParamedic = await paramedicModel.findOne({ paramedicId: paramedicId });
+        if (!existingParamedic) {
+            return { success: false, message: "No se encontró un paciente con ese ID." };
+        }
+
+        const { firstName, lastName, ambulanceId } = parameidcData;
+
+        await paramedicModel.updateOne(
+            { paramedicId: paramedicId },
+            { $set: { firstName, lastName, ambulanceId } }
+        );
+
+        return { success: true, message: "paramedico actualizado correctamente" };
+
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Error";
+        console.error(`Error al actualizar el paramedico: ${errorMessage}`);
+        return { success: false, message: `Error al actualizar el paramedico: ${errorMessage}` };
+    }
+};
+
+export const getParamedicsFromCollection = async (paramedicId: string) => {
+    try {
+        if (!paramedicId) {
+            return { success: false, message: "El ID del paramedico es obligatorio." };
+        }
+
+        const paramedics = await paramedicModel.findOne(
+            { paramedicId: paramedicId, isDeleted: false },
+            {
+                _id: 0,
+                ambulanceId: 1,
+                firstName: 1,
+                lastName: 1,
+                email: 1
+            }
+        );
+
+        if (!paramedics) {
+            return { success: false, message: "No se encontró un paramedico con ese ID." };
+        }
+
+        return { success: true, message: "Paramedico encontrado exitosamente.", paramedics };
+
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Error";
+        console.error(`Error al encontrar el paramedico: ${errorMessage}`);
+        return { success: false, message: `Error al encontrar el paramedico: ${errorMessage}` };
+    }
+
+}
+
+export const deleteParamedicsFromCollection = async (paramedicId: string) => {
+    try {
+        if (!paramedicId) {
+            return { success: false, message: "El ID del paramedico es obligatorio." };
+        }
+
+        const existingParamedic = await paramedicModel.findOne({ paramedicId: paramedicId });
+        if (!existingParamedic) {
+            return { success: false, message: "No se encontró un paciente con ese ID." };
+        }
+
+        await firebaseAdmin.deleteUser(paramedicId);
+
+        await paramedicModel.deleteOne({ paramedicId: paramedicId });
+        await rolesModel.deleteOne({ userId: paramedicId });
+
+        return { success: true, message: "Paramedico eliminado exitosamente." };
+
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Error";
+        console.error(`Error al eliminar el paramedico: ${errorMessage}`);
+        return { success: false, message: `Error al eliminar el paramedico: ${errorMessage}` };
+    }
+}

@@ -2,7 +2,10 @@ import {
     validateParamedicFields,
     addParamedicIntoCollection,
     updateEmergencyPickUpFromCollection,
-    cancelEmergencyCollection
+    cancelEmergencyCollection,
+    updateParamedicFromCollection,
+    getParamedicsFromCollection,
+    deleteParamedicsFromCollection
 } from '../../services/paramedics/paramedicService';
 import paramedicModel from '../../models/usersModels/paramedicModel';
 import rolesModel from '../../models/usersModels/rolesModel';
@@ -14,7 +17,9 @@ jest.mock('../../models/usersModels/paramedicModel');
 jest.mock('../../models/emergencyModel');
 jest.mock('../../models/usersModels/patientModel');
 jest.mock('../../config/firebase-config');
-jest.mock('../../services/publisherService', () => ({
+jest.mock('../../models/usersModels/rolesModel', () => ({
+    deleteOne: jest.fn(),
+})); jest.mock('../../services/publisherService', () => ({
     ...jest.requireActual('../../services/publisherService'),
     publishToExchange: jest.fn() // Mock the specific method
 }));
@@ -232,6 +237,96 @@ describe('Paramedic', () => {
             expect(result.success).toBe(false);
             expect(result.message).toBe('Error al descartar la emergencia: Database error');
         });
+    });
+
+    it('should update the paramedic successfully', async () => {
+        (paramedicModel.findOne as jest.Mock).mockResolvedValue({ paramedicId: 'paramedic123' });
+        (paramedicModel.updateOne as jest.Mock).mockResolvedValue({ nModified: 1 });
+
+        const result = await updateParamedicFromCollection('paramedic123', { firstName: 'John', lastName: 'Doe', ambulanceId: 'AMB123' });
+
+        expect(result.success).toBe(true);
+        expect(result.message).toBe('paramedico actualizado correctamente');
+        expect(paramedicModel.updateOne).toHaveBeenCalledWith(
+            { paramedicId: 'paramedic123' },
+            { $set: { firstName: 'John', lastName: 'Doe', ambulanceId: 'AMB123' } }
+        );
+    });
+
+    it('should handle errors gracefully', async () => {
+        const mockError = new Error('Database error');
+        (paramedicModel.findOne as jest.Mock).mockRejectedValue(mockError);
+
+        const result = await updateParamedicFromCollection('paramedic123', { firstName: 'John', lastName: 'Doe', ambulanceId: 'AMB123' });
+
+        expect(result.success).toBe(false);
+        expect(result.message).toBe('Error al actualizar el paramedico: Database error');
+    });
+
+    it('should return paramedic data successfully', async () => {
+        const mockParamedic = {
+            ambulanceId: 'AMB001',
+            firstName: 'John',
+            lastName: 'Doe',
+            email: 'john.doe@example.com',
+        };
+
+        (paramedicModel.findOne as jest.Mock).mockResolvedValue(mockParamedic);
+
+        const result = await getParamedicsFromCollection('paramedic123');
+
+        expect(result.success).toBe(true);
+        expect(result.message).toBe('Paramedico encontrado exitosamente.');
+        expect(result.paramedics).toEqual(mockParamedic);
+    });
+
+    it('should handle errors gracefully', async () => {
+        const mockError = new Error('Database error');
+        (paramedicModel.findOne as jest.Mock).mockRejectedValue(mockError);
+
+        const result = await getParamedicsFromCollection('paramedic123');
+
+        expect(result.success).toBe(false);
+        expect(result.message).toBe('Error al encontrar el paramedico: Database error');
+    });
+
+    it("should return error if paramedicId is missing", async () => {
+        const result = await deleteParamedicsFromCollection("");
+        expect(result.success).toBe(false);
+        expect(result.message).toBe("El ID del paramedico es obligatorio.");
+    });
+
+    it("should return error if paramedic does not exist", async () => {
+        (paramedicModel.findOne as jest.Mock).mockResolvedValue(null);
+
+        const result = await deleteParamedicsFromCollection("paramedic123");
+        expect(result.success).toBe(false);
+        expect(result.message).toBe("No se encontró un paciente con ese ID.");
+    });
+
+    it("should delete paramedic successfully", async () => {
+        (paramedicModel.findOne as jest.Mock).mockResolvedValue({ paramedicId: "paramedic123" });
+        (firebaseAdmin.deleteUser as jest.Mock).mockResolvedValue({});
+        (paramedicModel.deleteOne as jest.Mock).mockResolvedValue({ deletedCount: 1 });
+        (rolesModel.deleteOne as jest.Mock).mockResolvedValue({});
+
+        const result = await deleteParamedicsFromCollection("paramedic123");
+
+        expect(result.success).toBe(true);
+        expect(result.message).toBe("Paramedico eliminado exitosamente.");
+        expect(firebaseAdmin.deleteUser).toHaveBeenCalledWith("paramedic123");
+        expect(paramedicModel.deleteOne).toHaveBeenCalledWith({ paramedicId: "paramedic123" });
+        expect(rolesModel.deleteOne).toHaveBeenCalledWith({ userId: "paramedic123" });
+    });
+
+    it("should handle errors gracefully", async () => {
+        const mockError = new Error("Database error");
+        (paramedicModel.findOne as jest.Mock).mockRejectedValue(mockError);
+
+        const result = await deleteParamedicsFromCollection("paramedic123");
+
+        expect(result.success).toBe(false);
+        expect(result.message).toBe("Error al eliminar el paramedico: Database error");
     });
 
 });
