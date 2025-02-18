@@ -200,3 +200,158 @@ paths:
                   message:
                     type: string
                     example: "Error al procesar la cancelación de la emergencia."
+  /paramedic/{paramedicId}:
+    get:
+      summary: Obtener un paramédico
+      description: Retorna los datos de un paramédico por su ID.
+      tags:
+        - Paramedics
+      parameters:
+        - name: paramedicId
+          in: path
+          required: true
+          description: ID del paramédico a consultar.
+          schema:
+            type: string
+      responses:
+        200:
+          description: Datos del paramédico encontrados.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      firstName:
+                        type: string
+                      lastName:
+                        type: string
+                      ambulanceId:
+                        type: string
+                      email:
+                        type: string
+        400:
+          description: No se encontró el paramédico con el ID proporcionado.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "No se encontró el paramédico con el ID proporcionado."
+        500:
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Error al obtener el paramédico."
+    put:
+      summary: Actualizar un paramédico
+      description: Modifica la información de un paramédico existente.
+      tags:
+        - Paramedics
+      parameters:
+        - name: paramedicId
+          in: path
+          required: true
+          description: ID del paramédico a actualizar.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                ambulanceId:
+                  type: string
+                email:
+                  type: string
+      responses:
+        200:
+          description: Paramédico actualizado exitosamente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Paramédico actualizado exitosamente."
+        400:
+          description: Error al actualizar el paramédico.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Error al actualizar el paramédico."
+        500:
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Error al actualizar el paramédico."
+    delete:
+      summary: Eliminar un paramédico
+      description: Elimina un paramédico de la base de datos.
+      tags:
+        - Paramedics
+      parameters:
+        - name: paramedicId
+          in: path
+          required: true
+          description: ID del paramédico a eliminar.
+          schema:
+            type: string
+      responses:
+        200:
+          description: Paramédico eliminado exitosamente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Paramédico eliminado exitosamente."
+        400:
+          description: Error al eliminar el paramédico.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Error al eliminar el paramédico."
+        500:
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Error al eliminar el paramédico."
