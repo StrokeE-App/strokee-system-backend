@@ -11,7 +11,6 @@ import { validateEmergencyContactData } from "./emergencyContactsService";
 import { patientSchema } from "../../validationSchemas/patientShemas";
 import { PatientUpdate } from "./patient.dto";
 import dotenv from "dotenv";
-import { object } from "joi";
 
 dotenv.config();
 
