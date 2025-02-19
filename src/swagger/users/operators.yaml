@@ -175,3 +175,188 @@ paths:
                   message:
                     type: string
                     example: "No se encontró una emergencia con el ID proporcionado."
+
+  /operator/{operatorId}:
+      put:
+        summary: Update an operator
+        description: Update the information of an operator by their ID.
+        tags:
+          - Operator
+        operationId: updateOperator
+        parameters:
+          - in: path
+            name: operatorId
+            required: true
+            description: The ID of the operator to update.
+            schema:
+              type: string
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    description: The name of the operator.
+                  email:
+                    type: string
+                    description: The email of the operator.
+                  phoneNumber:
+                    type: string
+                    description: The phone number of the operator.
+                  # Add more fields as needed
+              example:
+                name: John Doe
+                email: john.doe@example.com
+                phoneNumber: "+1234567890"
+        responses:
+          '200':
+            description: Operator updated successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                  example:
+                    message: "Operator updated successfully."
+          '400':
+            description: Bad request due to invalid data
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                  example:
+                    message: "Invalid operator data."
+          '500':
+            description: Internal server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                  example:
+                    message: "An error occurred while updating the operator."
+      get:
+        summary: Get an operator
+        description: Retrieve details of an operator by their ID.
+        tags:
+          - Operator
+        operationId: getOperator
+        parameters:
+          - in: path
+            name: operatorId
+            required: true
+            description: The ID of the operator to retrieve.
+            schema:
+              type: string
+        responses:
+          '200':
+            description: Operator found successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                    operator:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        name:
+                          type: string
+                        email:
+                          type: string
+                        phoneNumber:
+                          type: string
+                      example:
+                        id: operator123
+                        name: John Doe
+                        email: john.doe@example.com
+                        phoneNumber: "+1234567890"
+                  example:
+                    message: "Operator found successfully."
+                    operator:
+                      id: operator123
+                      name: John Doe
+                      email: john.doe@example.com
+                      phoneNumber: "+1234567890"
+          '400':
+            description: Operator not found or invalid request
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                  example:
+                    message: "No operator found with the given ID."
+          '500':
+            description: Internal server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                  example:
+                    message: "An error occurred while retrieving the operator."
+      delete:
+        summary: Delete an operator
+        description: Delete an operator by their ID.
+        tags:
+          - Operator
+        operationId: deleteOperator
+        parameters:
+          - in: path
+            name: operatorId
+            required: true
+            description: The ID of the operator to delete.
+            schema:
+              type: string
+        responses:
+          '200':
+            description: Operator deleted successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                  example:
+                    message: "Operator deleted successfully."
+          '400':
+            description: Operator not found or invalid request
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                  example:
+                    message: "No operator found with the given ID."
+          '500':
+            description: Internal server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                  example:
+                    message: "An error occurred while deleting the operator."

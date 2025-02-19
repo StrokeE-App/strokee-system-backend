@@ -4,6 +4,8 @@ import { publishToExchange } from "../publisherService";
 import emergencyModel from "../../models/emergencyModel";
 import { isValidFirstName, isValidLastName, isValidEmail, isValidPassword } from "../utils";
 import { firebaseAdmin } from "../../config/firebase-config";
+import { UpdateOperator } from "./operator.dto";
+import { operatorSchema } from "../../validationSchemas/operatorSchema";
 
 export const validateOperatorFields = (
     firstName: string,
@@ -172,3 +174,84 @@ export const cancelEmergencyCollectionOperator = async (emergencyId: string) => 
         return { success: false, message: `Error al descartar la emergencia: ${errorMessage}` };
     }
 };
+
+export const updateOperatorFromCollection = async (operatorId: string, operatorData: UpdateOperator) => {
+    try {
+        console.log(operatorId)
+        if (!operatorId) {  
+            return { success: false, message: "El ID del operador es obligatorio." };
+        }
+
+        const { error } = operatorSchema.validate(operatorData);
+
+        if (error) {
+            return { success: false, message: `Error de validación: ${error.details[0].message}` };
+        }
+
+        const updateResult = await operatorModel.updateOne(
+            { operatorId },
+            { $set: operatorData },
+            { upsert: false }
+        );
+
+        if (updateResult.matchedCount === 0) {
+            return { success: false, message: "No se encontró un operador con ese ID." };
+        }
+
+        if (updateResult.modifiedCount === 0) {
+            return { success: false, message: "No se realizaron cambios en el operador." };
+        }
+
+        return { success: true, message: "Operador actualizado exitosamente." };
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Error";
+        console.error(`Error al actualizar el operador: ${errorMessage}`);
+        return { success: false, message: `Error al actualizar el operador: ${errorMessage}` };
+    }
+};
+
+export const getOperatorFromCollection = async (operatorId: string) => {
+    try {
+        if (!operatorId) {
+            return { success: false, message: "El ID del operador es obligatorio." };
+        }
+
+        const operator = await operatorModel.findOne({ operatorId }, { _id: 0, firstName: 1, lastName: 1, email: 1 });
+
+        if (!operator) {
+            return { success: false, message: "No se encontró un operador con ese ID." };
+        }   
+
+        return { success: true, message: "Operador obtenido exitosamente.", operator };
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Error";
+        console.error(`Error al obtener el operador: ${errorMessage}`);
+        return { success: false, message: `Error al obtener el operador: ${errorMessage}` };
+    }
+};
+
+export const deleteOperatorFromCollection = async (operatorId: string) => {
+    try {
+        if (!operatorId) {
+            return { success: false, message: "El ID del operador es obligatorio." };
+        }
+
+        const exsistingOperator = await operatorModel.findOne({ operatorId });
+
+        if (!exsistingOperator) {
+            return { success: false, message: "No se encontró un operador con ese ID." };
+        }
+        
+        await firebaseAdmin.deleteUser(operatorId);
+
+        await operatorModel.deleteOne({ operatorId });
+        await rolesModel.deleteOne({ userId: operatorId });
+
+        return { success: true, message: "Operador eliminado exitosamente." };
+
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Error";
+        console.error(`Error al eliminar el operador: ${errorMessage}`);
+        return { success: false, message: `Error al eliminar el operador: ${errorMessage}` };
+    }   
+}
