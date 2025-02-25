@@ -33,21 +33,25 @@ describe("Auth Functions", () => {
             const token = "valid-token";
             const mockedSessionCookie = "session-cookie";
             const mockedUserId = "user-id-12345";
+            const mockedExp = 1643723900; // ejemplo de expiración en segundos
 
             (firebaseAdmin.verifyIdToken as jest.Mock).mockResolvedValueOnce({
                 user_id: mockedUserId,
+                exp: mockedExp,
             });
             (firebaseAdmin.createSessionCookie as jest.Mock).mockResolvedValueOnce(mockedSessionCookie);
 
             const result = await createSessionCookie(token);
 
             expect(firebaseAdmin.verifyIdToken).toHaveBeenCalledWith(token);
+            const expiresIn = (mockedExp - Math.floor(Date.now() / 1000)) * 1000;
             expect(firebaseAdmin.createSessionCookie).toHaveBeenCalledWith(token, {
-                expiresIn: 60 * 60 * 24 * 1000,
+                expiresIn,
             });
             expect(result).toEqual({
                 sessionCookie: mockedSessionCookie,
                 userId: mockedUserId,
+                expiresIn,
             });
         });
 

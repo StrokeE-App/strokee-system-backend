@@ -7,14 +7,16 @@ import operatorModel from "../../models/usersModels/operatorModel";
 import paramedicModel from "../../models/usersModels/paramedicModel";
 import { emailSchema, passwordSchema } from "../../validationSchemas/userSchemas";
 
-export const createSessionCookie = async (token: string): Promise<{ sessionCookie: string | null, userId: string | null } | null> => {
+export const createSessionCookie = async (token: string): Promise<{ sessionCookie: string | null, userId: string | null, expiresIn: number } | null> => {
     try {
         const decodedToken = await firebaseAdmin.verifyIdToken(token);
-        const { user_id: userId } = decodedToken; 
+        const { user_id: userId, exp } = decodedToken; 
 
-        const sessionCookie = await firebaseAdmin.createSessionCookie(token, { expiresIn: 60 * 60 * 24 * 1000 });
+        const expiresIn = (exp - Math.floor(Date.now() / 1000)) * 1000;
 
-        return { sessionCookie, userId };
+        const sessionCookie = await firebaseAdmin.createSessionCookie(token, { expiresIn });
+
+        return { sessionCookie, userId, expiresIn };
     } catch (e: unknown) {
         if (e instanceof Error) {
             if (e.message.includes('auth/user-not-found')) {
