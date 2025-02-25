@@ -1,0 +1,67 @@
+paths:
+  /admin/register:
+    post:
+      summary: Registra un nuevo administrador
+      description: Crea un nuevo administrador en la base de datos.
+      tags:
+        - Admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+                - firstName
+                - lastName
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "admin@example.com"
+                password:
+                  type: string
+                  format: password
+                  example: "securepassword"
+                firstName:
+                  type: string
+                  example: "Alice"
+                lastName:
+                  type: string
+                  example: "Doe"
+      responses:
+        "201":
+          description: Administrador agregado exitosamente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Administrador agregado correctamente."
+                  adminId:
+                    type: string
+                    example: "admin-12345"
+        "400":
+          description: Error en el registro del administrador.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "El correo electrónico ya está registrado."
+        "500":
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Error al agregar el administrador."
