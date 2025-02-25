@@ -22,6 +22,7 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
         res.cookie('session_token', sessionData.sessionCookie, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
+            expires: new Date(Date.now() + sessionData.expiresIn)
         });
 
         res.status(200).json({
