@@ -8,6 +8,8 @@ import patientsRoutes from './routes/patientRoutes'
 import paramedicsRoutes from './routes/paramedicRoutes'
 import emergencyRoutes from './routes/emergencyRoutes'
 import operatorRoutes from './routes/operatorRoutes'
+import healthCenterRoutes from './routes/healthCenterRoute'
+import adminRoutes from './routes/adminRoute'
 import indexRoutes from './routes/indexRoute'
 import indexRoute from './routes/indexRoute'
 import creentialsRoute from './routes/creedentialsRoute'
@@ -53,10 +55,12 @@ connectToRabbitMQ()
 
 
 app.use(cookieParser());
-app.use(cors({ credentials: true }));
+app.use(cors({ credentials: true, origin: 'http://localhost:3000' }));
 app.use(bodyParser.json());
 app.use(indexRoute)
 app.use("/patient", patientsRoutes);
+app.use("/healthCenter", healthCenterRoutes);
+app.use("/admin", adminRoutes);
 app.use("/paramedic", paramedicsRoutes);
 app.use("/emergency", emergencyRoutes);
 app.use("/operator", operatorRoutes)

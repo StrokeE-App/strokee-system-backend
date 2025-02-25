@@ -177,7 +177,6 @@ export const cancelEmergencyCollectionOperator = async (emergencyId: string) => 
 
 export const updateOperatorFromCollection = async (operatorId: string, operatorData: UpdateOperator) => {
     try {
-        console.log(operatorId)
         if (!operatorId) {  
             return { success: false, message: "El ID del operador es obligatorio." };
         }
