@@ -84,6 +84,7 @@ export const addOperatorIntoCollection = async (
         const newRole = {
             userId: operatorRecord.uid,
             role: "operator",
+            allowedApps: ["operators"],
             isDeleted: false,
         }
 
