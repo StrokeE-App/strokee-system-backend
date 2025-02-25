@@ -36,6 +36,7 @@ export async function addHealthCenterIntoCollection(healthCenterStaff: AddHealth
         await rolesModel.create({
             userId: newHealthCenter.medicId,
             role: "healthCenterStaff",
+            allowedApps: ["healthCenter"],
             isDeleted: false,
         });
         

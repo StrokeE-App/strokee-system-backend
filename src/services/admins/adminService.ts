@@ -32,7 +32,9 @@ export const registerAdminIntoCollection = async (adminData: RegisterAdmin) => {
         const savedAdmin = await newAdmin.save();
         await rolesModel.create({
             userId: savedAdmin.adminId,
+            allowedApps: ["admins"],
             role: "admin",
+            isDeleted: false,
         });
 
         return { success: true, message: "Administrador registrado exitosamente.", adminId: savedAdmin.adminId };

@@ -5,36 +5,68 @@ import mongoose from "mongoose";
 import patientModel from "../../models/usersModels/patientModel";
 import operatorModel from "../../models/usersModels/operatorModel";
 import paramedicModel from "../../models/usersModels/paramedicModel";
+import adminModel from "../../models/usersModels/adminModel";
+import clinicModel from "../../models/usersModels/healthCenterModel";
 import { emailSchema, passwordSchema } from "../../validationSchemas/userSchemas";
+import rolesModel from "../../models/usersModels/rolesModel";
+import { logoutUser } from "../../controllers/auth/authController";
 
-export const createSessionCookie = async (token: string): Promise<{ sessionCookie: string | null, userId: string | null, expiresIn: number } | null> => {
+export const loginUserService = async (token: string, appIdentifier: string) => {
     try {
         const decodedToken = await firebaseAdmin.verifyIdToken(token);
-        const { user_id: userId, exp } = decodedToken; 
+        const { user_id: userId } = decodedToken;
 
-        const expiresIn = (exp - Math.floor(Date.now() / 1000)) * 1000;
+        if (!userId) {
+            return null;
+        }
 
-        const sessionCookie = await firebaseAdmin.createSessionCookie(token, { expiresIn });
+        const validApps = new Set(["paramedics", "patients", "operators", "admins", "clinics"]);
+        if (!validApps.has(appIdentifier)) {
+            return { success: false, message: "Identificador de aplicación no válido." };
+        }
 
-        return { sessionCookie, userId, expiresIn };
+        const userRole = await rolesModel.findOne({ userId: userId, isDeleted: false });
+
+        if (!userRole || !Array.isArray(userRole.allowedApps)) {
+            return { success: false, message: "El usuario no tiene un rol asignado o no tiene aplicaciones permitidas." };
+        }
+
+        if (!userRole.allowedApps.includes(appIdentifier)) {
+            return { success: false, message: "El usuario no tiene permiso para acceder a esta aplicación." };
+        }
+
+        return { userId };
     } catch (e: unknown) {
         if (e instanceof Error) {
-            if (e.message.includes('auth/user-not-found')) {
-                console.error("El usuario no existe. Por favor, verifica las credenciales.");
-            } else if (e.message.includes('auth/wrong-password')) {
-                console.error("La contraseña es incorrecta. Inténtalo de nuevo.");
-            } else if (e.message.includes('auth/invalid-id-token')) {
-                console.error("El token de ID proporcionado no es válido o ha expirado.");
-            } else if (e.message.includes('auth/id-token-expired')) {
-                console.error("El token de ID proporcionado ha expirado.");
-            } else {
-                console.error("Ocurrió un error durante la autenticación:", e.message);
-            }
+            console.error("Error en autenticación:", e.message);
         } else {
             console.error("Ocurrió un error inesperado durante la autenticación.");
         }
 
         return null;
+    }
+};
+
+export const logoutUserService = async (token: string) => {
+    try {
+        const decodedToken = await firebaseAdmin.verifyIdToken(token, true);
+        const { sub: userId } = decodedToken;
+
+        if (!userId) {
+            return { success: false, message: "Token inválido." };
+        }
+
+        await firebaseAdmin.revokeRefreshTokens(userId);
+
+        const userRecord = await firebaseAdmin.getUser(userId);
+        const revokeTime = userRecord.tokensValidAfterTime
+            ? new Date(userRecord.tokensValidAfterTime).getTime() / 1000
+            : null;
+
+        return { success: true, message: "Sesión cerrada exitosamente.", revokeTime };
+    } catch (error) {
+        console.error("Error en logout:", error);
+        return { success: false, message: "Error al cerrar la sesión." };
     }
 };
 
@@ -73,9 +105,11 @@ export const updateEmail = async (
     const userModels: Record<string, { model: any; idField: string }> = {
         patient: { model: patientModel, idField: "patientId" },
         paramedic: { model: paramedicModel, idField: "paramedicId" },
-        operator: { model: operatorModel, idField: "operatorId" }
+        operator: { model: operatorModel, idField: "operatorId" },
+        admin: { model: adminModel, idField: "adminId" },
+        clinic: { model: clinicModel, idField: "clinicId" },
     };
-    
+
 
     if (!userId || !newEmail || !userType) {
         return { success: false, message: "El ID del usuario, el nuevo email y el tipo de usuario son requeridos." };

@@ -89,6 +89,7 @@ export const addParamedicIntoCollection = async (
         const newRole = {
             userId: paramedicRecord.uid,
             role: "paramedic",
+            allowedApps: ["paramedics"],
             isDeleted: false,
         }
 

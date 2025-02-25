@@ -1,10 +1,46 @@
-import { createSessionCookie } from "../../services/auth/authService";
+import { loginUserService, logoutUserService } from "../../services/auth/authService";
 import { Request, Response, NextFunction } from "express";
 import { authenticateUser, updateEmail, updatePassword } from "../../services/auth/authService";
 
 
 export const loginUser = async (req: Request, res: Response, next: NextFunction) => {
     const { token } = req.body;
+    const appIdentifier = req.headers["x-app-identifier"];
+
+    if (!token) {
+        res.status(400).json({ message: 'Token no válido o vacío' });
+        return;
+    }
+
+    if (!appIdentifier) {
+        res.status(400).json({ message: 'Identificador de aplicación no válido o vacío' });
+        return;
+    }
+
+    try {
+        const sessionData = await loginUserService(token, appIdentifier.toString());
+
+        if (!sessionData) {
+            res.status(401).json({ message: "Token inválido" });
+            return;
+        }
+
+        if (sessionData.success === false) {
+            res.status(401).json({ message: sessionData.message });
+            return;
+        } else {
+            res.status(200).json({
+                message: "Login exitoso.",
+                userId: sessionData.userId,
+            });
+        }
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const logoutUser = async (req: Request, res: Response) => {
+   const { token } = req.body;
 
     if (!token) {
         res.status(400).json({ message: 'Token no válido o vacío' });
@@ -12,35 +48,17 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
     }
 
     try {
-        const sessionData = await createSessionCookie(token);
+        const result = await logoutUserService(token);
 
-        if (!sessionData || !sessionData.sessionCookie) { 
-            res.status(401).json({ message: "Token inválido" });
-            return;
+        if (result.success) {
+            res.status(200).json({ message: result.message });
+        } else {
+            res.status(400).json({ message: result.message });
         }
-
-        res.cookie('session_token', sessionData.sessionCookie, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            expires: new Date(Date.now() + sessionData.expiresIn)
-        });
-
-        res.status(200).json({
-            message: "Login exitoso.",
-            userId: sessionData.userId, 
-        });
+        
     } catch (error) {
-        next(error);
+        res.status(500).json({ message: "Error al cerrar sesión." });
     }
-};
-
-export const logoutUser = (req: Request, res: Response) => {
-    res.clearCookie('session_token', {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production', 
-    });
-
-    res.status(200).json({ message: 'Desconectado correctamente' });
 };
 
 export const getToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -60,7 +78,7 @@ export const getToken = async (req: Request, res: Response, next: NextFunction):
 
         const { idToken, refreshToken } = tokens;
 
-        res.status(200).json({ message: "Login exitoso.", token : idToken, refreshToken });
+        res.status(200).json({ message: "Login exitoso.", token: idToken, refreshToken });
     } catch (error) {
         next(error);
     }
