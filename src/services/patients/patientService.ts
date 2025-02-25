@@ -58,7 +58,7 @@ export const addPatientIntoPatientCollection = async (
     medications: string[],
     conditions: string[]
 ): Promise<{ success: boolean, message: string, patientId?: string, duplicateEmails?: string[], duplicatePhones?: string[] }> => {
-    
+
     const session = await mongoose.startSession(); // Cambiado a mongoose.startSession()
     session.startTransaction();
 
@@ -124,6 +124,7 @@ export const addPatientIntoPatientCollection = async (
         const newRole = {
             userId: patientRecord.uid,
             role: "patient",
+            allowedApps: ["patients"],
             isDeleted: false,
         };
 
