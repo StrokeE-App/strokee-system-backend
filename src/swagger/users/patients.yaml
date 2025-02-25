@@ -269,7 +269,7 @@ paths:
                   message:
                     type: string
                     example: "Algo salió mal, por favor intenta de nuevo más tarde."
-  /patient/emergency-contacts/{patientId}:
+  /patient/emergency-contacts/all/{patientId}:
     get:
       summary: Obtener todos los contactos de emergencia de un paciente
       description: Recupera la lista de contactos de emergencia asociados a un paciente.

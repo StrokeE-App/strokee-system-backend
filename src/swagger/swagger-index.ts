@@ -13,6 +13,8 @@ const patients = loadSwaggerFile("./users/patients.yaml") as any;
 const operators = loadSwaggerFile("./users/operators.yaml") as any;
 const emergencyContacts = loadSwaggerFile("./users/emergencyContacts.yaml") as any;
 const paramedics = loadSwaggerFile("./users/paramedics.yaml") as any;
+const admins = loadSwaggerFile("./users/admin.yaml") as any;
+const clinics = loadSwaggerFile("./users/clinic.yaml") as any;
 const emergencies = loadSwaggerFile("./emergencies/emergencies.yaml") as any;
 const credentials = loadSwaggerFile("./users/credentials.yaml") as any;
 
@@ -35,7 +37,10 @@ const swaggerDocs = {
     ...emergencyContacts.paths,
     ...paramedics.paths,
     ...operators.paths,
+    ...clinics.paths,
+    ...admins.paths,
     ...emergencies.paths,
+
   },
 };
 
