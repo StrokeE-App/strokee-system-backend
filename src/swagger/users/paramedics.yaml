@@ -275,12 +275,13 @@ paths:
               properties:
                 firstName:
                   type: string
+                  example: "Carlos"
                 lastName:
                   type: string
+                  example: "Gómez"
                 ambulanceId:
                   type: string
-                email:
-                  type: string
+                  example: "AMB123"
       responses:
         200:
           description: Paramédico actualizado exitosamente.

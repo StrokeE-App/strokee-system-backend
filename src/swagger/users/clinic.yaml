@@ -141,9 +141,6 @@ paths:
                 lastName:
                   type: string
                   example: "Gómez"
-                specialty:
-                  type: string
-                  example: "Neurología"
       responses:
         "200":
           description: Integrante actualizado correctamente.
