@@ -197,20 +197,14 @@ paths:
               schema:
                 type: object
                 properties:
-                  name:
+                  firstName:
                     type: string
-                    description: The name of the operator.
-                  email:
+                    description: The first name of the operator.
+                    example: John
+                  lastName:
                     type: string
-                    description: The email of the operator.
-                  phoneNumber:
-                    type: string
-                    description: The phone number of the operator.
-                  # Add more fields as needed
-              example:
-                name: John Doe
-                email: john.doe@example.com
-                phoneNumber: "+1234567890"
+                    description: The last name of the operator.
+                    example: Doe
         responses:
           '200':
             description: Operator updated successfully
