@@ -284,12 +284,6 @@ paths:
                 lastName:
                   type: string
                   example: "González"
-                email:
-                  type: string
-                  example: "carlos.gonzalez@example.com"
-                phoneNumber:
-                  type: string
-                  example: "9876543210"
       responses:
         "200":
           description: Administrador actualizado correctamente
