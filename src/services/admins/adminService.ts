@@ -2,7 +2,7 @@ import adminModel from "../../models/usersModels/adminModel";
 import rolesModel from "../../models/usersModels/rolesModel";
 import { firebaseAdmin } from "../../config/firebase-config";
 import { RegisterAdmin } from "./admin.dto";
-import { adminSchema } from "../../validationSchemas/adminSchema";
+import { adminSchema, updateAdminSchema } from "../../validationSchemas/adminSchema";
 
 export const registerAdminIntoCollection = async (adminData: RegisterAdmin) => {
     try {
@@ -45,3 +45,66 @@ export const registerAdminIntoCollection = async (adminData: RegisterAdmin) => {
         return { success: false, message: `Error al registrar el administrador: ${errorMessage}` };
     }
 }
+
+export async function updateAdmin(userId: string, updateData: Partial<RegisterAdmin>) {
+    try {
+        const { error } = updateAdminSchema.validate(updateData);
+
+        if (error) {
+            return { success: false, message: `Error de validación: ${error.details[0].message}` };
+        }
+
+        const updatedAdmin = await adminModel.findOneAndUpdate(
+            { adminId: userId, isDeleted: false },
+            updateData,
+            { new: true }
+        );
+
+        if (!updatedAdmin) {
+            return { success: false, message: "No se encontró el administrador o ya fue eliminado." };
+        }
+
+        return { success: true, message: "Administrador actualizado correctamente.", updatedAdmin };
+    } catch (error) {
+        console.error(`Error al actualizar el administrador: ${error}`);
+        return { success: false, message: "Error al actualizar el administrador." };
+    }
+}
+
+export async function deleteAdmin(userId: string) {
+    try {
+        const existingAdmin = await adminModel.findOne({ adminId: userId, isDeleted: false });
+
+        if (!existingAdmin) {
+            return { success: false, message: "No se encontró el administrador o ya fue eliminado." };
+        }
+
+        await adminModel.deleteOne({ adminId: userId, isDeleted: false });
+        await firebaseAdmin.deleteUser(userId);
+        await rolesModel.deleteOne({ userId });
+
+        return { success: true, message: "Administrador eliminado correctamente." };
+    } catch (error) {
+        console.error(`Error al eliminar el administrador: ${error}`);
+        return { success: false, message: "Error al eliminar el administrador." };
+    }
+}
+
+export async function getAdmin(userId: string) {
+    try {
+        const admin = await adminModel.findOne(
+            { adminId: userId, isDeleted: false },
+            { _id: 0, adminId: 0, isDeleted: 0, createdAt: 0, updatedAt: 0 }
+        );
+
+        if (!admin) {
+            return { success: false, message: "No se encontró el administrador." };
+        }
+
+        return { success: true, message: "Administrador obtenido correctamente.", admin };
+    } catch (error) {
+        console.error(`Error al buscar el administrador: ${error}`);
+        return { success: false, message: "Error al buscar el administrador." };
+    }
+}
+
