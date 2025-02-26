@@ -1,11 +1,13 @@
-import { registerPatient, creatEmergency, updatePatient } from '../../controllers/patients/patientController';
-import { addPatientIntoPatientCollection, addEmergencyToCollection, updatePatientFromCollection } from '../../services/patients/patientService';
+import { registerPatient, creatEmergency, updatePatient, deletePatient, getPatient } from '../../controllers/patients/patientController';
+import { addPatientIntoPatientCollection, addEmergencyToCollection, updatePatientFromCollection, deletePatientFromCollection, getPatientFromCollection } from '../../services/patients/patientService';
 import { Request, Response, NextFunction } from 'express';
 
 jest.mock('../../services/patients/patientService', () => ({
   addPatientIntoPatientCollection: jest.fn(),
   addEmergencyToCollection: jest.fn(),
   updatePatientFromCollection: jest.fn(),
+  deletePatientFromCollection: jest.fn(),
+  getPatientFromCollection: jest.fn(),
 }));
 
 describe('registerPatient Controller', () => {
@@ -132,5 +134,93 @@ describe('registerPatient Controller', () => {
     await updatePatient(req as Request, res as Response, next);
 
     expect(next).toHaveBeenCalledWith(new Error(errorMessage));
+  });
+});
+
+describe('Patient Controller', () => {
+  let req: Partial<Request>;
+  let res: Partial<Response>;
+  let next: NextFunction;
+
+  beforeEach(() => {
+    req = {
+      params: { patientId: '12345' },
+    };
+    res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+    next = jest.fn();
+  });
+
+  describe('getPatient', () => {
+    it('debería devolver 200 y los datos del paciente si la búsqueda es exitosa', async () => {
+      const result = { success: true, message: 'Paciente encontrado.', data: { id: '12345', name: 'John Doe' } };
+      (getPatientFromCollection as jest.Mock).mockResolvedValue(result);
+
+      await getPatient(req as Request, res as Response, next);
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith({
+        message: result.message,
+        data: result.data,
+      });
+    });
+
+    it('debería devolver 400 si el paciente no se encuentra', async () => {
+      const result = { success: false, message: 'Paciente no encontrado.' };
+      (getPatientFromCollection as jest.Mock).mockResolvedValue(result);
+
+      await getPatient(req as Request, res as Response, next);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({
+        message: result.message,
+      });
+    });
+
+    it('debería llamar a next con un error si getPatientFromCollection lanza una excepción', async () => {
+      const errorMessage = 'Error al buscar el paciente.';
+      (getPatientFromCollection as jest.Mock).mockRejectedValue(new Error(errorMessage));
+
+      await getPatient(req as Request, res as Response, next);
+
+      expect(next).toHaveBeenCalledWith(new Error(errorMessage));
+    });
+  });
+
+  describe('deletePatient', () => {
+    it('debería devolver 200 si el paciente se elimina correctamente', async () => {
+      const result = { success: true, message: 'Paciente eliminado correctamente.' };
+      (deletePatientFromCollection as jest.Mock).mockResolvedValue(result);
+
+      await deletePatient(req as Request, res as Response, next);
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith({
+        message: result.message,
+      });
+    });
+
+    it('debería devolver 400 si la eliminación falla', async () => {
+      const result = { success: false, message: 'No se encontró un paciente con ese ID.' };
+      (deletePatientFromCollection as jest.Mock).mockResolvedValue(result);
+
+      await deletePatient(req as Request, res as Response, next);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({
+        message: result.message,
+      });
+    });
+
+    it('debería llamar a next con un error si deletePatientFromCollection lanza una excepción', async () => {
+      const errorMessage = 'Error al eliminar el paciente.';
+      (deletePatientFromCollection as jest.Mock).mockRejectedValue(new Error(errorMessage));
+
+      await deletePatient(req as Request, res as Response, next);
+
+      expect(next).toHaveBeenCalledWith(new Error(errorMessage));
+    });
   });
 });

@@ -303,3 +303,51 @@ export const updatePatientFromCollection = async (patientId: string, patientData
         return { success: false, message: `Error al actualizar el paciente: ${errorMessage}` };
     }
 };
+
+export const getPatientFromCollection = async (patientId: string) => {
+    try {
+
+        if (!patientId) {
+            return { success: false, message: "El ID del paciente es obligatorio." };
+        }   
+
+        const existingPatient = await Patient.findOne({ patientId: patientId }, { _id: 0, isDeleted: 0, createdAt: 0, updatedAt: 0 });
+        if (!existingPatient) {
+            return { success: false, message: "No se encontró un paciente con ese ID." };
+        }
+
+        return { success: true, message: "Paciente obtenido exitosamente.", data: existingPatient };
+
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Error";
+        console.error(`Error encontrar paciente: ${errorMessage}`);
+        return { success: false, message: `Error encontrar paciente: ${errorMessage}` };
+    }
+}
+
+export const deletePatientFromCollection = async (patientId: string) => {
+    try {
+
+        if (!patientId) {
+            return { success: false, message: "El ID del paciente es obligatorio." };
+        }
+
+        const existingPatient = await Patient.findOne({ patientId: patientId });
+        if (!existingPatient) {
+            return { success: false, message: "No se encontró un paciente con ese ID." };
+        }
+
+        firebaseAdmin.deleteUser(patientId);
+
+        await Patient.deleteOne({ patientId: patientId });
+        await rolesModel.deleteOne({ userId: patientId });
+        await patientEmergencyContactModel.deleteOne({ patientId: patientId });
+
+        return { success: true, message: "Paciente eliminado exitosamente." };
+
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Error";
+        console.error(`Error al eliminar el paciente: ${errorMessage}`);
+        return { success: false, message: `Error al eliminar el paciente: ${errorMessage}` };
+    }
+}

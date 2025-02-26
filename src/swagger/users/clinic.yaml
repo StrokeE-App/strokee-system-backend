@@ -65,3 +65,157 @@ paths:
                   message:
                     type: string
                     example: "Error al agregar el centro de salud."
+  /healthCenter/{medicId}:
+    get:
+      summary: Obtener un integrante del centro de salud
+      description: Obtiene la información de un integrante del centro de salud por su ID.
+      tags:
+        - Clinic
+      parameters:
+        - name: medicId
+          in: path
+          required: true
+          description: ID del integrante del centro de salud.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Información obtenida exitosamente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Integrante de centro de salud obtenido correctamente."
+                  healthCenterStaff:
+                    type: object
+                    example:
+                      firstName: "Carlos"
+                      lastName: "Gómez"
+                      email: "carlos.gomez@example"
+        "400":
+          description: No se encontró el integrante.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "No se encontró el integrante del centro de salud."
+        "500":
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Error al buscar el integrante del centro de salud."
+  /healthCenter/update/{medicId}:
+    put:
+      summary: Actualizar un integrante del centro de salud
+      description: Actualiza la información de un integrante del centro de salud.
+      tags:
+        - Clinic
+      parameters:
+        - name: medicId
+          in: path
+          required: true
+          description: ID del integrante del centro de salud.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                  example: "Carlos"
+                lastName:
+                  type: string
+                  example: "Gómez"
+                specialty:
+                  type: string
+                  example: "Neurología"
+      responses:
+        "200":
+          description: Integrante actualizado correctamente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Integrante de centro de salud actualizado correctamente."
+        "400":
+          description: Error en la actualización.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "No se encontró el integrante del centro de salud o ya fue eliminado."
+        "500":
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Error al actualizar el integrante del centro de salud."
+  /healthCenter/delete/{medicId}:
+    delete:
+      summary: Eliminar un integrante del centro de salud
+      description: Elimina un integrante del centro de salud por su ID.
+      tags:
+        - Clinic
+      parameters:
+        - name: medicId
+          in: path
+          required: true
+          description: ID del integrante del centro de salud.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Integrante eliminado correctamente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Integrante de centro de salud eliminado correctamente."
+        "400":
+          description: No se encontró el integrante.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "No se encontró el integrante del centro de salud o ya fue eliminado."
+        "500":
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Error al eliminar el integrante del centro de salud."

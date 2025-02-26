@@ -124,6 +124,109 @@ paths:
                   message:
                     type: string
                     example: 'Error al agregar al paciente.'
+  /patient/{patientId}:
+    get:
+      summary: Obtener información de un paciente
+      description: Recupera la información de un paciente específico basado en su ID.
+      tags:
+        - Patients
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID único del paciente.
+      responses:
+        "200":
+          description: Información del paciente obtenida exitosamente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Paciente obtenido exitosamente."
+                  data:
+                    type: object
+                    example: 
+                      patientId: "12345"
+                      firstName: "John"
+                      lastName: "Doe"
+                      email: "johndoe@example.com"
+                      password: "password123"
+                      phoneNumber: "1234567890"
+                      age: 30
+                      birthDate: "2000-02-29T05:00:00.000Z"
+                      weight: 70
+                      height: 175
+                      medications: ["med1", "med2"]
+                      conditions: ["condition1", "condition2"]
+        "400":
+          description: Error en la solicitud.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "No se encontró un paciente con ese ID."
+        "500":
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Error al encontrar paciente: [detalle del error]."
+  /patient/delete/{patientId}:
+    delete:
+      summary: Eliminar un paciente
+      description: Elimina un paciente del sistema junto con su información relacionada.
+      tags:
+        - Patients
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID único del paciente a eliminar.
+      responses:
+        "200":
+          description: Paciente eliminado exitosamente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Paciente eliminado exitosamente."
+        "400":
+          description: Error en la solicitud.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "No se encontró un paciente con ese ID."
+        "500":
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Error al eliminar el paciente: [detalle del error]."
   /patient/update/{patientId}:
     put:
       summary: Actualizar información de un paciente
