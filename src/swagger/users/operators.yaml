@@ -287,10 +287,9 @@ paths:
                   example:
                     message: "Operator found successfully."
                     operator:
-                      id: operator123
-                      name: John Doe
+                      firstName: John
+                      lastName: Doe
                       email: john.doe@example.com
-                      phoneNumber: "+1234567890"
           '400':
             description: Operator not found or invalid request
             content:

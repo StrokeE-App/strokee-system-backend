@@ -1,12 +1,10 @@
-import { addPatientIntoPatientCollection, addEmergencyToCollection, updatePatientFromCollection } from '../../services/patients/patientService';
+import { addPatientIntoPatientCollection, addEmergencyToCollection, updatePatientFromCollection, getPatientFromCollection, deletePatientFromCollection } from '../../services/patients/patientService';
 import Patient from '../../models/usersModels/patientModel';
 import rolesModel from '../../models/usersModels/rolesModel';
 import patientEmergencyContactModel from '../../models/usersModels/patientEmergencyContact';
 import emergencyModel from '../../models/emergencyModel';
 import { publishToExchange } from '../../services/publisherService';
 import { firebaseAdmin } from "../../config/firebase-config";
-import mongoose from 'mongoose';    
-import { v4 as uuidv4 } from 'uuid';
 
 jest.mock('../../models/usersModels/patientModel');
 jest.mock('../../models/usersModels/patientEmergencyContact');
@@ -300,6 +298,87 @@ describe('addPatientIntoPatientCollection', () => {
         expect(result.message).toBe("Paciente actualizado correctamente");
         expect(mockPatient.save).toHaveBeenCalled();
     });
-
+    describe('getPatientFromCollection', () => {
+    
+        it('debe devolver un error si el ID del paciente no se proporciona', async () => {
+            const result = await getPatientFromCollection("");
+    
+            expect(result.success).toBe(false);
+            expect(result.message).toBe("El ID del paciente es obligatorio.");
+        });
+    
+        it('debe devolver un error si el paciente no existe', async () => {
+            (Patient.findOne as jest.Mock).mockResolvedValue(null);
+    
+            const result = await getPatientFromCollection("12345");
+    
+            expect(result.success).toBe(false);
+            expect(result.message).toBe("No se encontró un paciente con ese ID.");
+        });
+    
+        it('debe devolver el paciente si existe', async () => {
+            const mockPatient = { patientId: "12345", firstName: "John", lastName: "Doe" };
+            (Patient.findOne as jest.Mock).mockResolvedValue(mockPatient);
+    
+            const result = await getPatientFromCollection("12345");
+    
+            expect(result.success).toBe(true);
+            expect(result.message).toBe("Paciente obtenido exitosamente.");
+            expect(result.data).toEqual(mockPatient);
+        });
+    
+        it('debe manejar errores inesperados', async () => {
+            (Patient.findOne as jest.Mock).mockRejectedValue(new Error("Database error"));
+    
+            const result = await getPatientFromCollection("12345");
+    
+            expect(result.success).toBe(false);
+            expect(result.message).toContain("Error encontrar paciente: Database error");
+        });
+    });
+    
+    describe('deletePatientFromCollection', () => {
+        
+        it('debe devolver un error si el ID del paciente no se proporciona', async () => {
+            const result = await deletePatientFromCollection("");
+    
+            expect(result.success).toBe(false);
+            expect(result.message).toBe("El ID del paciente es obligatorio.");
+        });
+    
+        it('debe devolver un error si el paciente no existe', async () => {
+            (Patient.findOne as jest.Mock).mockResolvedValue(null);
+    
+            const result = await deletePatientFromCollection("12345");
+    
+            expect(result.success).toBe(false);
+            expect(result.message).toBe("No se encontró un paciente con ese ID.");
+        });
+    
+        it('debe eliminar el paciente si existe', async () => {
+            const mockPatient = { patientId: "12345" };
+            (Patient.findOne as jest.Mock).mockResolvedValue(mockPatient);
+    
+            firebaseAdmin.deleteUser = jest.fn().mockResolvedValue(undefined);
+            (Patient.deleteOne as jest.Mock).mockResolvedValue({ deletedCount: 1 });
+            rolesModel.deleteOne = jest.fn().mockResolvedValue({ deletedCount: 1 });
+            (patientEmergencyContactModel.deleteOne as jest.Mock).mockResolvedValue({ deletedCount: 1 });
+    
+            const result = await deletePatientFromCollection("12345");
+    
+            expect(result.success).toBe(true);
+            expect(result.message).toBe("Paciente eliminado exitosamente.");
+        });
+    
+        it('debe manejar errores inesperados', async () => {
+            (Patient.findOne as jest.Mock).mockRejectedValue(new Error("Database error"));
+    
+            const result = await deletePatientFromCollection("12345");
+    
+            expect(result.success).toBe(false);
+            expect(result.message).toContain("Error al eliminar el paciente: Database error");
+        });
+    
+    });
 
 });

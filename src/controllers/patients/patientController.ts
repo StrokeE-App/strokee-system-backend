@@ -4,7 +4,9 @@ import {
     addPatientIntoPatientCollection, 
     addEmergencyToCollection, 
     getAllEmergencyContactFromCollection,
-    updatePatientFromCollection 
+    updatePatientFromCollection,
+    getPatientFromCollection,
+    deletePatientFromCollection
 } from "../../services/patients/patientService";
 
 export const registerPatient = async (req: Request, res: Response, next: NextFunction) => {
@@ -138,6 +140,43 @@ export const updatePatient = async (req: Request, res: Response, next: NextFunct
     const patientData = req.body;
     try {
         const result = await updatePatientFromCollection(patientId, patientData);
+        if (result.success) {
+            res.status(200).json({
+                message: result.message,
+            });
+        } else {
+            res.status(400).json({
+                message: result.message,
+            });
+        }
+    } catch (error) {
+        next(error);
+    }
+}
+
+export const getPatient = async (req: Request, res: Response, next: NextFunction) => {
+    const { patientId } = req.params;
+    try {
+        const result = await getPatientFromCollection(patientId);
+        if (result.success) {
+            res.status(200).json({
+                message: result.message,
+                data: result.data,
+            });
+        } else {
+            res.status(400).json({
+                message: result.message,
+            });
+        }
+    } catch (error) {
+        next(error);
+    }
+}
+
+export const deletePatient = async (req: Request, res: Response, next: NextFunction) => {
+    const { patientId } = req.params;
+    try {
+        const result = await deletePatientFromCollection(patientId);
         if (result.success) {
             res.status(200).json({
                 message: result.message,

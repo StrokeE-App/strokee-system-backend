@@ -65,3 +65,166 @@ paths:
                   message:
                     type: string
                     example: "Error al agregar el administrador."
+  /admin/{adminId}:
+    get:
+      summary: Obtener un administrador por ID
+      description: Devuelve la información de un administrador específico.
+      tags:
+        - Admin
+      parameters:
+        - name: adminId
+          in: path
+          required: true
+          description: ID del administrador a buscar
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Administrador obtenido correctamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Administrador obtenido correctamente."
+                  admin:
+                    type: object
+                    properties:
+                      firstName:
+                        type: string
+                        example: "Juan"
+                      lastName:
+                        type: string
+                        example: "Pérez"
+                      email:
+                        type: string
+                        example: "juan.perez@example.com"
+        "400":
+          description: No se encontró el administrador
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "No se encontró el administrador."
+        "500":
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Error al obtener el administrador."
+  /admin/delete/{adminId}:
+    delete:
+      summary: Eliminar un administrador por ID
+      description: Elimina un administrador del sistema.
+      tags:
+        - Admin
+      parameters:
+        - name: adminId
+          in: path
+          required: true
+          description: ID del administrador a eliminar
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Administrador eliminado correctamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Administrador eliminado correctamente."
+        "400":
+          description: No se encontró el administrador o ya fue eliminado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "No se encontró el administrador o ya fue eliminado."
+        "500":
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Error al eliminar el administrador."
+  /admin/update/{adminId}:
+    put:
+      summary: Actualizar un administrador por ID
+      description: Modifica los datos de un administrador existente.
+      tags:
+        - Admin
+      parameters:
+        - name: adminId
+          in: path
+          required: true
+          description: ID del administrador a actualizar
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                  example: "Carlos"
+                lastName:
+                  type: string
+                  example: "González"
+                email:
+                  type: string
+                  example: "carlos.gonzalez@example.com"
+                phoneNumber:
+                  type: string
+                  example: "9876543210"
+      responses:
+        "200":
+          description: Administrador actualizado correctamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Administrador actualizado correctamente."
+        "400":
+          description: Error en la validación o administrador no encontrado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "No se encontró el administrador o ya fue eliminado."
+        "500":
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Error al actualizar el administrador."

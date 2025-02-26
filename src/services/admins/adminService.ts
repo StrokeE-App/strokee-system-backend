@@ -1,4 +1,8 @@
 import adminModel from "../../models/usersModels/adminModel";
+import patientModel from "../../models/usersModels/patientModel";
+import operatorModel from "../../models/usersModels/operatorModel";
+import paramedicModel from "../../models/usersModels/paramedicModel";
+import clinicModel from "../../models/usersModels/healthCenterModel";
 import rolesModel from "../../models/usersModels/rolesModel";
 import { firebaseAdmin } from "../../config/firebase-config";
 import { RegisterAdmin } from "./admin.dto";
@@ -107,4 +111,28 @@ export async function getAdmin(userId: string) {
         return { success: false, message: "Error al buscar el administrador." };
     }
 }
+export const getAllUsers = async () => {
+    try {
+        const [admins, operators, paramedics, patients, healthCenterStaffs] = await Promise.all([
+            adminModel.find({}),
+            operatorModel.find({}),
+            paramedicModel.find({}),
+            patientModel.find({}),
+            clinicModel.find({})
+        ]);
+
+        return {
+            success: true,
+            message: "Usuarios obtenidos correctamente.",
+            admins,
+            operators,
+            paramedics,
+            patients,
+            healthCenterStaffs
+        }
+    } catch (error) {
+        console.error(`Error al obtener los usuarios: ${error}`);
+        return { success: false, message: "Error al obtener los usuarios." };
+    }
+};
 
