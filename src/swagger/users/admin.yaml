@@ -1,4 +1,97 @@
 paths:
+  /admin/all:
+    get:
+      summary: Obtener todos los usuarios
+      description: Retorna una lista de todos los usuarios de la aplicación.
+      operationId: getAllAppUsers
+      tags:
+        - Admin
+      responses:
+        "200":
+          description: Lista de usuarios obtenida con éxito.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Usuarios obtenidos correctamente."
+                  users:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        _id:
+                          type: string
+                          example: "user-12345"
+                        operatorId:
+                          type: string
+                          example: "operator-12345"
+                        firstName:
+                          type: string
+                          example: "John"
+                        lastName:
+                          type: string
+                          example: "Doe"
+                        email:
+                          type: string
+                          format: email
+                          example: "eI4aA@example.com"
+                        role:
+                          type: string
+                          example: "operator"
+                    example:
+                      - _id: "user-12345"
+                        userId: "admin-12345"
+                        firstName: "John"
+                        lastName: "Doe"
+                        email: "eI4aA@example.com"
+                        role: "admin"
+                      - _id: "user-67890"
+                        userId: "operator-67890"
+                        firstName: "Jane"
+                        lastName: "Smith"
+                        email: "jane.smith@example.com"
+                        role: "operator"
+                      - _id: "user-98765"
+                        userId: "paramedic-98765"
+                        firstName: "Bob"
+                        lastName: "Johnson"
+                        email: "bob.johnson@example.com"
+                        role: "paramedic"
+                      - _id: "user-54321"
+                        userId: "patient-54321"
+                        firstName: "Alice"
+                        lastName: "Williams"
+                        email: "alice.williams@example.com"
+                        role: "patient"
+                      - _id: "user-43210"
+                        userId: "medic-43210"
+                        firstName: "Emily"
+                        lastName: "Brown" 
+                        email: "emily.brown@example.com"
+                        role: "clinic"
+        "400":
+          description: Error al obtener los usuarios.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "No se pudieron obtener los usuarios."
+        "500":
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Error inesperado en el servidor."
   /admin/register:
     post:
       summary: Registra un nuevo administrador

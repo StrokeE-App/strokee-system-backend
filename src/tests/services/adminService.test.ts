@@ -1,5 +1,9 @@
-import { registerAdminIntoCollection, deleteAdmin, getAdmin, updateAdmin } from "../../services/admins/adminService";
+import { registerAdminIntoCollection, deleteAdmin, getAdmin, updateAdmin, getAllUsers } from "../../services/admins/adminService";
 import adminModel from "../../models/usersModels/adminModel";
+import operatorModel from "../../models/usersModels/operatorModel";
+import paramedicModel from "../../models/usersModels/paramedicModel";
+import patientModel from "../../models/usersModels/patientModel";
+import clinicModel from "../../models/usersModels/healthCenterModel";
 import rolesModel from "../../models/usersModels/rolesModel";
 import { firebaseAdmin } from "../../config/firebase-config";
 import { adminSchema, updateAdminSchema } from "../../validationSchemas/adminSchema";
@@ -191,6 +195,44 @@ describe("registerAdminIntoCollection", () => {
     
             expect(result.success).toBe(false);
             expect(result.message).toBe("Error al buscar el administrador.");
+        });
+    });
+
+    describe("getAllUsers", () => {
+        afterEach(() => {
+            jest.clearAllMocks();
+        });
+    
+        it("debería obtener todos los usuarios correctamente", async () => {
+            const mockUsers = [
+                [{ adminId: "admin-1", firstName: "Admin", lastName: "One", email: "admin1@example.com", role: "Admin" }],
+                [{ operatorId: "operator-1", firstName: "Operator", lastName: "One", email: "operator1@example.com", role: "Operator" }],
+                [{ paramedicId: "paramedic-1", firstName: "Paramedic", lastName: "One", email: "paramedic1@example.com", role: "Paramedic" }],
+                [{ patientId: "patient-1", firstName: "Patient", lastName: "One", email: "patient1@example.com", role: "Patient" }],
+                [{ medicId: "clinic-1", firstName: "Doctor", lastName: "One", email: "doctor1@example.com", role: "Medic" }]
+            ];
+    
+            adminModel.aggregate = jest.fn().mockResolvedValue(mockUsers[0]);
+            operatorModel.aggregate = jest.fn().mockResolvedValue(mockUsers[1]);
+            paramedicModel.aggregate = jest.fn().mockResolvedValue(mockUsers[2]);
+            patientModel.aggregate = jest.fn().mockResolvedValue(mockUsers[3]);
+            clinicModel.aggregate = jest.fn().mockResolvedValue(mockUsers[4]);
+    
+            const result = await getAllUsers();
+    
+            expect(result.success).toBe(true);
+            expect(result.message).toBe("Usuarios obtenidos correctamente.");
+            expect(result.users).toHaveLength(5);
+            expect(result.users).toEqual(expect.arrayContaining(mockUsers.flat()));
+        });
+    
+        it("debería manejar errores internos correctamente", async () => {
+            adminModel.aggregate = jest.fn().mockRejectedValue(new Error("Error en la base de datos"));
+    
+            const result = await getAllUsers();
+    
+            expect(result.success).toBe(false);
+            expect(result.message).toBe("Error al obtener los usuarios.");
         });
     });
 });

@@ -1,5 +1,5 @@
-import { addAdmin, deleteAdminById, getAdminById, updateAdminById } from "../../controllers/admins/adminController";
-import { registerAdminIntoCollection, deleteAdmin, getAdmin, updateAdmin } from "../../services/admins/adminService";
+import { addAdmin, deleteAdminById, getAdminById, updateAdminById,getAllAppUsers } from "../../controllers/admins/adminController";
+import { registerAdminIntoCollection, deleteAdmin, getAdmin, updateAdmin, getAllUsers } from "../../services/admins/adminService";
 import { Request, Response, NextFunction } from "express";
 
 jest.mock("../../services/admins/adminService", () => ({
@@ -7,6 +7,7 @@ jest.mock("../../services/admins/adminService", () => ({
   deleteAdmin: jest.fn(),
   getAdmin: jest.fn(),
   updateAdmin: jest.fn(),
+  getAllUsers: jest.fn(),
 }));
 
 describe("addAdmin Controller", () => {
@@ -152,6 +153,44 @@ describe("addAdmin Controller", () => {
     (updateAdmin as jest.Mock).mockRejectedValue(new Error(errorMessage));
 
     await updateAdminById(req as Request, res as Response, next);
+
+    expect(next).toHaveBeenCalledWith(new Error(errorMessage));
+  });
+
+  it("debería retornar 200 y la lista de usuarios si la consulta es exitosa", async () => {
+    const result = {
+      success: true,
+      message: "Usuarios obtenidos correctamente.",
+      users: [{ id: "123", name: "John Doe" }],
+    };
+
+    (getAllUsers as jest.Mock).mockResolvedValue(result);
+
+    await getAllAppUsers(req as Request, res as Response, next);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({
+      message: result.message,
+      users: result.users,
+    });
+  });
+
+  it("debería retornar 400 si la consulta de usuarios falla", async () => {
+    const result = { success: false, message: "No se pudieron obtener los usuarios." };
+
+    (getAllUsers as jest.Mock).mockResolvedValue(result);
+
+    await getAllAppUsers(req as Request, res as Response, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ message: result.message });
+  });
+
+  it("debería llamar a next con un error si getAllUsers lanza una excepción", async () => {
+    const errorMessage = "Error al obtener los usuarios.";
+    (getAllUsers as jest.Mock).mockRejectedValue(new Error(errorMessage));
+
+    await getAllAppUsers(req as Request, res as Response, next);
 
     expect(next).toHaveBeenCalledWith(new Error(errorMessage));
   });

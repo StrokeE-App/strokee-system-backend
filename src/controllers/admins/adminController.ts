@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { registerAdminIntoCollection, deleteAdmin, getAdmin, updateAdmin } from "../../services/admins/adminService";
+import { registerAdminIntoCollection, deleteAdmin, getAdmin, updateAdmin, getAllUsers } from "../../services/admins/adminService";
 
 export const addAdmin = async (req: Request, res: Response, next: NextFunction) => {
     const adminData = req.body;
@@ -65,6 +65,24 @@ export const updateAdminById = async (req: Request, res: Response, next: NextFun
         if (result.success) {
             res.status(200).json({
                 message: result.message,
+            });
+        } else {
+            res.status(400).json({
+                message: result.message,
+            });
+        }
+    } catch (error) {
+        next(error);
+    }
+}
+
+export const getAllAppUsers = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        const result = await getAllUsers();
+        if (result.success) {
+            res.status(200).json({
+                message: result.message,
+                users: result.users
             });
         } else {
             res.status(400).json({

@@ -113,26 +113,120 @@ export async function getAdmin(userId: string) {
 }
 export const getAllUsers = async () => {
     try {
-        const [admins, operators, paramedics, patients, healthCenterStaffs] = await Promise.all([
-            adminModel.find({}),
-            operatorModel.find({}),
-            paramedicModel.find({}),
-            patientModel.find({}),
-            clinicModel.find({})
+        const users = await Promise.all([
+            adminModel.aggregate([
+                { 
+                    $lookup: {
+                        from: "userroles",
+                        localField: "adminId",
+                        foreignField: "userId",
+                        as: "roleData"
+                    }
+                },
+                { $unwind: { path: "$roleData", preserveNullAndEmptyArrays: true } },
+                { 
+                    $project: {
+                        userId: "$adminId", // Mantén el campo para referenciar al usuario
+                        firstName: 1, // Ajusta según los campos relevantes
+                        lastName: 1,
+                        email: 1,
+                        role: { $ifNull: ["$roleData.role", "Sin rol"] } // Agrega el rol y maneja valores nulos
+                    }
+                }
+            ]),
+            operatorModel.aggregate([
+                { 
+                    $lookup: {
+                        from: "userroles",
+                        localField: "operatorId",
+                        foreignField: "userId",
+                        as: "roleData"
+                    }
+                },
+                { $unwind: { path: "$roleData", preserveNullAndEmptyArrays: true } },
+                { 
+                    $project: {
+                        userId: "$operatorId",
+                        firstName: 1,
+                        lastName: 1,
+                        email: 1,
+                        role: { $ifNull: ["$roleData.role", "Sin rol"] }
+                    }
+                }
+            ]),
+            paramedicModel.aggregate([
+                { 
+                    $lookup: {
+                        from: "userroles",
+                        localField: "paramedicId",
+                        foreignField: "userId",
+                        as: "roleData"
+                    }
+                },
+                { $unwind: { path: "$roleData", preserveNullAndEmptyArrays: true } },
+                { 
+                    $project: {
+                        userId: "$paramedicId",
+                        firstName: 1,
+                        lastName: 1,
+                        email: 1,
+                        role: { $ifNull: ["$roleData.role", "Sin rol"] }
+                    }
+                }
+            ]),
+            patientModel.aggregate([
+                { 
+                    $lookup: {
+                        from: "userroles",
+                        localField: "patientId",
+                        foreignField: "userId",
+                        as: "roleData"
+                    }
+                },
+                { $unwind: { path: "$roleData", preserveNullAndEmptyArrays: true } },
+                { 
+                    $project: {
+                        userId: "$patientId",
+                        firstName: 1,
+                        lastName: 1,
+                        email: 1,
+                        role: { $ifNull: ["$roleData.role", "Sin rol"] }
+                    }
+                }
+            ]),
+            clinicModel.aggregate([
+                { 
+                    $lookup: {
+                        from: "userroles",
+                        localField: "medicId",
+                        foreignField: "userId",
+                        as: "roleData"
+                    }
+                },
+                { $unwind: { path: "$roleData", preserveNullAndEmptyArrays: true } },
+                { 
+                    $project: {
+                        userId: "$medicId",
+                        firstName: 1,
+                        lastName: 1,
+                        email: 1,
+                        role: { $ifNull: ["$roleData.role", "Sin rol"] }
+                    }
+                }
+            ])
         ]);
+
+        const userArray = users.flat(); // Unir los arrays en una sola lista
 
         return {
             success: true,
             message: "Usuarios obtenidos correctamente.",
-            admins,
-            operators,
-            paramedics,
-            patients,
-            healthCenterStaffs
-        }
+            users: userArray
+        };
     } catch (error) {
         console.error(`Error al obtener los usuarios: ${error}`);
         return { success: false, message: "Error al obtener los usuarios." };
     }
 };
+
 
