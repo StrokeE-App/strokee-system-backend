@@ -1,9 +1,12 @@
 import { Router } from "express";
 import { verifyTokenWithRole } from "../middlewares/authMiddleware";
-import { addHealthCenter } from "../controllers/healthCenterStaff/healthCenterController";
+import { addHealthCenter, getHealthCenter, deleteHealthCenter, updateHealthCenter } from "../controllers/healthCenterStaff/healthCenterController";
 
 const router = Router()
 
 router.post("/register", addHealthCenter);
+router.get("/:medicId", verifyTokenWithRole(["admin", "clinic"]), getHealthCenter);
+router.put("/update/:medicId", verifyTokenWithRole(["admin", "clinic"]), updateHealthCenter);
+router.delete("/delete/:medicId", verifyTokenWithRole(["admin", "clinic"]), deleteHealthCenter);
 
 export default router;

@@ -2,10 +2,9 @@ import healthCenterModel from "../../models/usersModels/healthCenterModel";
 import rolesModel from "../../models/usersModels/rolesModel";
 import { firebaseAdmin } from "../../config/firebase-config";
 import { AddHealthCenterStaff } from "./healthCenter.dto";
-import { healthCenterStaffSchema } from "../../validationSchemas/healthCenterStaff";
+import { healthCenterStaffSchema, updateHealthCenterStaffSchema } from "../../validationSchemas/healthCenterStaff";
 
 export async function addHealthCenterIntoCollection(healthCenterStaff: AddHealthCenterStaff) {
-    
     try {
         console.log(healthCenterStaff);
         const { error } = healthCenterStaffSchema.validate(healthCenterStaff);
@@ -16,7 +15,7 @@ export async function addHealthCenterIntoCollection(healthCenterStaff: AddHealth
         const healthCenterStaffExists = await healthCenterModel.findOne({ email: healthCenterStaff.email });
         console.log(healthCenterStaffExists);
         if (healthCenterStaffExists) {
-            return { success: false, message: "El correo electrónico ya esta registrado." };
+            return { success: false, message: "El correo electrónico ya está registrado." };
         }
 
         const user = await firebaseAdmin.createUser({
@@ -25,7 +24,7 @@ export async function addHealthCenterIntoCollection(healthCenterStaff: AddHealth
         });
 
         const newHealthCenter = new healthCenterModel({
-            medicId: user.uid,  
+            medicId: user.uid,
             firstName: healthCenterStaff.firstName,
             lastName: healthCenterStaff.lastName,
             email: healthCenterStaff.email,
@@ -35,15 +34,78 @@ export async function addHealthCenterIntoCollection(healthCenterStaff: AddHealth
         await newHealthCenter.save();
         await rolesModel.create({
             userId: newHealthCenter.medicId,
-            role: "healthCenterStaff",
-            allowedApps: ["healthCenter"],
+            role: "clinic",
+            allowedApps: ["clinics"],
             isDeleted: false,
         });
-        
+
         return { success: true, message: "Integrante de centro de salud agregado correctamente.", healthCenterId: newHealthCenter.medicId };
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "Error";
         console.error(`Error al agregar el centro de salud: ${errorMessage}`);
         return { success: false, message: `Error al agregar el integrante de centro de salud: ${errorMessage}` };
+    }
+}
+
+export async function deleteHealthCenterStaff(userId: string) {
+    try {
+
+        const exisistingHealthCenterStaff = await healthCenterModel.findOne({ medicId: userId, isDeleted: false });
+
+        if (!exisistingHealthCenterStaff) {
+            return { success: false, message: "No se encontró el integrante del centro de salud o ya fue eliminado." };
+        }
+
+        await healthCenterModel.deleteOne({ medicId: userId, isDeleted: false });
+
+        await firebaseAdmin.deleteUser(userId);
+
+        await rolesModel.deleteOne({ userId: userId });
+
+        return { success: true, message: "Integrante de centro de salud eliminado correctamente." };
+    } catch (error) {
+        console.error(`Error al eliminar el integrante: ${error}`);
+        return { success: false, message: "Error al eliminar el integrante del centro de salud." };
+    }
+}
+
+export async function updateHealthCenterStaff(userId: string, updateData: Partial<AddHealthCenterStaff>) {
+    try {
+
+        const { error } = updateHealthCenterStaffSchema.validate(updateData);
+
+        if (error) {
+            return { success: false, message: `Error de validación: ${error.details[0].message}` };
+        }
+
+        const updatedHealthCenterStaff = await healthCenterModel.findOneAndUpdate(
+            { medicId: userId, isDeleted: false },
+            updateData,
+            { new: true }
+        );
+
+        if (!updatedHealthCenterStaff) {
+            return { success: false, message: "No se encontró el integrante del centro de salud o ya fue eliminado." };
+        }
+
+        return { success: true, message: "Integrante de centro de salud actualizado correctamente.", updatedHealthCenterStaff };
+    } catch (error) {
+        console.error(`Error al actualizar el integrante: ${error}`);
+        return { success: false, message: "Error al actualizar el integrante del centro de salud." };
+    }
+}
+
+export async function getHealthCenterStaff(userId: string) {
+    try {
+        const healthCenterStaff = await healthCenterModel.findOne({ medicId: userId, isDeleted: false }, { _id: 0, medicId: 0, isDeleted: 0, createdAt: 0, updatedAt: 0 });
+
+        if (!healthCenterStaff) {
+            return { success: false, message: "No se encontró el integrante del centro de salud." };
+        }
+
+        return { success: true, message: "Integrante de centro de salud obtenido correctamente.", healthCenterStaff };
+    } catch (error) {
+        console.error(`Error al buscar el integrante: ${error}`);
+        return { success: false, message: "Error al buscar el integrante del centro de salud." };
     }
 }
