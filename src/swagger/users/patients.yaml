@@ -266,8 +266,8 @@ paths:
                 birthDate:
                   type: string
                   format: date
-                  description: Fecha de nacimiento del paciente en formato MM/DD/YYYY.
-                  example: "02/29/2024"
+                  description: Fecha de nacimiento del paciente en formato YYYY-MM-DD.
+                  example: "1995-01-01"
                 weight:
                   type: number
                   format: float
