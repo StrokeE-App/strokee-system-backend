@@ -1,11 +1,13 @@
-import { addHealthCenterIntoCollection, deleteHealthCenterStaff, updateHealthCenterStaff, getHealthCenterStaff } from "../../services/healthCenterStaff/healthCenterService";
+import { addHealthCenterIntoCollection, deleteHealthCenterStaff, updateHealthCenterStaff, getHealthCenterStaff, getPatientDeliverdToHealthCenter  } from "../../services/healthCenterStaff/healthCenterService";
 import healthCenterModel from "../../models/usersModels/healthCenterModel";
 import rolesModel from "../../models/usersModels/rolesModel";
+import emergencyModel from "../../models/emergencyModel";
 import { firebaseAdmin } from "../../config/firebase-config";
 import { healthCenterStaffSchema, updateHealthCenterStaffSchema  } from "../../validationSchemas/healthCenterStaff";
 
 jest.mock("../../models/usersModels/healthCenterModel");
 jest.mock("../../models/usersModels/rolesModel");
+jest.mock("../../models/emergencyModel");
 jest.mock("../../config/firebase-config");
 
 const mockSave = jest.fn().mockResolvedValue({});
@@ -215,6 +217,59 @@ describe("addHealthCenterIntoCollection", () => {
     
             expect(result.success).toBe(false);
             expect(result.message).toBe("Error al buscar el integrante del centro de salud.");
+        });
+    });
+    describe("getPatientDeliverdToHealthCenter", () => {
+        afterEach(() => {
+            jest.clearAllMocks();
+        });
+    
+        it("debería retornar un error 400 si no se proporciona emergencyId", async () => {
+            const result = await getPatientDeliverdToHealthCenter("");
+    
+            expect(result.success).toBe(false);
+            expect(result.code).toBe(400);
+            expect(result.message).toBe("El ID de la emergencia es obligatorio.");
+        });
+    
+        it("debería retornar un error 404 si la emergencia no se encuentra", async () => {
+            emergencyModel.updateOne = jest.fn().mockResolvedValue({ matchedCount: 0 });
+    
+            const result = await getPatientDeliverdToHealthCenter("12345");
+    
+            expect(emergencyModel.updateOne).toHaveBeenCalledWith(
+                { emergencyId: "12345" },
+                { $set: { status: "DELIVERED" } },
+                { upsert: false }
+            );
+            expect(result.success).toBe(false);
+            expect(result.code).toBe(404);
+            expect(result.message).toBe("No se encontró una emergencia con ese ID.");
+        });
+    
+        it("debería actualizar correctamente el estado de la emergencia", async () => {
+            emergencyModel.updateOne = jest.fn().mockResolvedValue({ matchedCount: 1 });
+    
+            const result = await getPatientDeliverdToHealthCenter("12345");
+    
+            expect(emergencyModel.updateOne).toHaveBeenCalledWith(
+                { emergencyId: "12345" },
+                { $set: { status: "DELIVERED" } },
+                { upsert: false }
+            );
+            expect(result.success).toBe(true);
+            expect(result.code).toBe(200);
+            expect(result.message).toBe("Emergencia entregada correctamente.");
+        });
+    
+        it("debería manejar errores internos correctamente", async () => {
+            emergencyModel.updateOne = jest.fn().mockRejectedValue(new Error("Error de conexión"));
+    
+            const result = await getPatientDeliverdToHealthCenter("12345");
+    
+            expect(result.success).toBe(false);
+            expect(result.code).toBe(500);
+            expect(result.message).toBe("Error interno del servidor.");
         });
     });
 });
