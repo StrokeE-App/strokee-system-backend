@@ -1,4 +1,5 @@
 import healthCenterModel from "../../models/usersModels/healthCenterModel";
+import emergencyModel from "../../models/emergencyModel";
 import rolesModel from "../../models/usersModels/rolesModel";
 import { firebaseAdmin } from "../../config/firebase-config";
 import { AddHealthCenterStaff } from "./healthCenter.dto";
@@ -107,5 +108,28 @@ export async function getHealthCenterStaff(userId: string) {
     } catch (error) {
         console.error(`Error al buscar el integrante: ${error}`);
         return { success: false, message: "Error al buscar el integrante del centro de salud." };
+    }
+}
+
+export async function getPatientDeliverdToHealthCenter(emergencyId: string) {
+    try {
+        if (!emergencyId) {
+            return { success: false, code: 400, message: "El ID de la emergencia es obligatorio." };
+        }
+
+        const emergencyDelivered = await emergencyModel.updateOne(
+            { emergencyId },
+            { $set: { status: "DELIVERED" } },
+            { upsert: false }
+        );
+
+        if (emergencyDelivered.matchedCount === 0) {
+            return { success: false, code: 404, message: "No se encontró una emergencia con ese ID." };
+        }
+
+        return { success: true, code: 200, message: "Emergencia entregada correctamente." };
+    } catch (error) {
+        console.error(`Error al entregar la emergencia: ${error}`);
+        return { success: false, code: 500, message: "Error interno del servidor." };
     }
 }
