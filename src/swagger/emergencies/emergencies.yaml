@@ -47,7 +47,7 @@ paths:
                           example: 20
                         status:
                           type: string
-                          example: 'ACTIVE'
+                          example: 'CONFIRMED'
                         patient:
                           type: object
                           properties:

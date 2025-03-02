@@ -130,7 +130,7 @@ export const updateEmergencyPickUpFromCollection = async (
 
         const updateResult = await emergencyModel.updateOne(
             { emergencyId },
-            { $set: { pickupDate: parsedPickUpDate.toISOString() } },
+            { $set: { pickupDate: parsedPickUpDate.toISOString(), status: "CONFIRMED" } },
             { upsert: false }
         );
 
@@ -145,7 +145,7 @@ export const updateEmergencyPickUpFromCollection = async (
         const message = {
             emergencyId,
             pickupDate: parsedPickUpDate.toISOString(),
-            status: "ACTIVE",
+            status: "CONFIRMED",
         };
 
         await publishToExchange("paramedic_exchange", "paramedic_update_queue", message);

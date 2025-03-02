@@ -171,7 +171,7 @@ describe('addOperatorIntoCollection', () => {
             expect(result.message).toBe('Emergencia confirmada y mensaje enviado.');
             expect(emergencyModel.updateOne).toHaveBeenCalledWith(
                 { emergencyId: 'emergency123' },
-                { $set: { status: 'ACTIVE', ambulanceId: 'ambulance123' } },
+                { $set: { status: 'TO_AMBULANCE', ambulanceId: 'ambulance123' } },
                 { upsert: false }
             );
         });
