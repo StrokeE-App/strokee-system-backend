@@ -120,7 +120,7 @@ export const updateEmergencyPickUpFromCollectionOperator = async (
 
         const updateResult = await emergencyModel.updateOne(
             { emergencyId },
-            { $set: { status: "ACTIVE", ambulanceId: ambulanceId } },
+            { $set: { status: "TO_AMBULANCE", ambulanceId: ambulanceId } },
             { upsert: false }
         );
 
@@ -134,7 +134,7 @@ export const updateEmergencyPickUpFromCollectionOperator = async (
 
         const message = {
             emergencyId,
-            status: "ACTIVE",
+            status: "TO_AMBULANCE",
             ambulanceId
         };
 
