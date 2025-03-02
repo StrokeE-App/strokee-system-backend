@@ -10,7 +10,6 @@ export const getEmergencyFromCollection = async (emergencyId: string) => {
             { 
                 $match: { 
                     emergencyId: emergencyId, 
-                    status: "ACTIVE" 
                 } 
             },
             { 
