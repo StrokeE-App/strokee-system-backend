@@ -22,10 +22,11 @@ export const patientSchema = Joi.object({
         "number.base": "La edad debe ser un número.",
         "any.required": "La edad es obligatoria."
     }),
-    birthDate: Joi.string().pattern(/^\d{2}\/\d{2}\/\d{4}$/).required().messages({
-        "string.pattern.base": "La fecha de nacimiento debe tener el formato DD/MM/AAAA.",
-        "any.required": "La fecha de nacimiento es obligatoria."
-    }),
+    birthDate: Joi.string().pattern(/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/).required()
+        .messages({
+           "string.pattern.base": "La fecha de nacimiento debe tener el formato YYYY-MM-DD.",
+            "any.required": "La fecha de nacimiento es obligatoria."
+        }),
     weight: Joi.number().required().messages({
         "number.base": "El peso debe ser un número.",
         "any.required": "El peso es obligatorio."
