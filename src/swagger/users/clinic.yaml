@@ -216,3 +216,64 @@ paths:
                   message:
                     type: string
                     example: "Error al eliminar el integrante del centro de salud."
+  /healthCenter/deliver-patient:
+    post:
+      summary: Marcar una emergencia como entregada
+      description: Actualiza el estado de una emergencia a "DELIVERED" en la base de datos.
+      tags:
+        - Clinic
+      operationId: deliverPatient
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - emergencyId
+              properties:
+                emergencyId:
+                  type: string
+                  example: "emergency-123"
+                  description: ID único de la emergencia a entregar.
+      responses:
+        "200":
+          description: La emergencia fue entregada correctamente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Emergencia entregada correctamente."
+        "400":
+          description: Falta el ID de la emergencia en la solicitud o es inválido.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "El ID de la emergencia es obligatorio."
+        "404":
+          description: No se encontró una emergencia con el ID proporcionado.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "No se encontró una emergencia con ese ID."
+        "500":
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Error interno del servidor."
