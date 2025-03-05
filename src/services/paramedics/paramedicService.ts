@@ -1,12 +1,15 @@
 import paramedicModel from "../../models/usersModels/paramedicModel";
 import emergencyModel from "../../models/emergencyModel";
 import rolesModel from "../../models/usersModels/rolesModel";
+import Patient from "../../models/usersModels/patientModel";
 import { publishToExchange } from "../publisherService";
 import { firebaseAdmin } from "../../config/firebase-config";
 import { isValidFirstName, isValidLastName, isValidEmail, isValidPassword } from "../utils";
 import { ParamedicUpdate } from "./paramedic.dto";
 import { paramedicSchema } from "../../validationSchemas/paramedicSchemas";
- 
+import { sendNotification } from "../mail";
+import { getAllEmergencyContactFromCollection } from "../patients/patientService";
+
 export const validateParamedicFields = (
     ambulanceId: string,
     firstName: string,
@@ -128,18 +131,14 @@ export const updateEmergencyPickUpFromCollection = async (
             return { success: false, message: "La fecha de recogida no es válida." };
         }
 
-        const updateResult = await emergencyModel.updateOne(
+        const updatedEmergency = await emergencyModel.findOneAndUpdate(
             { emergencyId },
             { $set: { pickupDate: parsedPickUpDate.toISOString(), status: "CONFIRMED" } },
-            { upsert: false }
+            { new: true }
         );
 
-        if (updateResult.matchedCount === 0) {
+        if (!updatedEmergency) {
             return { success: false, message: "No se encontró una emergencia con ese ID." };
-        }
-
-        if (updateResult.modifiedCount === 0) {
-            return { success: false, message: "No se realizaron cambios en la emergencia." };
         }
 
         const message = {
@@ -149,6 +148,19 @@ export const updateEmergencyPickUpFromCollection = async (
         };
 
         await publishToExchange("paramedic_exchange", "paramedic_update_queue", message);
+
+        const patient = await Patient.findOne({ patientId: updatedEmergency.patientId });
+        if (!patient) {
+            return { success: false, message: "No se encontró un paciente con ese ID." };
+        }
+
+        const listEmergencyContacts = await getAllEmergencyContactFromCollection(patient.patientId);
+
+        if (listEmergencyContacts.data && listEmergencyContacts.data.length > 0) {
+            listEmergencyContacts.data.forEach((contact) => {
+              sendNotification(contact.email, patient.firstName, patient.lastName);
+            })
+          }
 
         return { success: true, message: "Emergencia confirmada y mensaje enviado." };
     } catch (error) {
