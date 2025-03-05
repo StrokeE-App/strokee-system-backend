@@ -7,15 +7,18 @@ import {
     getParamedicsFromCollection,
     deleteParamedicsFromCollection
 } from '../../services/paramedics/paramedicService';
+import { getAllEmergencyContactFromCollection } from '../../services/patients/patientService';
 import paramedicModel from '../../models/usersModels/paramedicModel';
 import rolesModel from '../../models/usersModels/rolesModel';
+import Patient from '../../models/usersModels/patientModel';
 import emergencyModel from '../../models/emergencyModel';
+import { sendNotification } from '../../services/mail';
 import { firebaseAdmin } from "../../config/firebase-config";
 import * as messagePublisher from '../../services/publisherService';
 
 jest.mock('../../models/usersModels/paramedicModel');
-jest.mock('../../models/emergencyModel');
 jest.mock('../../models/usersModels/patientModel');
+jest.mock('../../models/emergencyModel');
 jest.mock('../../config/firebase-config');
 jest.mock('../../models/usersModels/rolesModel', () => ({
     deleteOne: jest.fn(),
@@ -23,6 +26,11 @@ jest.mock('../../models/usersModels/rolesModel', () => ({
     ...jest.requireActual('../../services/publisherService'),
     publishToExchange: jest.fn() // Mock the specific method
 }));
+
+jest.mock('../../services/mail', () => ({
+    sendNotification: jest.fn(),
+}));
+jest.mock('../../services/patients/patientService');
 
 describe('Paramedic', () => {
     it('should return "ambulanceId" when ambulanceId is missing', () => {
@@ -170,27 +178,28 @@ describe('Paramedic', () => {
             expect(result.message).toBe('La fecha de recogida no es válida.');
         });
 
-        it('should update the pickup date successfully', async () => {
-            const mockUpdate = jest.fn().mockResolvedValue({ nModified: 1 });
-            emergencyModel.updateOne = mockUpdate;
-            const mockPublish = jest.fn().mockResolvedValue(true);
-            jest.spyOn(messagePublisher, 'publishToExchange').mockResolvedValue(undefined);
-
-            const result = await updateEmergencyPickUpFromCollection('emergency123', '2025-01-01T10:00:00Z');
+        it('should confirm emergency and send notifications when successful', async () => {
+            (emergencyModel.findOneAndUpdate as jest.Mock).mockResolvedValue({ emergencyId: 'emergency123', patientId: 'patient123' });
+            (Patient.findOne as jest.Mock).mockResolvedValue({ patientId: 'patient123', firstName: 'John', lastName: 'Doe' });
+            (getAllEmergencyContactFromCollection as jest.Mock).mockResolvedValue({ data: [{ email: 'contact@example.com' }] });
+            
+            const result = await updateEmergencyPickUpFromCollection('emergency123', '2024-03-05T12:00:00Z');
+            
             expect(result.success).toBe(true);
             expect(result.message).toBe('Emergencia confirmada y mensaje enviado.');
-            expect(mockUpdate).toHaveBeenCalledWith(
-                { emergencyId: 'emergency123' },
-                { $set: { pickupDate: '2025-01-01T10:00:00.000Z', status: 'CONFIRMED' } },
-                { upsert: false }
+            expect(messagePublisher.publishToExchange).toHaveBeenCalledWith(
+                'paramedic_exchange', 'paramedic_update_queue',
+                { emergencyId: 'emergency123', pickupDate: '2024-03-05T12:00:00.000Z', status: 'CONFIRMED' }
             );
+            expect(sendNotification).toHaveBeenCalledWith('contact@example.com', 'John', 'Doe');
         });
-
+        
         it('should handle errors gracefully', async () => {
             const mockError = new Error('Database error');
-            emergencyModel.updateOne = jest.fn().mockRejectedValue(mockError);
-
+            emergencyModel.findOneAndUpdate = jest.fn().mockRejectedValue(mockError);
+        
             const result = await updateEmergencyPickUpFromCollection('emergency123', '2025-01-01T10:00:00Z');
+        
             expect(result.success).toBe(false);
             expect(result.message).toBe('Error al actualizar la hora de recogida: Database error');
         });
