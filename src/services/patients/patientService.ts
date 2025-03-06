@@ -10,6 +10,7 @@ import { firebaseAdmin } from "../../config/firebase-config";
 import { validateEmergencyContactData } from "./emergencyContactsService";
 import { patientSchema } from "../../validationSchemas/patientShemas";
 import { PatientUpdate } from "./patient.dto";
+import { sendMessage } from "../whatsappService";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -206,6 +207,8 @@ export const addEmergencyToCollection = async (patientId: string): Promise<{ suc
         });
 
         const savedEmergency = await newEmergency.save();
+
+        await sendMessage(existingPatient.firstName, existingPatient.lastName, existingPatient.phoneNumber);
 
         const message = {
             emergencyId,
