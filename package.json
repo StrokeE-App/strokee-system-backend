@@ -24,6 +24,7 @@
   "homepage": "https://github.com/CarlosAC-29/strokee-system-backend#readme",
   "devDependencies": {
     "@types/amqplib": "^0.10.6",
+    "@types/twilio": "^3.19.2",
     "@types/body-parser": "^1.19.5",
     "@types/cookie-parser": "^1.4.8",
     "@types/cors": "^2.8.17",
