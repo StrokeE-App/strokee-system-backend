@@ -11,7 +11,6 @@ import { validateEmergencyContactData } from "./emergencyContactsService";
 import { patientSchema } from "../../validationSchemas/patientShemas";
 import { PatientUpdate } from "./patient.dto";
 import dotenv from "dotenv";
-import { sendMessage } from "../whatsappService";
 
 dotenv.config();
 
@@ -214,7 +213,6 @@ export const addEmergencyToCollection = async (patientId: string): Promise<{ suc
         };
 
         await publishToExchange("patient_exchange", "patient_report_queue", message);
-        await sendMessage(existingPatient.firstName, existingPatient.lastName, existingPatient.phoneNumber);
         return { success: true, message: "Emergencia creada exitosamente.", emergencyId: savedEmergency.emergencyId };
 
     } catch (error) {
