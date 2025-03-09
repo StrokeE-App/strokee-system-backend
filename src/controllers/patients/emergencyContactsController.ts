@@ -4,7 +4,9 @@ import {
     addEmergencyContactIntoCollection,
     getEmergencyContactFromCollection,
     updateEmergencyContactFromCollection,
-    deleteEmergencyContactFromCollection
+    deleteEmergencyContactFromCollection,
+    sendEmailToRegisterEmergencyContact,
+    registerEmergencyContactToActivateEmergencyIntoCollection
 } from "../../services/patients/emergencyContactsService";
 
 const validateEmergencyContactDataController = (contacts: any[]): string | null => {
@@ -112,6 +114,37 @@ export const deleteEmergencyContact = async (req: Request, res: Response, next: 
             res.status(400).json({
                 message: result.message,
             });
+        }
+    } catch (error) {
+        next(error);
+    }
+}
+
+export const sendActivationEmail = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { email, patientId, emergencyContactId } = req.body;
+        const result = await sendEmailToRegisterEmergencyContact(patientId, emergencyContactId, email);
+        if (result.success) {
+            res.status(200).json({ message: result.message });
+        } else {
+            res.status(400).json({ message: result.message });
+        }
+    } catch (error) {
+        next(error);
+    }
+}
+
+export const registerEmergencyContactToStartEmergency = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { firstName, lastName, email, password, phoneNumber, verificationToken, verification_code } = req.body;
+        const body = { firstName, lastName, email, phoneNumber, verificationToken, verification_code, password };
+
+        const result = await registerEmergencyContactToActivateEmergencyIntoCollection(body, verificationToken);
+
+        if (result.success) {
+            res.status(200).json({ message: result.message });
+        } else {
+            res.status(400).json({ message: result.message });
         }
     } catch (error) {
         next(error);

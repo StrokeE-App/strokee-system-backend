@@ -6,13 +6,25 @@ import {
     getPatientEmergencyContacts,
     updatePatient,
     getPatient,
-    deletePatient
+    deletePatient,
+    registerEmergencyContact
  } from "../controllers/patients/patientController";
-import { validateListofEmergencyContacts, addEmergencyContact, getEmergencyContact, updateEmergencyContact, deleteEmergencyContact } from "../controllers/patients/emergencyContactsController";
+import { 
+    validateListofEmergencyContacts, 
+    addEmergencyContact, 
+    getEmergencyContact, 
+    updateEmergencyContact, 
+    deleteEmergencyContact,
+    sendActivationEmail,
+    registerEmergencyContactToStartEmergency
+} from "../controllers/patients/emergencyContactsController";
 import { verifyTokenWithRole } from "../middlewares/authMiddleware"
 const router = Router()
 
 router.get("/all", verifyTokenWithRole(['admin', 'patient']), getAllPatients);
+router.get("/register-emergency-contact", registerEmergencyContact);
+router.post("/register-emergency-contact-to-start-emergency", registerEmergencyContactToStartEmergency);
+router.post("/send-activation-email", sendActivationEmail);
 router.get("/:patientId", verifyTokenWithRole(['admin', 'patient']), getPatient);
 router.get("/emergency-contacts/all/:patientId", verifyTokenWithRole(['admin', 'patient']), getPatientEmergencyContacts);
 router.get("/emergency-contacts/:patientId/:contactId", verifyTokenWithRole(['admin', 'patient']), getEmergencyContact);

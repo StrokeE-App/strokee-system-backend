@@ -74,7 +74,7 @@ describe('addPatientIntoPatientCollection', () => {
                     email: "jane.doe@example.com",
                     phoneNumber: "1234567990",
                     relationship: "Friend",
-                    isDeleted: false
+                    canActivateEmergency: false
                 }
             ],
             ['medication1'],

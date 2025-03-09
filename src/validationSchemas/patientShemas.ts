@@ -44,3 +44,26 @@ export const patientSchema = Joi.object({
         "any.required": "Las condiciones son obligatorias."
     })
 });
+
+export const patientEmergencyContactSchema = Joi.object({
+    ...commonValidations,
+    verificationToken: Joi.string().required().messages({
+        "any.required": "El token de verificación es obligatorio."
+    }),
+    verification_code: Joi.string().required().messages({
+        "any.required": "El código de verificación es obligatorio."
+    }),
+    phoneNumber: Joi.string().length(10).pattern(/^\d+$/).required().messages({
+        "string.length": "El número de teléfono debe tener exactamente 10 dígitos.",
+        "string.pattern.base": "El número de teléfono solo debe contener números.",
+        "any.required": "El número de teléfono es obligatorio."
+    }),
+    email: Joi.string().email().required().messages({
+        "string.email": "El correo-elected debe ser valido.",
+        "any.required": "El correo-elected es obligatorio."
+    }),
+    password: Joi.string().min(8).required().messages({
+        "string.min": "La contraseña debe tener al menos 8 caracteres.",
+        "any.required": "La contraseña es obligatoria."
+    })
+})

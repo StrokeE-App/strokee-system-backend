@@ -8,6 +8,7 @@ export interface IPatient extends Document {
   email: string;
   phoneNumber: string;
   age: number;
+  emergencyContact: IEmergencyContact[];
   birthDate: Date;
   weight: number;
   height: number;
@@ -22,6 +23,7 @@ const PatientSchema: Schema = new Schema(
     firstName: { type: String, required: true },
     lastName: { type: String, required: true },
     email: { type: String, required: true, unique: true },
+    emergencyContact: { type: [Object], default: [] },
     phoneNumber: { type: String, required: true },
     age: { type: Number, required: true },
     birthDate: { type: Date, required: true },

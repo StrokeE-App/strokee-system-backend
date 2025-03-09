@@ -16,27 +16,31 @@ import creentialsRoute from './routes/creedentialsRoute'
 import errorHandler from "./middlewares/errorMiddleware"
 import dotenv from "dotenv";
 import cookieParser from 'cookie-parser';
-import amqp from 'amqplib'; 
+import amqp from 'amqplib';
+import path = require('path');
+import { createClient } from 'redis';
+
+
 
 dotenv.config();
 const app = express();
 const RABBITMQ_URL = process.env.RABBIT_MQ || 'amqp://localhost';
 
 const connectToMongo = () => {
-    
-    const MONGO_URI = process.env.MONGOURI!
-    
-    mongoose.Promise = Promise;
-    mongoose.connect(MONGO_URI)
-    mongoose.connection.on('connected', () => {
-        console.log('Connected to MongoDB');
-    }
-);
 
-mongoose.connection.on('error', (err) => {
+  const MONGO_URI = process.env.MONGOURI!
+
+  mongoose.Promise = Promise;
+  mongoose.connect(MONGO_URI)
+  mongoose.connection.on('connected', () => {
+    console.log('Connected to MongoDB');
+  }
+  );
+
+  mongoose.connection.on('error', (err) => {
     console.log('Error connecting to MongoDB', err);
-}
-);
+  }
+  );
 
 }
 
@@ -44,16 +48,39 @@ const connectToRabbitMQ = async () => {
   try {
     await amqp.connect(RABBITMQ_URL);
     console.log('Connected to RabbitMQ');
-    
+
   } catch (error) {
     console.error('Error connecting to RabbitMQ:', error);
   }
+};
+
+let redisClient: ReturnType<typeof createClient> | null = null;
+
+export const connectToRedis = async () => {
+  if (!redisClient) {
+    redisClient = createClient({
+      username: process.env.REDIS_USERNAME || '',
+      password: process.env.REDIS_PASSWORD || '',
+      socket: {
+        host: process.env.REDIS_SOCKET_HOST || 'localhost',
+        port: Number(process.env.REDIS_SOCKET_PORT) || 6379
+      }
+    });
+
+    redisClient.on('error', err => console.error('Redis Client Error', err));
+
+    await redisClient.connect();
+    console.log('Connected to Redis');
+  }
+
+  return redisClient;
 };
 
 connectToMongo()
 connectToRabbitMQ()
 
 
+app.use(express.static(path.join(__dirname, "../public")));
 app.use(cookieParser());
 app.use(cors({ credentials: true, origin: 'http://localhost:3000' }));
 app.use(bodyParser.json());

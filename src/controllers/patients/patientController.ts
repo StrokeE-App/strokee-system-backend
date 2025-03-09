@@ -1,13 +1,20 @@
 import { NextFunction, Request, Response } from "express";
-import { 
-    getAllPatientsFromCollection, 
-    addPatientIntoPatientCollection, 
-    addEmergencyToCollection, 
+import {
+    getAllPatientsFromCollection,
+    addPatientIntoPatientCollection,
+    addEmergencyToCollection,
     getAllEmergencyContactFromCollection,
     updatePatientFromCollection,
     getPatientFromCollection,
     deletePatientFromCollection
 } from "../../services/patients/patientService";
+import jwt from "jsonwebtoken";
+import path from "path";
+import dotenv from "dotenv";
+dotenv.config();
+
+const SECRET_KEY = process.env.SECRET_KEY_JWT || '';
+
 
 export const registerPatient = async (req: Request, res: Response, next: NextFunction) => {
     const {
@@ -94,9 +101,9 @@ export const creatEmergency = async (req: Request, res: Response, next: NextFunc
                 message: result.message,
             });
         }
-    }catch (error) {
+    } catch (error) {
         next(error);
-    }  
+    }
 }
 
 export const getPatientEmergencyContacts = async (req: Request, res: Response, next: NextFunction) => {
@@ -111,10 +118,10 @@ export const getPatientEmergencyContacts = async (req: Request, res: Response, n
 
         const result = await getAllEmergencyContactFromCollection(patientId)
 
-        console.log(result) 
+        console.log(result)
 
         if (result.success) {
-            if(!result.data) {
+            if (!result.data) {
                 res.status(404).json({ message: result.message });
                 return
             }
@@ -123,14 +130,14 @@ export const getPatientEmergencyContacts = async (req: Request, res: Response, n
                 data: result.data
             })
             return
-        }else{
+        } else {
             res.status(400).json({
                 message: result.message,
             });
         }
 
 
-    }catch (error) {
+    } catch (error) {
         next(error);
     }
 }
@@ -190,3 +197,23 @@ export const deletePatient = async (req: Request, res: Response, next: NextFunct
         next(error);
     }
 }
+
+export const registerEmergencyContact = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const { verificationId } = req.query;
+
+    if (!verificationId) {
+        console.error("Token no proporcionado.");
+        res.status(400).send("Token no proporcionado.");
+        return;
+    }
+
+    const token = verificationId as string;
+    
+    try {
+        const decodedToken = jwt.decode(token);
+        res.sendFile(path.join(__dirname, "../../../public/registerEmergencyContact.html"));
+    } catch (error) {
+        console.error("Token inválido:", error);
+        res.status(401).send("Url inválida o expirada.");
+    }
+};

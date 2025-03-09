@@ -94,6 +94,7 @@ export const addPatientIntoPatientCollection = async (
 
         for (const contact of emergencyContact) {
             contact.emergencyContactId = uuidv4();
+            contact.canActivateEmergency = false;
         }
 
         patientRecord = await firebaseAdmin.createUser({ email, password });
@@ -108,6 +109,7 @@ export const addPatientIntoPatientCollection = async (
             email,
             phoneNumber,
             age,
+            emergencyContact,
             birthDate,
             weight,
             height,
@@ -134,13 +136,6 @@ export const addPatientIntoPatientCollection = async (
             { $set: newRole },
             { upsert: true, session }
         );
-
-        if (result.modifiedCount === 0 && addRole.modifiedCount === 0) {
-            await new patientEmergencyContactModel({
-                patientId: patientRecord.uid,
-                emergencyContact
-            }).save({ session });
-        }
 
         await session.commitTransaction();
         session.endSession();
@@ -225,14 +220,14 @@ export const addEmergencyToCollection = async (patientId: string): Promise<{ suc
     }
 }
 
-export const getAllEmergencyContactFromCollection = async (patientId: string) => {
+export const getAllEmergencyContactFromCollection = async (patientId: string) : Promise<{ success: boolean, message: string, data: { email: string }[] | null }> => {
     try {
 
         if (!patientId) {
-            return { success: false, message: "El ID del paciente es obligatorio." };
+            return { success: false, message: "El ID del paciente es obligatorio.", data: null };
         }
 
-        const existingPatient = await patientEmergencyContactModel.findOne({ patientId: patientId }, { _id: 0, emergencyContact: 1 });
+        const existingPatient = await Patient.findOne({ patientId: patientId }, { _id: 0, emergencyContact: 1 });
         if (!existingPatient) {
             return { success: true, message: "No se encontró un paciente con ese ID.", data: null };
         }
@@ -242,7 +237,7 @@ export const getAllEmergencyContactFromCollection = async (patientId: string) =>
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "Error";
         console.error(`Error encontrar contactos de emergencia: ${errorMessage}`);
-        return { success: false, message: `Error encontrar contactos de emergencia: ${errorMessage}` };
+        return { success: false, message: `Error encontrar contactos de emergencia: ${errorMessage}`, data: null };
     }
 }
 
