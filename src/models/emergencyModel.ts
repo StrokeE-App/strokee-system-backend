@@ -9,6 +9,11 @@ export interface IEmeregency extends Document {
     ambulanceId: string;
     nihScale: string;
     status: string;
+    activatedBy: {
+        rol : string;
+        phoneNumber : string;
+        userId: string;
+    }
     patient?: {
         firstName: string;
         lastName: string;
@@ -21,6 +26,7 @@ export interface IEmeregency extends Document {
 const EmergencySchema: Schema = new Schema (
     {
         emergencyId: { type: String, required: true, unique: true },
+        activatedBy: { type: Object, required: true },
         startDate: { type: Date, required: true },
         pickupDate: { type: Date, required: false },
         deliveredDate: { type: Date, required: false },

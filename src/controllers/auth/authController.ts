@@ -32,6 +32,7 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
             res.status(200).json({
                 message: "Login exitoso.",
                 userId: sessionData.userId,
+                role: sessionData.role
             });
         }
     } catch (error) {

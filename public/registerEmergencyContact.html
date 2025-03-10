@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <title>Registro de Contacto de Emergencia</title>
     <style>
         body {
@@ -32,6 +33,65 @@
             gap: 1rem;
 
         }
+        .submit-btn {
+            display: absolute;
+            padding: 3rem;
+        }
+
+        .loader-cotainer{
+            width: 100%;
+            background-color: #09c372;
+        }
+
+        .loader-text{
+            height: 100%;
+            text-align: center;
+            line-height: 10px;
+        }
+
+        /* From Uiverse.io by barisdogansutcu */
+        #loader {
+            position: relative;
+            visibility: hidden;
+            bottom: 1.9rem;
+            left: 65%;
+            width: 8%;
+            transform-origin: center;
+            animation: rotate4 2s linear infinite;
+        }
+
+        circle {
+            fill: none;
+            stroke: hsl(0, 0%, 100%);
+            stroke-width: 4;
+            stroke-dasharray: 1, 200;
+            stroke-dashoffset: 0;
+            stroke-linecap: round;
+            animation: dash4 1.5s ease-in-out infinite;
+        }
+
+        @keyframes rotate4 {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes dash4 {
+            0% {
+                stroke-dasharray: 1, 200;
+                stroke-dashoffset: 0;
+            }
+
+            50% {
+                stroke-dasharray: 90, 200;
+                stroke-dashoffset: -35px;
+            }
+
+            100% {
+                stroke-dashoffset: -125px;
+            }
+        }
+
 
         #subtitle-befast {
             background-color: #D63A3A;
@@ -55,13 +115,16 @@
         }
 
         #form button {
-            padding: 10px;
+            padding: .8rem;
             margin-top: 10px;
             width: 100%;
             color: white;
             background-color: #D63A3A;
             border: none;
             border-radius: 4px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         #form button:hover {
@@ -322,7 +385,13 @@
                     <div class="error"></div>
                 </div>
             </div>
-            <button type="submit">Registrarme</button>
+            <div class="button-container">
+                <button id="submit-btn" type="submit" class="loader-cotainer"><span class="loader-text">Registrarme</span></div>
+                    <svg id="loader" viewBox="25 25 50 50">
+                        <circle r="20" cy="50" cx="50"></circle>
+                    </svg>
+                <div id="loading-spinner" class="spinner"></div>
+            </div>
         </form>
     </div>
     <script>
@@ -339,7 +408,15 @@
 
         form.addEventListener('submit', async e => {
             e.preventDefault();
+
             if (validateInputs()) {
+                const submitBtn = document.getElementById("submit-btn");
+                const spinner = document.getElementById("loader");
+
+                // Desactiva el botón y muestra la rueda de carga
+                submitBtn.disabled = true;
+                spinner.style.visibility = "visible";
+
                 const userData = {
                     verificationToken: verificationToken,
                     verification_code: verification_code.value.trim(),
@@ -362,17 +439,32 @@
                     });
 
                     if (response.ok) {
-                        alert('Registro exitoso');
+                        Swal.fire({
+                            title: "¡Registro Exitoso!",
+                            text: "Te has registrado correctamente como contacto de emergencia.",
+                            icon: "success",
+                            confirmButtonColor: "#D63A3A"
+                        });
                         form.reset();
                     } else {
                         const errorData = await response.json();
-                        alert(`Error: ${errorData.message}`);
+                        Swal.fire({
+                            title: "¡Registro Fallido!",
+                            text: errorData.message,
+                            icon: "error",
+                            confirmButtonColor: "#D63A3A"
+                        });
                     }
                 } catch (error) {
                     alert('Hubo un error al conectar con el servidor');
+                } finally {
+                    // Reactiva el botón y oculta la rueda de carga
+                    submitBtn.disabled = false;
+                    spinner.style.visibility = "hidden";
                 }
             }
         });
+
 
         const setError = (element, message) => {
             const inputControl = element.parentElement;

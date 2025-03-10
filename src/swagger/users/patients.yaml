@@ -441,3 +441,117 @@ paths:
                     example: "No se encontraron contactos de emergencia."
         "500":
           description: Error interno del servidor.
+  /patient/send-activation-email:
+    post:
+      summary: Enviar correo de activación al contacto de emergencia
+      description: Envia un email con un token de activación para el contacto de emergencia.
+      tags:
+        - Patients
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - patientId
+                - emergencyContactId
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: contacto@email.com
+                patientId:
+                  type: string
+                  example: "123456"
+                emergencyContactId:
+                  type: string
+                  example: "654321"
+      responses:
+        "200":
+          description: Correo enviado exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Se envió un correo de activación al contacto de emergencia."
+        "400":
+          description: Error al enviar el correo
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "No se pudo enviar el correo de activación."
+
+  /patient/register-emergency-contact:
+    post:
+      summary: Registrar contacto de emergencia y activar emergencia
+      description: Registra un contacto de emergencia usando un código de verificación y un token de activación.
+      tags:
+        - Patients
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - firstName
+                - lastName
+                - email
+                - password
+                - phoneNumber
+                - verificationToken
+                - verification_code
+              properties:
+                firstName:
+                  type: string
+                  example: "Juan"
+                lastName:
+                  type: string
+                  example: "Pérez"
+                email:
+                  type: string
+                  format: email
+                  example: contacto@email.com
+                password:
+                  type: string
+                  format: password
+                  example: "contraseñaSegura123"
+                phoneNumber:
+                  type: string
+                  example: "3001234567"
+                verificationToken:
+                  type: string
+                  example: "eyJhbGciOiJIUzI1NiIsInR5cCIg..."
+                verification_code:
+                  type: string
+                  example: "123456"
+      responses:
+        "200":
+          description: Contacto de emergencia registrado exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Contacto de emergencia registrado exitosamente."
+        "400":
+          description: Error en la validación o el código de verificación es incorrecto
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "El código de verificación es incorrecto."

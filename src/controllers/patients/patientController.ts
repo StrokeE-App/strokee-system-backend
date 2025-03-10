@@ -87,9 +87,9 @@ export const getAllPatients = async (req: Request, res: Response) => {
 
 export const creatEmergency = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { patientId } = req.body
+        const { patientId, rol, emergencyContactId } = req.body
 
-        const result = await addEmergencyToCollection(patientId)
+        const result = await addEmergencyToCollection(patientId, rol, emergencyContactId)
 
         if (result.success) {
             res.status(201).json({

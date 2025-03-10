@@ -173,19 +173,39 @@ export const getAllPatientsFromCollection = async () => {
     }
 }
 
-export const addEmergencyToCollection = async (patientId: string): Promise<{ success: boolean, message: string, emergencyId?: string }> => {
+export const addEmergencyToCollection = async (patientId: string, role: string, emergencyContactId?: string | null): Promise<{ success: boolean, message: string, emergencyId?: string }> => {
     try {
+
+        let phoneNumber = "";
 
         if (!patientId) {
             return { success: false, message: "El ID del paciente es obligatorio." };
         }
 
-        console.log(patientId)
+        console.log("role", role)
 
+        const allowedRoles = ["patient", "emergencyContact"];
+        if (!allowedRoles.includes(role)) {
+            return { success: false, message: "El rol no es valido" };
+        }
+        
         const existingPatient = await Patient.findOne({ patientId: patientId }, { firstName: 1, lastName: 1, height: 1, weight: 1, phoneNumber: 1 });
         if (!existingPatient) {
             return { success: false, message: "No se encontró un paciente con ese ID." };
         }
+
+        phoneNumber = existingPatient.phoneNumber
+
+        if (role === "emergencyContact") {
+            const emergencyContact = await patientEmergencyContactModel.findOne({ patients: patientId, fireBaseId: emergencyContactId });
+            if (!emergencyContact) {
+                return { success: false, message: "No se encontró un contacto de emergencia con ese ID." };
+            }
+
+            phoneNumber = emergencyContact.phoneNumber;
+        }
+
+        console.log(patientId)
 
         const emergencyId = uuidv4();
 
@@ -195,6 +215,7 @@ export const addEmergencyToCollection = async (patientId: string): Promise<{ suc
             pickupDate: null,
             deliveredDate: null,
             patientId: patientId,
+            activatedBy: { rol: role, phoneNumber: phoneNumber, userId: role === "emergencyContact" ? emergencyContactId : patientId },
             ambulanceId: null,
             nihScale: null,
             status: "PENDING",
@@ -203,7 +224,8 @@ export const addEmergencyToCollection = async (patientId: string): Promise<{ suc
 
         const savedEmergency = await newEmergency.save();
 
-        await sendMessage(existingPatient.firstName, existingPatient.lastName, existingPatient.phoneNumber);
+
+        await sendMessage(existingPatient.firstName, existingPatient.lastName, phoneNumber);
 
         const message = {
             emergencyId,
@@ -220,7 +242,7 @@ export const addEmergencyToCollection = async (patientId: string): Promise<{ suc
     }
 }
 
-export const getAllEmergencyContactFromCollection = async (patientId: string) : Promise<{ success: boolean, message: string, data: { email: string }[] | null }> => {
+export const getAllEmergencyContactFromCollection = async (patientId: string): Promise<{ success: boolean, message: string, data: { email: string }[] | null }> => {
     try {
 
         if (!patientId) {
@@ -307,7 +329,7 @@ export const getPatientFromCollection = async (patientId: string) => {
 
         if (!patientId) {
             return { success: false, message: "El ID del paciente es obligatorio." };
-        }   
+        }
 
         const existingPatient = await Patient.findOne({ patientId: patientId }, { _id: 0, isDeleted: 0, createdAt: 0, updatedAt: 0 });
         if (!existingPatient) {

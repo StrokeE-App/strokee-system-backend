@@ -11,6 +11,7 @@ import dotenv from "dotenv";
 import { patientEmergencyContactSchema } from "../../validationSchemas/patientShemas";
 import { RegisterEmergencyContactValidation } from "./patient.dto";
 import { connectToRedis } from "../../boostrap";
+import { console } from "inspector";
 
 dotenv.config();
 
@@ -214,7 +215,12 @@ export const getEmergencyContactFromCollection = async (patientId: string, emerg
             { "emergencyContact.$": 1 }
         );
 
-        return contact.emergencyContact[0];
+        if (contact && contact.emergencyContact && contact.emergencyContact.length > 0) {
+            return contact.emergencyContact[0];
+        } else {
+            return null;
+        }
+
     } catch (error) {
         console.error('Error al obtener el contacto de emergencia:', error);
         return null;
@@ -240,7 +246,11 @@ export const updateEmergencyContactFromCollection = async (patientId: string, em
             }
         );
 
-        if (result.modifiedCount === 0) {
+        if (result && result.modifiedCount === 0) {
+            return { success: false, message: "No se pudo actualizar el contacto de emergencia." };
+        }
+
+        if (result === undefined) {
             return { success: false, message: "No se pudo actualizar el contacto de emergencia." };
         }
 

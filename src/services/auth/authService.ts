@@ -35,7 +35,7 @@ export const loginUserService = async (token: string, appIdentifier: string) => 
             return { success: false, message: "El usuario no tiene permiso para acceder a esta aplicación." };
         }
 
-        return { userId };
+        return { userId, role: userRole.role };
     } catch (e: unknown) {
         if (e instanceof Error) {
             console.error("Error en autenticación:", e.message);
