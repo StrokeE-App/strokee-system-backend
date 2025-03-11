@@ -38,6 +38,9 @@ paths:
                   userId:
                     type: string
                     example: "user-id-12345"
+                  role:
+                    type: string
+                    example: "patient"
         400:
           description: Token o identificador de aplicación no válido o vacío.
           content:

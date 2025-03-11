@@ -1,5 +1,6 @@
 import { IEmergencyContact } from "../models/usersModels/emergencyContactModel";
 import { MAX_FIRST_NAME_LENGTH, MAX_LAST_NAME_LENGTH } from "../config/constantsUsers";
+import { isBoolean } from "util";
 
 
 export const isValidEmail = (email: string): boolean => {

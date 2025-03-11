@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <title>Registro de Contacto de Emergencia</title>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            gap: 5rem;
+        }
+
+        .container-message {
+            width: 32%;
+            padding: 2rem;
+            background-color: rgb(255, 255, 255);
+            border-radius: 4px;
+            font-size: 15px;
+            gap: 1rem;
+
+        }
+
+        .submit-btn {
+            display: absolute;
+            padding: 3rem;
+        }
+
+        .loader-cotainer {
+            width: 100%;
+            background-color: #09c372;
+        }
+
+        .loader-text {
+            height: 100%;
+            text-align: center;
+            line-height: 10px;
+        }
+
+        /* From Uiverse.io by barisdogansutcu */
+        #loader {
+            position: relative;
+            visibility: hidden;
+            bottom: 1.9rem;
+            left: 65%;
+            width: 8%;
+            transform-origin: center;
+            animation: rotate4 2s linear infinite;
+        }
+
+        circle {
+            fill: none;
+            stroke: hsl(0, 0%, 100%);
+            stroke-width: 4;
+            stroke-dasharray: 1, 200;
+            stroke-dashoffset: 0;
+            stroke-linecap: round;
+            animation: dash4 1.5s ease-in-out infinite;
+        }
+
+        @keyframes rotate4 {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes dash4 {
+            0% {
+                stroke-dasharray: 1, 200;
+                stroke-dashoffset: 0;
+            }
+
+            50% {
+                stroke-dasharray: 90, 200;
+                stroke-dashoffset: -35px;
+            }
+
+            100% {
+                stroke-dashoffset: -125px;
+            }
+        }
+
+
+        #subtitle-befast {
+            background-color: #D63A3A;
+            padding: .8rem;
+            color: white;
+            width: 80%;
+        }
+
+        #form {
+            width: 300px;
+            padding: 20px;
+            background-color: rgb(255, 255, 255);
+            border-radius: 4px;
+            font-size: 12px;
+            gap: 1rem;
+        }
+
+        #form h1 {
+            color: #0f2027;
+            text-align: center;
+        }
+
+        #form button {
+            padding: .8rem;
+            margin-top: 10px;
+            width: 100%;
+            color: white;
+            background-color: #D63A3A;
+            border: none;
+            border-radius: 4px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #form button:hover {
+            background-color: #f31818;
+            cursor: pointer;
+        }
+
+        #title-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        #logo {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #logo-text {
+            color: #D63A3A;
+            letter-spacing: 0.2rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            font-family: sans-serif;
+            line-height: 15px;
+        }
+
+        .befast-container {
+            padding-left: 2.3rem;
+        }
+
+        .underline-text {
+            border-bottom: 2px solid #D63A3A;
+            display: inline-block;
+            padding-bottom: .5rem;
+        }
+
+        .input-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+        }
+
+        .input-control {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-control input {
+            border-radius: .7rem;
+            border: 1px solid #c0c0c0;
+            outline: 0 !important;
+            box-sizing: border-box;
+            padding: 12px 15px;
+        }
+
+        .input-control input:focus {
+            outline: 0;
+        }
+
+        .input-control.success input {
+            border-color: #09c372;
+        }
+
+        .input-control.error input {
+            border-color: #ff3860;
+        }
+
+        .input-control .error {
+            color: #ff3860;
+            font-size: .7rem;
+            height: 1rem;
+            margin-left: 1rem;
+            margin-top: .2rem;
+        }
+
+        .info {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            width: 100%;
+            padding: 12px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: start;
+            background: #D63A3A;
+            border-radius: 8px;
+            box-shadow: 0px 0px 5px -3px #111;
+        }
+
+        .info__icon {
+            width: 20px;
+            height: 20px;
+            transform: translateY(-2px);
+            margin-right: 8px;
+        }
+
+        .info__icon path {
+            fill: #fff;
+        }
+
+        .info__title {
+            font-weight: 500;
+            font-size: 14px;
+            color: #fff;
+        }
+
+        .info__close {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            margin-left: auto;
+        }
+
+        .info__close path {
+            fill: #fff;
+        }
+
+        @media (max-width: 800px) {
+            .container {
+                flex-direction: column;
+                height: auto;
+                gap: 1rem;
+            }
+
+            .befast-container {
+                padding-left: 0;
+            }
+
+            .container-message {
+                width: 80%;
+                padding: 2rem 0;
+                background-color: rgb(255, 255, 255);
+                font-size: 15px;
+                gap: 1rem;
+
+            }
+
+            #subtitle-befast {
+                background-color: #D63A3A;
+                color: white;
+            }
+        }
+
+        @media (min-width: 801px) and (max-width: 1200px) {
+            .container {
+                flex-direction: column;
+                height: auto;
+                gap: 1rem;
+            }
+
+            .befast-container {
+                padding-left: 0;
+            }
+
+            .container-message {
+                width: 80%;
+                padding: 2rem 0;
+                background-color: rgb(255, 255, 255);
+                font-size: 15px;
+                gap: 1rem;
+
+            }
+
+            #subtitle-befast {
+                background-color: #D63A3A;
+                color: white;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="container-message">
+
+            <div class="info">
+                <div class="info__icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" viewBox="0 0 24 24" height="24" fill="none">
+                        <path fill="#393a37"
+                            d="m12 1.5c-5.79844 0-10.5 4.70156-10.5 10.5 0 5.7984 4.70156 10.5 10.5 10.5 5.7984 0 10.5-4.7016 10.5-10.5 0-5.79844-4.7016-10.5-10.5-10.5zm.75 15.5625c0 .1031-.0844.1875-.1875.1875h-1.125c-.1031 0-.1875-.0844-.1875-.1875v-6.375c0-.1031.0844-.1875.1875-.1875h1.125c.1031 0 .1875.0844.1875.1875zm-.75-8.0625c-.2944-.00601-.5747-.12718-.7808-.3375-.206-.21032-.3215-.49305-.3215-.7875s.1155-.57718.3215-.7875c.2061-.21032.4864-.33149.7808-.3375.2944.00601.5747.12718.7808.3375.206.21032.3215.49305.3215.7875s-.1155.57718-.3215.7875c-.2061.21032-.4864.33149-.7808.3375z">
+                        </path>
+                    </svg>
+                </div>
+                <div class="info__title">Importante</div>
+
+            </div>
+            <div class="befast-container">
+                <p id="message">
+                    Te estás registrando como <strong>contacto de emergencia</strong>.
+                    Se espera que tengas la capacidad de <strong>activar una emergencia de ACV (Accidente
+                        Cerebrovascular)</strong> solo en caso de que el propio paciente no pueda hacerlo por sí mismo.
+                </p>
+                <h3>Reconoce un ACV con la regla BEFAST</h3>
+                <ul>
+                    <li><strong>B</strong>alance (Equilibrio): Pérdida repentina del equilibrio o coordinación.</li>
+                    <li><strong>E</strong>yes (Vista): Visión borrosa o pérdida de visión en uno o ambos ojos.</li>
+                    <li><strong>F</strong>ace (Cara): Caída o asimetría en un lado de la cara.</li>
+                    <li><strong>A</strong>rms (Brazos): Dificultad para levantar un brazo o debilidad en un lado del
+                        cuerpo.
+                    </li>
+                    <li><strong>S</strong>peech (Habla): Dificultad para hablar o comprender el lenguaje.</li>
+                    <li><strong>T</strong>ime (Tiempo): ¡Cada segundo cuenta! Llama a emergencias de inmediato.</li>
+                </ul>
+            </div>
+        </div>
+
+        <form id="form">
+            <div id="title-container">
+                <div id="logo">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="17%" height="17%" viewBox="0 0 24 24" fill="none"
+                        stroke="#D63A3A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="lucide lucide-siren">
+                        <path d="M7 18v-6a5 5 0 1 1 10 0v6" />
+                        <path d="M5 21a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-1a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2z" />
+                        <path d="M21 12h1" />
+                        <path d="M18.5 4.5 18 5" />
+                        <path d="M2 12h1" />
+                        <path d="M12 2v1" />
+                        <path d="m4.929 4.929.707.707" />
+                        <path d="M12 12v6" />
+                    </svg>
+                    <h2 id="logo-text" class="underline-text">STROKEE</h2>
+                </div>
+                <h1>Registro de Contacto de Emergencia</h1>
+            </div>
+
+            <div class="input-container">
+                <div class="input-control">
+                    <input id="verification_code" name="verification_code" limit="50" type="text"
+                        placeholder="Codigo de verificacion">
+                    <div class="error"></div>
+                </div>
+                <div class="input-control">
+                    <input id="firstName" name="firstName" limit="50" type="text" placeholder="Nombre">
+                    <div class="error"></div>
+                </div>
+                <div class="input-control">
+                    <input id="lastName" name="lastName" limit="50" type="text" placeholder="Apellido">
+                    <div class="error"></div>
+                </div>
+                <div class="input-control">
+                    <input id="phoneNumber" name="phoneNumber" limit="50" type="text" placeholder="Telefono">
+                    <div class="error"></div>
+                </div>
+                <div class="input-control">
+                    <input id="email" name="email" type="text" placeholder="Correo">
+                    <div class="error"></div>
+                </div>
+                <div class="input-control">
+                    <input id="password" name="password" limit="50" type="password" placeholder="Contraseña">
+                    <div class="error"></div>
+                </div>
+                <div class="input-control">
+                    <input id="password2" name="password2" limit="50" type="password"
+                        placeholder="Confirmar contraseña">
+                    <div class="error"></div>
+                </div>
+            </div>
+            <div class="button-container">
+                <button id="submit-btn" type="submit" class="loader-cotainer"><span
+                        class="loader-text">Registrarme</span>
+            </div>
+            <svg id="loader" viewBox="25 25 50 50">
+                <circle r="20" cy="50" cx="50"></circle>
+            </svg>
+            <div id="loading-spinner" class="spinner"></div>
+    </div>
+    </form>
+    </div>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const form = document.getElementById('form');
+        const verification_code = document.getElementById('verification_code');
+        const firstName = document.getElementById('firstName');
+        const lastName = document.getElementById('lastName');
+        const phoneNumber = document.getElementById('phoneNumber')
+        const email = document.getElementById('email');
+        const password = document.getElementById('password');
+        const password2 = document.getElementById('password2');
+
+        let API_URL;
+        if (window.location.hostname === "localhost") {
+            API_URL = "http://localhost:4000";
+        } else {
+            API_URL = "https://strokee-system-backend.onrender.com";
+        }
+
+        form.addEventListener('submit', async e => {
+            e.preventDefault();
+
+            if (validateInputs()) {
+                const submitBtn = document.getElementById("submit-btn");
+                const spinner = document.getElementById("loader");
+
+                // Desactiva el botón y muestra la rueda de carga
+                submitBtn.disabled = true;
+                spinner.style.visibility = "visible";
+
+                const userData = {
+                    verification_code: verification_code.value.trim(),
+                    firstName: firstName.value.trim(),
+                    lastName: lastName.value.trim(),
+                    phoneNumber: phoneNumber.value.trim(),
+                    email: email.value.trim(),
+                    password: password.value.trim()
+                };
+
+                console.log(userData);
+
+                try {
+                    const response = await fetch(`${API_URL}/patient/register-emergency-contact-to-start-emergency`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(userData)
+                    });
+
+                    if (response.ok) {
+                        Swal.fire({
+                            title: "¡Registro Exitoso!",
+                            text: "Te has registrado correctamente como contacto de emergencia.",
+                            icon: "success",
+                            confirmButtonColor: "#D63A3A"
+                        });
+                        form.reset();
+                    } else {
+                        const errorData = await response.json();
+                        Swal.fire({
+                            title: "¡Registro Fallido!",
+                            text: errorData.message,
+                            icon: "error",
+                            confirmButtonColor: "#D63A3A"
+                        });
+                    }
+                } catch (error) {
+                    alert('Hubo un error al conectar con el servidor');
+                } finally {
+                    // Reactiva el botón y oculta la rueda de carga
+                    submitBtn.disabled = false;
+                    spinner.style.visibility = "hidden";
+                }
+            }
+        });
+
+
+        const setError = (element, message) => {
+            const inputControl = element.parentElement;
+            const errorDisplay = inputControl.querySelector('.error');
+
+            errorDisplay.innerText = message;
+            inputControl.classList.add('error');
+            inputControl.classList.remove('success');
+        };
+
+        const setSuccess = element => {
+            const inputControl = element.parentElement;
+            const errorDisplay = inputControl.querySelector('.error');
+
+            errorDisplay.innerText = '';
+            inputControl.classList.add('success');
+            inputControl.classList.remove('error');
+        };
+
+        const isValidEmail = email => {
+            const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+            return re.test(String(email).toLowerCase());
+        };
+
+        const isValidPhoneNumber = phoneNumber => {
+            const re = /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/im;
+            return re.test(String(phoneNumber).toLowerCase());
+        }
+
+        const validateInputs = () => {
+            let isValid = true;
+
+            if (verification_code.value.trim() === '') {
+                setError(verification_code, 'El codigo de verificacion es obligatorio.');
+                isValid = false;
+            } else {
+                setSuccess(verification_code);
+            }
+
+            if (firstName.value.trim() === '') {
+                setError(firstName, 'El nombre es obligatorio.');
+                isValid = false;
+            } else {
+                setSuccess(firstName);
+            }
+
+            if (lastName.value.trim() === '') {
+                setError(lastName, 'El apellido es obligatorio.');
+                isValid = false;
+            } else {
+                setSuccess(lastName);
+            }
+
+            if (phoneNumber.value.trim() === '') {
+                setError(phoneNumber, 'El telefono es obligatorio.');
+                isValid = false;
+            } else if (!isValidPhoneNumber(phoneNumber.value.trim())) {
+                setError(phoneNumber, 'El telefono no tiene un formato valido.');
+                isValid = false;
+            } else {
+                setSuccess(phoneNumber);
+            }
+
+            if (email.value.trim() === '') {
+                setError(email, 'El correo electrónico es obligatorio.');
+                isValid = false;
+            } else if (!isValidEmail(email.value.trim())) {
+                setError(email, 'El correo electrónico no tiene un formato válido.');
+                isValid = false;
+            } else {
+                setSuccess(email);
+            }
+
+            if (password.value.trim() === '') {
+                setError(password, 'La contraseña es obligatoria.');
+                isValid = false;
+            } else if (password.value.trim().length < 8) {
+                setError(password, 'La contraseña debe tener al menos 8 caracteres.');
+                isValid = false;
+            } else {
+                setSuccess(password);
+            }
+
+            if (password2.value.trim() === '') {
+                setError(password2, 'La confirmación de la contraseña es obligatoria.');
+                isValid = false;
+            } else if (password2.value.trim() !== password.value.trim()) {
+                setError(password2, 'Las contraseñas no coinciden.');
+                isValid = false;
+            } else {
+                setSuccess(password2);
+            }
+
+            return isValid;
+        };
+
+    </script>
+</body>
+
+</html>
