@@ -45,3 +45,33 @@ StrokeE System`,
         console.error('Error al enviar el correo:', error);
     }
 }
+
+export const sendRegistrationEmail = async (email: string, code: string) => {
+    console.log(email, code);
+
+    const registrationLink = `http://localhost:4000/patient/register-emergency-contact`;
+
+    const mailOptions = {
+        from: "tu_correo@gmail.com",
+        to: email,
+        subject: "Registro como Contacto de Emergencia",
+        html: `
+            <div style="font-family: Arial, sans-serif; color: #333;">
+                <h2 style="color: #D32F2F;">Registro como Contacto de Emergencia</h2>
+                <p>Estimado(a),</p>
+                <p>Has sido designado como contacto de emergencia. Para completar tu registro, por favor sigue estos pasos:</p>
+                <ol>
+                    <li>Haz clic en el siguiente enlace: <a href="${registrationLink}" style="color: #D32F2F; font-weight: bold;">Registrarme</a></li>
+                    <li>Ingresa el siguiente código de verificación cuando se te solicite:</li>
+                </ol>
+                <div style="background: #f4f4f4; padding: 10px; border-radius: 5px; text-align: center; font-size: 18px; font-weight: bold;">
+                    ${code}
+                </div>
+                <p>⚠️ Este código es válido por <strong>30 minutos</strong>. Si no has solicitado este registro, ignora este mensaje.</p>
+                <p>Atentamente,<br><strong>StrokeE System</strong></p>
+            </div>
+        `,
+    };
+
+    await transporter.sendMail(mailOptions);
+};

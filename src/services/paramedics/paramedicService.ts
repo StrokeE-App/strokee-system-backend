@@ -157,10 +157,16 @@ export const updateEmergencyPickUpFromCollection = async (
         const listEmergencyContacts = await getAllEmergencyContactFromCollection(patient.patientId);
 
         if (listEmergencyContacts.data && listEmergencyContacts.data.length > 0) {
+            const uniqueEmails = new Set<string>();
+        
             listEmergencyContacts.data.forEach((contact) => {
-              sendNotification(contact.email, patient.firstName, patient.lastName);
-            })
-          }
+                if (contact.email && !uniqueEmails.has(contact.email)) {
+                    uniqueEmails.add(contact.email);
+                    sendNotification(contact.email, patient.firstName, patient.lastName);
+                }
+            });
+        }
+        
 
         return { success: true, message: "Emergencia confirmada y mensaje enviado." };
     } catch (error) {

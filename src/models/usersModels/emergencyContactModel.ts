@@ -3,7 +3,7 @@ export interface IEmergencyContact {
     firstName: string;
     lastName: string;
     email: string;
+    canActivateEmergency: boolean;
     relationship: string;
     phoneNumber: string;
-    isDeleted: boolean;
 } 

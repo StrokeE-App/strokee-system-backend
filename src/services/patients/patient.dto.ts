@@ -9,3 +9,12 @@ export type PatientUpdate = {
     medications?: string[];
     conditions?: string[];
 };
+
+export type RegisterEmergencyContactValidation = {
+    verification_code: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    password: string;
+    phoneNumber: string;
+};

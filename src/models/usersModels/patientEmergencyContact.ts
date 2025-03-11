@@ -1,15 +1,27 @@
 import mongoose, { Schema, Document } from "mongoose";
-import { IEmergencyContact } from "./emergencyContactModel";
 
 export interface IPatientEmergencyContact extends Document {
-    patientId: string;
-    emergencyContact: Array<IEmergencyContact>; 
+    fireBaseId: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phoneNumber: string;
+    patients: [
+        {
+            patientId: string;
+            emergencyContactId: string;
+        }
+    ];
 }
 
 const PatientEmergencyContactSchema: Schema = new Schema(
     {
-        patientId: { type: String, required: true, unique: true },
-        emergencyContact: { type: Array, default: [] },
+        fireBaseId: { type: String, required: true, unique: true },
+        firstName: { type: String, required: true },
+        lastName: { type: String, required: true },
+        email: { type: String, required: true, unique: true },
+        phoneNumber: { type: String, required: true },
+        patients: { type: [Object], default: [] },
     },
     {
         timestamps: true,

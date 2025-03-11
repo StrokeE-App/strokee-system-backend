@@ -1,0 +1,99 @@
+paths:
+  /emergency-contact/{userId}:
+    get:
+      summary: Obtener contacto de emergencia por userId
+      description: Obtiene el contacto de emergencia y sus pacientes asociados mediante el userId de Firebase.
+      tags:
+        - Emergency Contact
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: ID de usuario en Firebase.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Contacto de emergencia obtenido exitosamente.
+          content:
+            application/json:
+              example:
+                message: "Contacto de emergencia obtenido exitosamente."
+                data:
+                  - userId: "KbctYnE5FSY8rKxcjalLjMNpGM83"
+                    firstName: "Carlos"
+                    lastName: "Caceres"
+                    email: "carlosandres0229@gmail.com"
+                    phoneNumber: "3057479364"
+                    patientDetails:
+                      - patientId: "fAghdKBejbUReqZGS6eivQqdrbm1"
+                        firstName: "Carlos"
+                        lastName: "Caceres"
+                        email: "patient@gmail.com"
+                        phoneNumber: "3057521276"
+                        conditions: ["gripa"]
+                        medications: ["dolex"]
+        "400":
+          description: No se pudo obtener el contacto de emergencia.
+          content:
+            application/json:
+              example:
+                message: "No se pudo obtener el contacto de emergencia."
+        "500":
+          description: Error interno del servidor.
+          content:
+            application/json:
+              example:
+                message: "Error interno del servidor."
+  /emergency-contact/add-patient:
+    post:
+      summary: Vincular un contacto de emergencia a un paciente
+      description: Verifica el código de activación y asocia el contacto de emergencia con un paciente.
+      tags:
+        - Emergency Contact
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: string
+                  example: "user_12345"
+                  description: ID del usuario que se registra como contacto de emergencia.
+                code:
+                  type: string
+                  example: "654321"
+                  description: Código de verificación enviado por correo.
+      responses:
+        "200":
+          description: Contacto de emergencia vinculado con éxito.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Contacto de emergencia vinculado con éxito."
+        "400":
+          description: Error en la solicitud, código inválido o expirado.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Código expirado o inválido."
+        "500":
+          description: Error inesperado en el servidor.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Error inesperado."
