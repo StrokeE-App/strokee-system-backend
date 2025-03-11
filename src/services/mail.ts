@@ -51,7 +51,7 @@ export const sendRegistrationEmail = async (email: string, code: string) => {
 
     let url = "http://localhost:4000"
 
-    if(process.env.NODE_ENV === "production") {
+    if(process.env.NODE_ENV === "staging") {
         url = "https://strokee-system-backend.onrender.com"
     }
 
