@@ -49,7 +49,13 @@ StrokeE System`,
 export const sendRegistrationEmail = async (email: string, code: string) => {
     console.log(email, code);
 
-    const registrationLink = `http://localhost:4000/patient/register-emergency-contact`;
+    let url = "http://localhost:4000"
+
+    if(process.env.NODE_ENV === "staging") {
+        url = "https://strokee-system-backend.onrender.com"
+    }
+
+    const registrationLink = `${url}/patient/register-emergency-contact`;
 
     const mailOptions = {
         from: "tu_correo@gmail.com",
