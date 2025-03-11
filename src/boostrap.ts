@@ -83,27 +83,7 @@ connectToRabbitMQ()
 
 app.use(express.static(path.join(__dirname, "../public")));
 app.use(cookieParser());
-
-const allowedOrigins = [
-  'http://localhost:3000',
-  'http://localhost:3001',
-  'http://localhost:3002',
-  'http://localhost:3003',
-  'http://localhost:3004',
-  'http://localhost:3005',
-];
-
-app.use(cors({
-  credentials: true,
-  origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-          callback(null, true);
-      } else {
-          callback(new Error('Not allowed by CORS'));
-      }
-  }
-}));
-
+app.use(cors({ credentials: true, origin: true }));
 app.use(bodyParser.json());
 app.use(indexRoute)
 app.use("/patient", patientsRoutes);
