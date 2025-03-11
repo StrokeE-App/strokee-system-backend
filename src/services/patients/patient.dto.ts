@@ -11,7 +11,6 @@ export type PatientUpdate = {
 };
 
 export type RegisterEmergencyContactValidation = {
-    verificationToken: string;
     verification_code: string;
     firstName: string;
     lastName: string;

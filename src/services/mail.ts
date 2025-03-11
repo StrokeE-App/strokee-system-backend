@@ -46,10 +46,10 @@ StrokeE System`,
     }
 }
 
-export const sendRegistrationEmail = async (email: string, code: string, token: string) => {
+export const sendRegistrationEmail = async (email: string, code: string) => {
     console.log(email, code);
 
-    const registrationLink = `http://localhost:4000/patient/register-emergency-contact?verificationId=${token}`;
+    const registrationLink = `http://localhost:4000/patient/register-emergency-contact`;
 
     const mailOptions = {
         from: "tu_correo@gmail.com",

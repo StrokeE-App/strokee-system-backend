@@ -87,9 +87,9 @@ export const getAllPatients = async (req: Request, res: Response) => {
 
 export const creatEmergency = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { patientId, rol, emergencyContactId } = req.body
+        const { patientId, role, emergencyContactId } = req.body
 
-        const result = await addEmergencyToCollection(patientId, rol, emergencyContactId)
+        const result = await addEmergencyToCollection(patientId, role, emergencyContactId)
 
         if (result.success) {
             res.status(201).json({
@@ -199,18 +199,8 @@ export const deletePatient = async (req: Request, res: Response, next: NextFunct
 }
 
 export const registerEmergencyContact = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const { verificationId } = req.query;
-
-    if (!verificationId) {
-        console.error("Token no proporcionado.");
-        res.status(400).send("Token no proporcionado.");
-        return;
-    }
-
-    const token = verificationId as string;
     
     try {
-        const decodedToken = jwt.decode(token);
         res.sendFile(path.join(__dirname, "../../../public/registerEmergencyContact.html"));
     } catch (error) {
         console.error("Token inválido:", error);

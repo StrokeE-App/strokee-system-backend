@@ -33,17 +33,18 @@
             gap: 1rem;
 
         }
+
         .submit-btn {
             display: absolute;
             padding: 3rem;
         }
 
-        .loader-cotainer{
+        .loader-cotainer {
             width: 100%;
             background-color: #09c372;
         }
 
-        .loader-text{
+        .loader-text {
             height: 100%;
             text-align: center;
             line-height: 10px;
@@ -386,17 +387,18 @@
                 </div>
             </div>
             <div class="button-container">
-                <button id="submit-btn" type="submit" class="loader-cotainer"><span class="loader-text">Registrarme</span></div>
-                    <svg id="loader" viewBox="25 25 50 50">
-                        <circle r="20" cy="50" cx="50"></circle>
-                    </svg>
-                <div id="loading-spinner" class="spinner"></div>
+                <button id="submit-btn" type="submit" class="loader-cotainer"><span
+                        class="loader-text">Registrarme</span>
             </div>
-        </form>
+            <svg id="loader" viewBox="25 25 50 50">
+                <circle r="20" cy="50" cx="50"></circle>
+            </svg>
+            <div id="loading-spinner" class="spinner"></div>
+    </div>
+    </form>
     </div>
     <script>
         const params = new URLSearchParams(window.location.search);
-        const verificationToken = params.get('verificationId');
         const form = document.getElementById('form');
         const verification_code = document.getElementById('verification_code');
         const firstName = document.getElementById('firstName');
@@ -405,6 +407,13 @@
         const email = document.getElementById('email');
         const password = document.getElementById('password');
         const password2 = document.getElementById('password2');
+
+        let API_URL;
+        if (window.location.hostname === "localhost") {
+            API_URL = "http://localhost:4000";
+        } else {
+            API_URL = "https://strokee-system-backend.onrender.com";
+        }
 
         form.addEventListener('submit', async e => {
             e.preventDefault();
@@ -418,7 +427,6 @@
                 spinner.style.visibility = "visible";
 
                 const userData = {
-                    verificationToken: verificationToken,
                     verification_code: verification_code.value.trim(),
                     firstName: firstName.value.trim(),
                     lastName: lastName.value.trim(),
@@ -430,7 +438,7 @@
                 console.log(userData);
 
                 try {
-                    const response = await fetch('http://localhost:4000/patient/register-emergency-contact-to-start-emergency', {
+                    const response = await fetch(`${API_URL}/patient/register-emergency-contact-to-start-emergency`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'

@@ -197,6 +197,9 @@ export const addEmergencyToCollection = async (patientId: string, role: string, 
         phoneNumber = existingPatient.phoneNumber
 
         if (role === "emergencyContact") {
+            if (!emergencyContactId) {
+                return { success: false, message: "El ID del contacto de emergencia es obligatorio." };
+            }
             const emergencyContact = await patientEmergencyContactModel.findOne({ patients: patientId, fireBaseId: emergencyContactId });
             if (!emergencyContact) {
                 return { success: false, message: "No se encontró un contacto de emergencia con ese ID." };
