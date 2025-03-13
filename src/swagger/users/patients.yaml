@@ -25,6 +25,10 @@ paths:
                   type: string
                   example: 'johndoe@example.com'
                   description: La dirección de correo electrónico del paciente.
+                token:
+                  type: string
+                  example: '123456'
+                  description: Token de autenticación del paciente.
                 password:
                   type: string
                   example: 'password123'
@@ -70,6 +74,10 @@ paths:
                         email: string
                         example: 'john.doe@example.com'
                         description: Correo del contacto de emergencia.
+                      token:
+                        type: string
+                        example: '123456'
+                        description: Token de autenticación del contacto de emergencia.
                       phoneNumber:
                         type: string
                         example: '9876543210'
