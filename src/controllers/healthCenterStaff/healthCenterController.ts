@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { addHealthCenterIntoCollection, deleteHealthCenterStaff, getHealthCenterStaff, updateHealthCenterStaff, getPatientDeliverdToHealthCenter } from "../../services/healthCenterStaff/healthCenterService";
+import { addHealthCenterIntoCollection, deleteHealthCenterStaff, getHealthCenterStaff, updateHealthCenterStaff, getPatientDeliverdToHealthCenter, sendEmailToRegisterPatient } from "../../services/healthCenterStaff/healthCenterService";
 
 export const addHealthCenter = async (req: Request, res: Response, next: NextFunction) => {
     const healthCenterData = req.body;
@@ -89,3 +89,16 @@ export const deliverPatient = async (req: Request, res: Response, next: NextFunc
     }
 };
 
+export const invitePatient = async (req: Request, res: Response, next: NextFunction) => {
+    const { email, medicId } = req.body;
+    try {
+        const result = await sendEmailToRegisterPatient(email, medicId);
+        if (result.success) {
+            res.status(200).json({ message: result.message });
+        } else {
+            res.status(400).json({ message: result.message });
+        }
+    } catch (error) {
+        next(error);
+    }
+}
