@@ -4,6 +4,9 @@ import rolesModel from "../../models/usersModels/rolesModel";
 import { firebaseAdmin } from "../../config/firebase-config";
 import { AddHealthCenterStaff } from "./healthCenter.dto";
 import { healthCenterStaffSchema, updateHealthCenterStaffSchema } from "../../validationSchemas/healthCenterStaff";
+import { connectToRedis } from "../../boostrap";
+import { sendPatientRegistrationEmail } from "../mail";
+import Patient from "../../models/usersModels/patientModel";
 
 export async function addHealthCenterIntoCollection(healthCenterStaff: AddHealthCenterStaff) {
     try {
@@ -133,3 +136,31 @@ export async function getPatientDeliverdToHealthCenter(emergencyId: string) {
         return { success: false, code: 500, message: "Error interno del servidor." };
     }
 }
+
+export const sendEmailToRegisterPatient= async (email: string, medicId: string) => {
+    try {
+
+        if (!email) {
+            return { success: false, message: "No se pudo enviar el correo de activación al contacto de emergencia." };
+        }
+
+        if (!medicId) {
+            return { success: false, message: "No se pudo enviar el correo de activación al contacto de emergencia." };
+        }
+
+        const existingHealthCenterStaff = await healthCenterModel.findOne({ medicId });
+        if (!existingHealthCenterStaff) {
+            return { success: false, message: "No se encontró el integrante del centro de salud." };
+        }
+
+        const code = Math.floor(100000 + Math.random() * 900000).toString();
+        (await connectToRedis()).set(`registerPatient:${email}`, JSON.stringify({ code, medicId }), { EX: 1800 }); //30 minutos
+        await sendPatientRegistrationEmail(email, code);
+
+        return { success: true, message: "Se envió un correo de activación al contacto de emergencia" };
+    } catch (error) {
+        console.error("Error al agregar contacto de emergencia:", error);
+        return { success: false, message: `Error: ${(error as any).message || "Error"}` };
+    }
+}
+

@@ -11,9 +11,27 @@ import { validateEmergencyContactData } from "./emergencyContactsService";
 import { patientSchema } from "../../validationSchemas/patientShemas";
 import { PatientUpdate } from "./patient.dto";
 import { sendMessage } from "../whatsappService";
+import { connectToRedis } from "../../boostrap";
 import dotenv from "dotenv";
 
 dotenv.config();
+
+export async function validateVerificationCodePatient(email: string, verificationCode: string) {
+    const redisClient = await connectToRedis();
+    const storedData = await redisClient.get(`registerPatient:${email}`);
+
+    if (!storedData) {
+        throw new Error("El correo electr&oacute;nico o el c&oacute;digo de verificaci&oacute;n es incorrecto.");
+    }
+
+    const { code, medicId } = JSON.parse(storedData); // Extraer solo el código
+
+    if (code !== verificationCode) {
+        throw new Error("El código de verificación es incorrecto");
+    }
+
+    return { medicId };
+}
 
 const validatePatientFields = (
     firstName: string,
@@ -57,8 +75,21 @@ export const addPatientIntoPatientCollection = async (
     height: number,
     emergencyContact: IEmergencyContact[],
     medications: string[],
-    conditions: string[]
+    conditions: string[],
+    token: string
 ): Promise<{ success: boolean, message: string, patientId?: string, duplicateEmails?: string[], duplicatePhones?: string[] }> => {
+    let invitationSentBy = "";
+    try{
+        const { medicId } = await validateVerificationCodePatient(email, token);
+        invitationSentBy = medicId
+    }catch(e){
+        
+        return {
+            success: false,
+            message: 'El correo electonico o el codigo de verificacion es incorrecto.'
+
+        }
+    }
 
     const session = await mongoose.startSession(); // Cambiado a mongoose.startSession()
     session.startTransaction();
@@ -97,9 +128,17 @@ export const addPatientIntoPatientCollection = async (
             contact.canActivateEmergency = false;
         }
 
-        patientRecord = await firebaseAdmin.createUser({ email, password });
-        if (!patientRecord.uid) {
-            throw new Error("No se pudo crear el usuario en Firebase.");
+        try {
+            patientRecord = await firebaseAdmin.createUser({ email, password });
+        
+            if (!patientRecord.uid) {
+                throw new Error("No se pudo crear el usuario en Firebase.");
+            }
+        } catch (error: any) {
+            if (error.code === "auth/email-already-exists") {
+                throw new Error("Ya existe un usuario registrado con este correo.");
+            }
+            throw new Error(`Error al crear el usuario: ${error.message}`);
         }
 
         const newPatient = {
@@ -107,6 +146,7 @@ export const addPatientIntoPatientCollection = async (
             firstName,
             lastName,
             email,
+            medicId: invitationSentBy,
             phoneNumber,
             age,
             emergencyContact,
@@ -139,6 +179,9 @@ export const addPatientIntoPatientCollection = async (
 
         await session.commitTransaction();
         session.endSession();
+
+        const redisClient = await connectToRedis();
+        (await redisClient.del(`registerPatient:${email}`))
 
         return { success: true, message: "Paciente agregado exitosamente.", patientId: patientRecord.uid };
 
