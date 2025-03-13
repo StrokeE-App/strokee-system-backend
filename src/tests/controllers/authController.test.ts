@@ -22,6 +22,7 @@ describe("Patient Controller", () => {
                 height: 175,
                 medications: ["med1", "med2"],
                 conditions: ["condition1", "condition2"],
+                token: "valid-token",
             },
         };
 
@@ -59,7 +60,8 @@ describe("Patient Controller", () => {
                 req.body.height,
                 req.body.emergencyContact,
                 req.body.medications,
-                req.body.conditions
+                req.body.conditions,
+                req.body.token
             );
 
             expect(res.status).toHaveBeenCalledWith(201);
@@ -91,7 +93,8 @@ describe("Patient Controller", () => {
                 req.body.height,
                 req.body.emergencyContact,
                 req.body.medications,
-                req.body.conditions
+                req.body.conditions,
+                req.body.token
             );
 
             expect(res.status).toHaveBeenCalledWith(400);

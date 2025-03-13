@@ -30,6 +30,7 @@ export const registerPatient = async (req: Request, res: Response, next: NextFun
         emergencyContact,
         medications,
         conditions,
+        token
     } = req.body;
 
     try {
@@ -45,7 +46,8 @@ export const registerPatient = async (req: Request, res: Response, next: NextFun
             height,
             emergencyContact,
             medications,
-            conditions
+            conditions,
+            token
         );
 
         if (result.success) {

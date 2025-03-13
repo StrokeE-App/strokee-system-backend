@@ -2,6 +2,7 @@ import nodemailer from 'nodemailer';
 import dotenv from "dotenv";
 import { activiationEmailTemplate } from '../config/emailTemplates/activationEmailTemplate';
 import { alertEmailTemplate } from '../config/emailTemplates/alertEmailTemplate';
+import { activationPatientEmailTemplate } from '../config/emailTemplates/activationPatientEmailTemplate';
 
 dotenv.config();
 
@@ -49,3 +50,25 @@ export const sendRegistrationEmail = async (email: string, code: string) => {
 
     await transporter.sendMail(mailOptions);
 };
+
+export const sendPatientRegistrationEmail = async (email: string, code: string) => {
+    console.log(email, code);
+
+    let url = "http://localhost:4000"
+
+    if(process.env.NODE_ENV === "staging") {
+        url = "https://strokee-system-backend.onrender.com"
+    }
+
+    const registrationLink = `${url}/patient/register-emergency-contact`;
+
+    const mailOptions = {
+        from: "tu_correo@gmail.com",
+        to: email,
+        subject: "invitacion de paciente",
+        html: activationPatientEmailTemplate(registrationLink, code),
+    };
+
+    await transporter.sendMail(mailOptions);
+};
+
