@@ -2,10 +2,9 @@ import operatorModel from "../../models/usersModels/operatorModel";
 import rolesModel from "../../models/usersModels/rolesModel";
 import { publishToExchange } from "../publisherService";
 import emergencyModel from "../../models/emergencyModel";
-import { isValidFirstName, isValidLastName, isValidEmail, isValidPassword } from "../utils";
 import { firebaseAdmin } from "../../config/firebase-config";
 import { UpdateOperator } from "./operator.dto";
-import { operatorSchema } from "../../validationSchemas/operatorSchema";
+import { operatorSchema, operatorRegisterSchema } from "../../validationSchemas/operatorSchema";
 
 export const validateOperatorFields = (
     firstName: string,
@@ -27,31 +26,14 @@ export const addOperatorIntoCollection = async (
     password: string,
 ): Promise<{ success: boolean, message: string, operatorId?: string }> => {
     try {
-        const missingField = validateOperatorFields(
-            firstName,
-            lastName,
-            email,
-            password
-        );
+        
+        const { error } = operatorRegisterSchema.validate({ firstName, lastName, email, password });
 
-        if (missingField) {
-            throw new Error(`El campo ${missingField} es requerido.`);
-        }
-
-        if (!isValidFirstName(firstName)) {
-            throw new Error(`El nombre ${firstName} excede el límite de caracteres permitido.`);
-        }
-
-        if (!isValidLastName(lastName)) {
-            throw new Error(`El apellido ${lastName} excede el límite de caracteres permitido.`);
-        }
-
-        if (!isValidEmail(email)) {
-            throw new Error(`El correo electrónico ${email} no tiene un formato válido.`);
-        }
-
-        if (!isValidPassword(password)) {
-            throw new Error(`La contraseña debe tener al menos 8 caracteres.`);
+        if (error) {
+            return {
+                success: false,
+                message: error.message,
+            };
         }
 
         const existinOperator = await operatorModel.findOne({ email });

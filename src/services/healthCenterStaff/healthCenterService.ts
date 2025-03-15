@@ -6,6 +6,7 @@ import { AddHealthCenterStaff } from "./healthCenter.dto";
 import { healthCenterStaffSchema, updateHealthCenterStaffSchema } from "../../validationSchemas/healthCenterStaff";
 import { connectToRedis } from "../../boostrap";
 import { sendPatientRegistrationEmail } from "../mail";
+import { hashEmail } from "../utils";
 import Patient from "../../models/usersModels/patientModel";
 
 export async function addHealthCenterIntoCollection(healthCenterStaff: AddHealthCenterStaff) {
@@ -153,8 +154,9 @@ export const sendEmailToRegisterPatient= async (email: string, medicId: string) 
             return { success: false, message: "No se encontró el integrante del centro de salud." };
         }
 
+        const hasedEmail = hashEmail(email);
         const code = Math.floor(100000 + Math.random() * 900000).toString();
-        (await connectToRedis()).set(`registerPatient:${email}`, JSON.stringify({ code, medicId }), { EX: 1800 }); //30 minutos
+        (await connectToRedis()).set(`registerPatient:${hasedEmail}`, JSON.stringify({ code, medicId }), { EX: 1800 }); //30 minutos
         await sendPatientRegistrationEmail(email, code);
 
         return { success: true, message: "Se envió un correo de activación al contacto de emergencia" };

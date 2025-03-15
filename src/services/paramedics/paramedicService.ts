@@ -4,26 +4,10 @@ import rolesModel from "../../models/usersModels/rolesModel";
 import Patient from "../../models/usersModels/patientModel";
 import { publishToExchange } from "../publisherService";
 import { firebaseAdmin } from "../../config/firebase-config";
-import { isValidFirstName, isValidLastName, isValidEmail, isValidPassword } from "../utils";
 import { ParamedicUpdate } from "./paramedic.dto";
-import { paramedicSchema } from "../../validationSchemas/paramedicSchemas";
+import { paramedicSchema, paramedicRegisterSchema } from "../../validationSchemas/paramedicSchemas";
 import { sendNotification } from "../mail";
 import { getAllEmergencyContactFromCollection } from "../patients/patientService";
-
-export const validateParamedicFields = (
-    ambulanceId: string,
-    firstName: string,
-    lastName: string,
-    email: string,
-    password: string
-): string | null => {
-    if (!ambulanceId) return "ambulanceId";
-    if (!firstName) return "firstName";
-    if (!lastName) return "lastName";
-    if (!email) return "email";
-    if (!password) return "password";
-    return null;
-};
 
 export const addParamedicIntoCollection = async (
     ambulanceId: string,
@@ -33,32 +17,14 @@ export const addParamedicIntoCollection = async (
     password: string,
 ): Promise<{ success: boolean, message: string, ambulanceId?: string }> => {
     try {
-        const missingField = validateParamedicFields(
-            ambulanceId,
-            firstName,
-            lastName,
-            email,
-            password
-        );
+        
+        const { error } = paramedicRegisterSchema.validate({ ambulanceId, firstName, lastName, email, password });
 
-        if (missingField) {
-            throw new Error(`El campo ${missingField} es requerido.`);
-        }
-
-        if (!isValidFirstName(firstName)) {
-            throw new Error(`El nombre ${firstName} excede el límite de caracteres permitido.`);
-        }
-
-        if (!isValidLastName(lastName)) {
-            throw new Error(`El apellido ${lastName} excede el límite de caracteres permitido.`);
-        }
-
-        if (!isValidEmail(email)) {
-            throw new Error(`El correo electrónico ${email} no tiene un formato válido.`);
-        }
-
-        if (!isValidPassword(password)) {
-            throw new Error(`La contraseña debe tener al menos 8 caracteres.`);
+        if (error) {
+            return {
+                success: false,
+                message: error.message,
+            };
         }
 
         const existinParamedic = await paramedicModel.findOne({ email });
