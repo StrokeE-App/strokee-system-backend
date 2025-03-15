@@ -10,7 +10,6 @@ import {
     registerEmergencyContact
  } from "../controllers/patients/patientController";
 import { 
-    validateListofEmergencyContacts, 
     addEmergencyContact, 
     getEmergencyContact, 
     updateEmergencyContact, 
@@ -31,7 +30,6 @@ router.get("/emergency-contacts/:patientId/:contactId", verifyTokenWithRole(['ad
 router.post("/emergency-contacts/add", verifyTokenWithRole(['admin', 'patient']), addEmergencyContact);
 router.post("/register", registerPatient);
 router.post("/start-emergency", verifyTokenWithRole(['patient', 'emergencyContact']), creatEmergency);
-router.post("/emergency-contacts/validate", validateListofEmergencyContacts);
 router.put("/emergency-contacts/:patientId/:contactId", verifyTokenWithRole(['admin', 'patient']), updateEmergencyContact);
 router.put("/update/:patientId", verifyTokenWithRole(['admin', 'patient']), updatePatient);
 router.delete("/emergency-contacts/:patientId/:contactId", verifyTokenWithRole(['admin', 'patient']), deleteEmergencyContact);

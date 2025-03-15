@@ -7,146 +7,78 @@ import { v4 as uuidv4 } from 'uuid';
 import { publishToExchange } from "../publisherService";
 import { IEmergencyContact } from "../../models/usersModels/emergencyContactModel";
 import { firebaseAdmin } from "../../config/firebase-config";
-import { validateEmergencyContactData } from "./emergencyContactsService";
 import { patientSchema } from "../../validationSchemas/patientShemas";
 import { PatientUpdate } from "./patient.dto";
 import { sendMessage } from "../whatsappService";
 import { connectToRedis } from "../../boostrap";
+import { hashEmail, validateVerificationCodePatient } from "../utils";
+import { handleAsyncErrorRegister } from "../errorHandlers";
 import dotenv from "dotenv";
 
 dotenv.config();
 
-export async function validateVerificationCodePatient(email: string, verificationCode: string) {
-    const redisClient = await connectToRedis();
-    const storedData = await redisClient.get(`registerPatient:${email}`);
-
-    if (!storedData) {
-        throw new Error("El correo electr&oacute;nico o el c&oacute;digo de verificaci&oacute;n es incorrecto.");
+export const addPatientIntoPatientCollection = async (data: any): Promise<{ 
+    success: boolean; 
+    message: string; 
+    patientId?: string; 
+}> => {
+    // Validar datos con schema
+    const { error } = patientSchema.validate(data);
+    if (error) {
+        return { success: false, message: `Error de validación: ${error.details[0].message}` };
     }
 
-    const { code, medicId } = JSON.parse(storedData); // Extraer solo el código
+    const {
+        firstName, lastName, email, password, phoneNumber, age, birthDate, 
+        weight, height, emergencyContact, medications, conditions, token
+    } = data;
 
-    if (code !== verificationCode) {
-        throw new Error("El código de verificación es incorrecto");
-    }
-
-    return { medicId };
-}
-
-const validatePatientFields = (
-    firstName: string,
-    lastName: string,
-    email: string,
-    password: string,
-    phoneNumber: string,
-    age: number,
-    birthDate: Date,
-    weight: number,
-    height: number,
-    emergencyContact: IEmergencyContact[],
-    medications: string[],
-    conditions: string[]
-): string | null => {
-    if (!firstName) return "firstName";
-    if (!lastName) return "lastName";
-    if (!email) return "email";
-    if (!password) return "password";
-    if (!phoneNumber) return "phoneNumber";
-    if (!age) return "age";
-    if (!birthDate) return "birthDate";
-    if (!weight) return "weight";
-    if (!height) return "height";
-    if (!emergencyContact) return "emergencyContact";
-    if (medications.length === 0) return "medications";
-    if (conditions.length === 0) return "conditions";
-
-    return null;
-};
-
-export const addPatientIntoPatientCollection = async (
-    firstName: string,
-    lastName: string,
-    email: string,
-    password: string,
-    phoneNumber: string,
-    age: number,
-    birthDate: Date,
-    weight: number,
-    height: number,
-    emergencyContact: IEmergencyContact[],
-    medications: string[],
-    conditions: string[],
-    token: string
-): Promise<{ success: boolean, message: string, patientId?: string, duplicateEmails?: string[], duplicatePhones?: string[] }> => {
-    let invitationSentBy = "";
-    try{
+    // Validar el token de registro
+    let invitedByMedicId: string;
+    try {
         const { medicId } = await validateVerificationCodePatient(email, token);
-        invitationSentBy = medicId
-    }catch(e){
-        
-        return {
-            success: false,
-            message: 'El correo electonico o el codigo de verificacion es incorrecto.'
-
-        }
+        invitedByMedicId = medicId;
+    } catch {
+        return { success: false, message: "El correo electrónico o el código de verificación es incorrecto." };
     }
 
-    const session = await mongoose.startSession(); // Cambiado a mongoose.startSession()
+    // Iniciar transacción en MongoDB
+    const session = await mongoose.startSession();
     session.startTransaction();
 
-    let patientRecord: { uid: string } | undefined;
+    let firebaseUserId: string | undefined;
 
     try {
-        const missingField = validatePatientFields(
-            firstName, lastName, email, password, phoneNumber, age, birthDate, weight, height, emergencyContact, medications, conditions
-        );
-
-        if (missingField) {
-            throw new Error(`El campo ${missingField} es requerido.`);
-        }
-
+        // Verificar si el paciente ya existe
         const existingPatient = await Patient.findOne({ email }).session(session);
         if (existingPatient) {
-            return {
-                success: false,
-                message: `El email ${email} ya está registrado.`,
-            };
+            return { success: false, message: `El email ${email} ya está registrado.` };
         }
 
-        const contactValidation = validateEmergencyContactData(emergencyContact);
-        if (!contactValidation.success) {
-            return {
-                success: false,
-                message: `${contactValidation.message}`,
-                duplicateEmails: contactValidation.duplicateEmails || [],
-                duplicatePhones: contactValidation.duplicatePhones || [],
-            };
-        }
-
+        // Asignar ID único a contactos de emergencia
         for (const contact of emergencyContact) {
             contact.emergencyContactId = uuidv4();
             contact.canActivateEmergency = false;
         }
 
+        // Crear usuario en Firebase
         try {
-            patientRecord = await firebaseAdmin.createUser({ email, password });
-        
-            if (!patientRecord.uid) {
-                throw new Error("No se pudo crear el usuario en Firebase.");
-            }
+            const patientRecord = await firebaseAdmin.createUser({ email, password });
+            firebaseUserId = patientRecord.uid;
         } catch (error: any) {
             if (error.code === "auth/email-already-exists") {
                 throw new Error("Ya existe un usuario registrado con este correo.");
             }
-            throw new Error(`Error al crear el usuario: ${error.message}`);
+            throw new Error(`Error al crear el usuario en Firebase: ${error.message}`);
         }
 
+        // Crear documento del paciente en la base de datos
         const newPatient = {
-            patientId: patientRecord.uid,
+            patientId: firebaseUserId,
             firstName,
             lastName,
             email,
-            medicId: invitationSentBy,
+            medicId: invitedByMedicId,
             phoneNumber,
             age,
             emergencyContact,
@@ -158,50 +90,43 @@ export const addPatientIntoPatientCollection = async (
             isDeleted: false,
         };
 
-        const result = await Patient.updateOne(
-            { patientId: patientRecord.uid, isDeleted: false },
+        await Patient.updateOne(
+            { patientId: firebaseUserId, isDeleted: false },
             { $set: newPatient },
             { upsert: true, session }
         );
 
+        // Asignar rol al usuario
         const newRole = {
-            userId: patientRecord.uid,
+            userId: firebaseUserId,
             role: "patient",
             allowedApps: ["patients"],
             isDeleted: false,
         };
 
-        const addRole = await rolesModel.updateOne(
-            { userId: patientRecord.uid, isDeleted: false },
+        await rolesModel.updateOne(
+            { userId: firebaseUserId, isDeleted: false },
             { $set: newRole },
             { upsert: true, session }
         );
 
+        // Confirmar la transacción
         await session.commitTransaction();
         session.endSession();
 
+        // Eliminar el token de Redis
         const redisClient = await connectToRedis();
-        (await redisClient.del(`registerPatient:${email}`))
+        await redisClient.del(`registerPatient:${hashEmail(email)}`);
 
-        return { success: true, message: "Paciente agregado exitosamente.", patientId: patientRecord.uid };
+        return { success: true, message: "Paciente agregado exitosamente.", patientId: firebaseUserId };
 
     } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "Error desconocido";
-        console.error(`Error al agregar al paciente: ${errorMessage}`);
-
-        await session.abortTransaction();
-        session.endSession();
-
-        if (patientRecord && patientRecord.uid) {
-            try {
-                await firebaseAdmin.deleteUser(patientRecord.uid);
-                console.log("Usuario eliminado de Firebase debido a un error en la base de datos.");
-            } catch (firebaseError) {
-                console.error("Error al eliminar usuario de Firebase:", firebaseError);
-            }
-        }
-
-        return { success: false, message: `Error al agregar al paciente: ${errorMessage}` };
+        return await handleAsyncErrorRegister({ 
+            error, 
+            session, 
+            firebaseUserId, 
+            contextMessage: "Error al agregar al paciente"
+        });
     }
 };
 export const getAllPatientsFromCollection = async () => {

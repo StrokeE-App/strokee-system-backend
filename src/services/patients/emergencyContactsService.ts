@@ -3,9 +3,9 @@ import patientModel from "../../models/usersModels/patientModel";
 import rolesModel from "../../models/usersModels/rolesModel";
 import patientEmergencyContactModel from "../../models/usersModels/patientEmergencyContact";
 import { sendRegistrationEmail } from "../mail";
-import { validateEmergencyContact } from "../utils";
 import { v4 as uuidv4 } from 'uuid';
 import { firebaseAdmin } from "../../config/firebase-config";
+import { emergencyContactSchema } from "../../validationSchemas/emergencyContactSchema";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import { patientEmergencyContactSchema } from "../../validationSchemas/patientShemas";
@@ -32,7 +32,13 @@ export const addEmergencyContactIntoCollection = async (
             };
         }
 
-        validateEmergencyContact(newContact)
+        const { error } = emergencyContactSchema.validate(newContact);
+        if (error) {
+            return {
+                success: false,
+                message: error.message,
+            };
+        }
 
         newContact.emergencyContactId = uuidv4();
 
@@ -175,51 +181,6 @@ export const registerEmergencyContactToActivateEmergencyIntoCollection = async (
     }
 };
 
-
-
-export const validateEmergencyContactData = (contacts: IEmergencyContact[]): {
-    success: boolean,
-    message?: string,
-    duplicateEmails?: string[],
-    duplicatePhones?: string[]
-} => {
-    const phoneCount: Record<string, number> = {};
-    const emailCount: Record<string, number> = {};
-
-    try {
-        console.log(contacts)
-        contacts.forEach(contact => validateEmergencyContact(contact));
-
-        contacts.forEach(contact => {
-            if (contact.phoneNumber) {
-                phoneCount[contact.phoneNumber] = (phoneCount[contact.phoneNumber] || 0) + 1;
-            }
-            if (contact.email) {
-                emailCount[contact.email] = (emailCount[contact.email] || 0) + 1;
-            }
-        });
-
-        const duplicatePhones = Object.keys(phoneCount).filter(phone => phoneCount[phone] > 1);
-        const duplicateEmails = Object.keys(emailCount).filter(email => emailCount[email] > 1);
-
-        if (duplicatePhones.length > 0 || duplicateEmails.length > 0) {
-            return {
-                success: false,
-                message: "Hay contactos duplicados en el array de entrada.",
-                duplicateEmails,
-                duplicatePhones
-            };
-        }
-
-        return { success: true, message: "Todos los contactos son válidos." };
-    } catch (error) {
-        return {
-            success: false,
-            message: `Error al validar contactos: ${(error as Error).message}`
-        };
-    }
-};
-
 export const getEmergencyContactFromCollection = async (patientId: string, emergencyContactId: string) => {
     try {
         const contact = await await patientModel.findOne(
@@ -242,7 +203,9 @@ export const getEmergencyContactFromCollection = async (patientId: string, emerg
 export const updateEmergencyContactFromCollection = async (patientId: string, emergencyContactId: string, updatedContact: IEmergencyContact) => {
     try {
 
-        validateEmergencyContact(updatedContact)
+        const { error } = emergencyContactSchema.validate(updatedContact);
+
+        if (error) return { success: false, message: `Error de validación: ${error.details[0].message}` };
 
         updatedContact.emergencyContactId = emergencyContactId
 

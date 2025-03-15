@@ -17,38 +17,10 @@ const SECRET_KEY = process.env.SECRET_KEY_JWT || '';
 
 
 export const registerPatient = async (req: Request, res: Response, next: NextFunction) => {
-    const {
-        firstName,
-        lastName,
-        email,
-        password,
-        phoneNumber,
-        age,
-        birthDate,
-        weight,
-        height,
-        emergencyContact,
-        medications,
-        conditions,
-        token
-    } = req.body;
+    const data = req.body;
 
     try {
-        const result = await addPatientIntoPatientCollection(
-            firstName,
-            lastName,
-            email,
-            password,
-            phoneNumber,
-            age,
-            birthDate,
-            weight,
-            height,
-            emergencyContact,
-            medications,
-            conditions,
-            token
-        );
+        const result = await addPatientIntoPatientCollection(data);
 
         if (result.success) {
             res.status(201).json({
@@ -57,9 +29,7 @@ export const registerPatient = async (req: Request, res: Response, next: NextFun
             });
         } else {
             res.status(400).json({
-                message: result.message,
-                duplicateEmails: result.duplicateEmails,
-                duplicatePhones: result.duplicatePhones,
+                message: result.message
             });
         }
     } catch (error) {
