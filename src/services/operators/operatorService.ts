@@ -130,6 +130,7 @@ export const updateEmergencyPickUpFromCollectionOperator = async (
         };
 
         await publishToExchange("operator_exchange", "emergency_started_queue", message);
+        await publishToExchange("patient_exchange", "patient_report_queue", message);
 
         return { success: true, message: "Emergencia confirmada y mensaje enviado." };
     } catch (error) {

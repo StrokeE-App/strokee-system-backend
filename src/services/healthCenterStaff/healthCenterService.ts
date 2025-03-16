@@ -7,6 +7,7 @@ import { healthCenterStaffSchema, updateHealthCenterStaffSchema } from "../../va
 import { connectToRedis } from "../../boostrap";
 import { sendPatientRegistrationEmail } from "../mail";
 import { hashEmail } from "../utils";
+import { publishToExchange } from "../publisherService";
 import Patient from "../../models/usersModels/patientModel";
 
 export async function addHealthCenterIntoCollection(healthCenterStaff: AddHealthCenterStaff) {
@@ -126,15 +127,24 @@ export async function getPatientDeliverdToHealthCenter(emergencyId: string, deli
             return { success: false, code: 400, message: "La fecha de entrega no es válida." };
         }
 
-        const emergencyDelivered = await emergencyModel.updateOne(
+        const emergencyDelivered = await emergencyModel.findOneAndUpdate(
             { emergencyId },
             { $set: { status: "DELIVERED", deliveredDate: parsedDeliveredDate } },
-            { upsert: false }
+            { returnDocument: "after" }
         );
 
-        if (emergencyDelivered.matchedCount === 0) {
+        if (!emergencyDelivered) {
             return { success: false, code: 404, message: "No se encontró una emergencia con ese ID." };
         }
+
+        const message = {
+            ambulanceId: emergencyDelivered.ambulanceId,
+            emergencyId,
+            status: "DELIVERED",
+        }
+
+        await publishToExchange("paramedic_exchange", "paramedic_update_queue", message);
+        await publishToExchange("paramedic_exchange", "paramedic_update_queue", message)
 
         return { success: true, code: 200, message: "Emergencia entregada correctamente." };
     } catch (error) {
@@ -143,7 +153,7 @@ export async function getPatientDeliverdToHealthCenter(emergencyId: string, deli
     }
 }
 
-export const sendEmailToRegisterPatient= async (email: string, medicId: string) => {
+export const sendEmailToRegisterPatient = async (email: string, medicId: string) => {
     try {
 
         if (!email) {
