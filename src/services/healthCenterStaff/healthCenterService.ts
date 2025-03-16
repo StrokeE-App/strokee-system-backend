@@ -116,15 +116,20 @@ export async function getHealthCenterStaff(userId: string) {
     }
 }
 
-export async function getPatientDeliverdToHealthCenter(emergencyId: string) {
+export async function getPatientDeliverdToHealthCenter(emergencyId: string, deliveredDate: Date) {
     try {
         if (!emergencyId) {
             return { success: false, code: 400, message: "El ID de la emergencia es obligatorio." };
         }
 
+        const parsedDeliveredDate = new Date(deliveredDate);
+        if (isNaN(parsedDeliveredDate.getTime())) {
+            return { success: false, code: 400, message: "La fecha de entrega no es válida." };
+        }
+
         const emergencyDelivered = await emergencyModel.findOneAndUpdate(
             { emergencyId },
-            { $set: { status: "DELIVERED" } },
+            { $set: { status: "DELIVERED", deliveredDate: parsedDeliveredDate } },
             { returnDocument: "after" }
         );
 

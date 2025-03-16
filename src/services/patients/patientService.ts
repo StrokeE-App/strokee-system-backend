@@ -17,10 +17,10 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-export const addPatientIntoPatientCollection = async (data: any): Promise<{ 
-    success: boolean; 
-    message: string; 
-    patientId?: string; 
+export const addPatientIntoPatientCollection = async (data: any): Promise<{
+    success: boolean;
+    message: string;
+    patientId?: string;
 }> => {
     // Validar datos con schema
     const { error } = patientSchema.validate(data);
@@ -29,7 +29,7 @@ export const addPatientIntoPatientCollection = async (data: any): Promise<{
     }
 
     const {
-        firstName, lastName, email, password, phoneNumber, age, birthDate, 
+        firstName, lastName, email, password, phoneNumber, age, birthDate,
         weight, height, emergencyContact, medications, conditions, token
     } = data;
 
@@ -121,10 +121,10 @@ export const addPatientIntoPatientCollection = async (data: any): Promise<{
         return { success: true, message: "Paciente agregado exitosamente.", patientId: firebaseUserId };
 
     } catch (error) {
-        return await handleAsyncErrorRegister({ 
-            error, 
-            session, 
-            firebaseUserId, 
+        return await handleAsyncErrorRegister({
+            error,
+            session,
+            firebaseUserId,
             contextMessage: "Error al agregar al paciente"
         });
     }
@@ -156,10 +156,20 @@ export const addEmergencyToCollection = async (patientId: string, role: string, 
         if (!allowedRoles.includes(role)) {
             return { success: false, message: "El rol no es valido" };
         }
-        
+
         const existingPatient = await Patient.findOne({ patientId: patientId }, { firstName: 1, lastName: 1, height: 1, weight: 1, phoneNumber: 1 });
         if (!existingPatient) {
             return { success: false, message: "No se encontró un paciente con ese ID." };
+        }
+
+        // 🚧 Verificación de emergencia activa
+        const existingEmergency = await emergencyModel.findOne({
+            patientId,
+            status: { $in: ["PENDING", "TO_AMBULANCE", "CONFIRMED"] } // Verifica si hay una emergencia en curso
+        });
+
+        if (existingEmergency) {
+            return { success: false, message: "Ya tienes una emergencia activa. Espera a que sea atendida antes de solicitar otra." };
         }
 
         phoneNumber = existingPatient.phoneNumber

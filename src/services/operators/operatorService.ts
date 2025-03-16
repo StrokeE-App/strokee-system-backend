@@ -100,6 +100,15 @@ export const updateEmergencyPickUpFromCollectionOperator = async (
             return { success: false, message: "El ID de la ambulancia es obligatoria." };
         }
 
+        const existingAssignment = await emergencyModel.findOne({ 
+            ambulanceId: ambulanceId, 
+            status: { $in: ["TO_AMBULANCE", "CONFIRMED"] } 
+        });
+        
+        if (existingAssignment) {
+            return { success: false, message: `La ambulancia con ID ${ambulanceId} ya está asignada a otra emergencia.` };
+        }
+
         const updateResult = await emergencyModel.updateOne(
             { emergencyId },
             { $set: { status: "TO_AMBULANCE", ambulanceId: ambulanceId } },

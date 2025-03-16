@@ -231,11 +231,16 @@ paths:
               type: object
               required:
                 - emergencyId
+                - deliveredDate
               properties:
                 emergencyId:
                   type: string
                   example: "emergency-123"
                   description: ID único de la emergencia a entregar.
+                deliveredDate:
+                  type: string
+                  example: "2025-01-01T02:00:00Z"
+                  description: Fecha de entrega de la emergencia.
       responses:
         "200":
           description: La emergencia fue entregada correctamente.
