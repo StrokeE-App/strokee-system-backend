@@ -108,6 +108,7 @@ export const updateEmergencyPickUpFromCollection = async (
         }
 
         const message = {
+            ambulanceId: updatedEmergency.ambulanceId,
             emergencyId,
             pickupDate: parsedPickUpDate.toISOString(),
             status: "CONFIRMED",
