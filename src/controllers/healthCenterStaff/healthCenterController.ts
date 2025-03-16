@@ -77,10 +77,10 @@ export const deleteHealthCenter = async (req: Request, res: Response, next: Next
 }
 
 export const deliverPatient = async (req: Request, res: Response, next: NextFunction) => {
-    const { emergencyId } = req.body;
+    const { emergencyId, deliveredDate } = req.body;
 
     try {
-        const result = await getPatientDeliverdToHealthCenter(emergencyId);
+        const result = await getPatientDeliverdToHealthCenter(emergencyId, deliveredDate);
 
         res.status(result.code).json({ message: result.message });
 
