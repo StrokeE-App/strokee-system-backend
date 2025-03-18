@@ -228,5 +228,3 @@ export const getAllUsers = async () => {
         return { success: false, message: "Error al obtener los usuarios." };
     }
 };
-
-
