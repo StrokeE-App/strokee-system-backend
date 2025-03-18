@@ -19,7 +19,6 @@ import dotenv from "dotenv";
 import cookieParser from 'cookie-parser';
 import amqp from 'amqplib';
 import path = require('path');
-import { createClient } from 'redis';
 
 
 
@@ -55,28 +54,6 @@ const connectToRabbitMQ = async () => {
   }
 };
 
-let redisClient: ReturnType<typeof createClient> | null = null;
-
-export const connectToRedis = async () => {
-  if (!redisClient) {
-    redisClient = createClient({
-      username: process.env.REDIS_USERNAME || '',
-      password: process.env.REDIS_PASSWORD || '',
-      socket: {
-        host: process.env.REDIS_SOCKET_HOST || 'localhost',
-        port: Number(process.env.REDIS_SOCKET_PORT) || 6379
-      }
-    });
-
-    redisClient.on('error', err => console.error('Redis Client Error', err));
-
-    await redisClient.connect();
-    console.log('Connected to Redis');
-  }
-
-  return redisClient;
-};
-
 connectToMongo()
 connectToRabbitMQ()
 
@@ -88,7 +65,7 @@ app.use(bodyParser.json());
 app.use(indexRoute)
 app.use("/patient", patientsRoutes);
 app.use("/healthCenter", healthCenterRoutes);
-app.use("/emergencyContact", emergencyContactRoutes);
+app.use("/emergency-contact", emergencyContactRoutes);
 app.use("/admin", adminRoutes);
 app.use("/paramedic", paramedicsRoutes);
 app.use("/emergency", emergencyRoutes);

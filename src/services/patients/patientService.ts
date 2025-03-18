@@ -10,10 +10,10 @@ import { firebaseAdmin } from "../../config/firebase-config";
 import { patientSchema } from "../../validationSchemas/patientShemas";
 import { PatientUpdate } from "./patient.dto";
 import { sendMessage } from "../whatsappService";
-import { connectToRedis } from "../../boostrap";
 import { hashEmail, validateVerificationCodePatient } from "../utils";
 import { handleAsyncErrorRegister } from "../errorHandlers";
 import dotenv from "dotenv";
+import verificationCode from "../../models/verificationCode";
 
 dotenv.config();
 
@@ -114,9 +114,8 @@ export const addPatientIntoPatientCollection = async (data: any): Promise<{
         await session.commitTransaction();
         session.endSession();
 
-        // Eliminar el token de Redis
-        const redisClient = await connectToRedis();
-        await redisClient.del(`registerPatient:${hashEmail(email)}`);
+        // Eliminar el token de mongo
+       await verificationCode.deleteOne({ email: email, type: "REGISTER_PATIENT" });
 
         return { success: true, message: "Paciente agregado exitosamente.", patientId: firebaseUserId };
 

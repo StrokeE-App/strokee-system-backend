@@ -14,15 +14,13 @@ import {
     getEmergencyContact, 
     updateEmergencyContact, 
     deleteEmergencyContact,
-    sendActivationEmail,
-    registerEmergencyContactToStartEmergency
+    sendActivationEmail
 } from "../controllers/patients/emergencyContactsController";
 import { verifyTokenWithRole } from "../middlewares/authMiddleware"
 const router = Router()
 
 router.get("/all", verifyTokenWithRole(['admin', 'patient']), getAllPatients);
 router.get("/register-emergency-contact", registerEmergencyContact);
-router.post("/register-emergency-contact-to-start-emergency", registerEmergencyContactToStartEmergency);
 router.post("/send-activation-email", verifyTokenWithRole(['admin', 'patient']) ,sendActivationEmail);
 router.get("/:patientId", verifyTokenWithRole(['admin', 'patient']), getPatient);
 router.get("/emergency-contacts/all/:patientId", verifyTokenWithRole(['admin', 'patient']), getPatientEmergencyContacts);

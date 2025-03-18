@@ -101,10 +101,8 @@ export const sendActivationEmail = async (req: Request, res: Response, next: Nex
 
 export const registerEmergencyContactToStartEmergency = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { firstName, lastName, email, password, phoneNumber, verification_code } = req.body;
-        const body = { firstName, lastName, email, phoneNumber, verification_code, password };
 
-        const result = await registerEmergencyContactToActivateEmergencyIntoCollection(body);
+        const result = await registerEmergencyContactToActivateEmergencyIntoCollection(req.body);
 
         if (result.success) {
             res.status(200).json({ message: result.message });

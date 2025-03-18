@@ -4,10 +4,10 @@ import rolesModel from "../../models/usersModels/rolesModel";
 import { firebaseAdmin } from "../../config/firebase-config";
 import { AddHealthCenterStaff } from "./healthCenter.dto";
 import { healthCenterStaffSchema, updateHealthCenterStaffSchema } from "../../validationSchemas/healthCenterStaff";
-import { connectToRedis } from "../../boostrap";
 import { sendPatientRegistrationEmail } from "../mail";
 import { hashEmail } from "../utils";
 import { publishToExchange } from "../publisherService";
+import modelVerificationCode from "../../models/verificationCode";
 import Patient from "../../models/usersModels/patientModel";
 
 export async function addHealthCenterIntoCollection(healthCenterStaff: AddHealthCenterStaff) {
@@ -169,9 +169,21 @@ export const sendEmailToRegisterPatient = async (email: string, medicId: string)
             return { success: false, message: "No se encontró el integrante del centro de salud." };
         }
 
-        const hasedEmail = hashEmail(email);
         const code = Math.floor(100000 + Math.random() * 900000).toString();
-        (await connectToRedis()).set(`registerPatient:${hasedEmail}`, JSON.stringify({ code, medicId }), { EX: 1800 }); //30 minutos
+        await modelVerificationCode.findOneAndUpdate(
+            { email },
+            {
+                $set: {
+                    email,
+                    code,
+                    type: "REGISTER_PATIENT",
+                    data: {
+                        medicId
+                    }
+                }
+            },
+            { upsert: true, new: true }
+        )
         await sendPatientRegistrationEmail(email, code);
 
         return { success: true, message: "Se envió un correo de activación al contacto de emergencia" };
