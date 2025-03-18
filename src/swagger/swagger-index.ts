@@ -18,6 +18,7 @@ const admins = loadSwaggerFile("./users/admin.yaml") as any;
 const clinics = loadSwaggerFile("./users/clinic.yaml") as any;
 const emergencies = loadSwaggerFile("./emergencies/emergencies.yaml") as any;
 const credentials = loadSwaggerFile("./users/credentials.yaml") as any;
+const ambulance = loadSwaggerFile("./users/ambulance.yaml") as any;
 
 const swaggerDocs = {
   openapi: "3.0.0",
@@ -42,6 +43,7 @@ const swaggerDocs = {
     ...clinics.paths,
     ...admins.paths,
     ...emergencies.paths,
+    ...ambulance.paths
 
   },
 };
