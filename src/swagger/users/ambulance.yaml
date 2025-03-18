@@ -1,0 +1,191 @@
+openapi: 3.0.0
+info:
+  title: Ambulance API
+  description: API para gestionar ambulancias
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000/api
+    description: Servidor local
+paths:
+  /ambulances/register:
+    post:
+      summary: Agregar una ambulancia
+      tags:
+        - Ambulance
+      operationId: addAmbulance
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ambulanceId:
+                  type: string
+                  example: "12345"
+      responses:
+        201:
+          description: Ambulancia agregada exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        400:
+          description: Error en la solicitud
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+        500:
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /ambulances/delete/{ambulanceId}:
+    delete:
+      summary: Eliminar una ambulancia
+      tags: 
+        - Ambulance
+      operationId: deleteAmbulance
+      parameters:
+        - name: ambulanceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Ambulancia eliminada correctamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        400:
+          description: Error en la solicitud
+          content:  
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        500:
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /ambulances/{ambulanceId}:
+    get:
+      summary: Obtener una ambulancia
+      tags:
+        - Ambulance
+      operationId: getAmbulance
+      parameters:
+        - name: ambulanceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Datos de la ambulancia obtenidos correctamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  ambulance:
+                    type: object
+        400:
+          description: Error en la solicitud
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        500:
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /ambulances/update/{ambulanceId}:
+    put:
+      summary: Editar una ambulancia
+      tags:
+        - Ambulance
+      operationId: editAmbulance
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ambulanceId:
+                  type: string
+                updateData:
+                  type: object
+                  properties:
+                    status:
+                      type: string
+                      example: "TO_AMBULANCE"
+                    ambulanceId:
+                      type: string
+                      example: "12345"
+      responses:
+        200:
+          description: Ambulancia actualizada correctamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        400:
+          description: Error en la solicitud
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        500:
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string

@@ -10,6 +10,7 @@ import emergencyContactRoutes from './routes/emergencyContactRoute'
 import emergencyRoutes from './routes/emergencyRoutes'
 import operatorRoutes from './routes/operatorRoutes'
 import healthCenterRoutes from './routes/healthCenterRoute'
+import ambulanceRoutes from './routes/ambulanceRoute'
 import adminRoutes from './routes/adminRoute'
 import indexRoutes from './routes/indexRoute'
 import indexRoute from './routes/indexRoute'
@@ -66,6 +67,7 @@ app.use(indexRoute)
 app.use("/patient", patientsRoutes);
 app.use("/healthCenter", healthCenterRoutes);
 app.use("/emergency-contact", emergencyContactRoutes);
+app.use("/ambulance", ambulanceRoutes);
 app.use("/admin", adminRoutes);
 app.use("/paramedic", paramedicsRoutes);
 app.use("/emergency", emergencyRoutes);
