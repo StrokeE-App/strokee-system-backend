@@ -71,3 +71,13 @@ export const getAmbulance = async (ambulanceId: string) => {
         return { success: false, message: "Error al obtener la ambulancia." };
     }
 }
+
+export const getAllAmbulances = async () => {
+    try {
+        const ambulances = await ambulanceModel.find({}, { ambulanceId: 1, status: 1, _id: 0 });
+        return { success: true, message: "Ambulancias obtenidas correctamente.", ambulances };
+    } catch (error) {
+        console.error(`Error al obtener las ambulancias: ${error}`);
+        return { success: false, message: "Error al obtener las ambulancias." };
+    }
+}
