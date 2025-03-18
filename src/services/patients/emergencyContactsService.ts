@@ -10,9 +10,9 @@ import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import { patientEmergencyContactSchema } from "../../validationSchemas/patientShemas";
 import { RegisterEmergencyContactValidation } from "./patient.dto";
-import { connectToRedis } from "../../boostrap";
 import { console } from "inspector";
-import emergencyModel from "../../models/emergencyModel";
+import modelVerificationCode from "../../models/verificationCode";
+import verificationCodeModel from "../../models/verificationCode";
 
 dotenv.config();
 
@@ -75,7 +75,22 @@ export const sendEmailToRegisterEmergencyContact = async (patientId: string, con
         }
 
         const code = Math.floor(100000 + Math.random() * 900000).toString();
-        (await connectToRedis()).set(`registerEmergencyContact:${code}`, JSON.stringify({ code, contactId, patientId }), { EX: 1800 }); //30 minutos
+
+        await modelVerificationCode.findOneAndUpdate(
+            { email },
+            {
+                $set: {
+                    email,
+                    code,
+                    type: "REGISTER_EMERGENCY_CONTACT",
+                    data: {
+                        contactId,
+                        patientId
+                    }
+                }
+            },
+            { upsert: true, new: true }
+        )
         await sendRegistrationEmail(email, code);
 
         return { success: true, message: "Se envió un correo de activación al contacto de emergencia" };
@@ -86,14 +101,17 @@ export const sendEmailToRegisterEmergencyContact = async (patientId: string, con
 }
 
 async function validateVerificationCode(verificationCode: string) {
-    const redisClient = await connectToRedis();
-    const storedData = await redisClient.get(`registerEmergencyContact:${verificationCode}`);
+
+    const storedData = await verificationCodeModel.findOne({ code: verificationCode, type: "REGISTER_EMERGENCY_CONTACT" });
 
     if (!storedData) {
         throw new Error("El código de verificación ha expirado o es incorrecto");
     }
 
-    const { code, contactId, patientId } = JSON.parse(storedData); // Extraer solo el código
+    const data = storedData.data;
+    const contactId = data.contactId;
+    const patientId = data.patientId;
+    const code = storedData.code;
 
     if (code !== verificationCode) {
         throw new Error("El código de verificación es incorrecto");
@@ -155,6 +173,13 @@ export const registerEmergencyContactToActivateEmergencyIntoCollection = async (
             return { success: false, message: "El token de invitación ya ha sido utilizado o es inválido." };
         }
 
+        const existingEmergencyContact = await patientEmergencyContactModel.findOne({ email: data.email });
+
+        if (existingEmergencyContact) {
+            await firebaseAdmin.deleteUser(emergencyContactRecord.uid);
+            return { success: false, message: "El contacto de emergencia ya ha sido registrado." };
+        }
+
         const emergencyContact = await saveEmergencyContact(data, patientId, contactId, emergencyContactRecord.uid);
         const role = await rolesModel.create({
             userId: emergencyContactRecord.uid,
@@ -170,8 +195,7 @@ export const registerEmergencyContactToActivateEmergencyIntoCollection = async (
             return { success: false, message: "Error al registrar contacto en la base de datos." };
         }
 
-        const redisClient = await connectToRedis();
-        await redisClient.del(`registerEmergencyContact:${data.verification_code}`);
+        await verificationCodeModel.deleteOne({ code: data.verification_code, type: "REGISTER_EMERGENCY_CONTACT" });
 
         return { success: true, message: "Contacto de emergencia registrado exitosamente." };
 
@@ -295,24 +319,26 @@ export const getEmergencyContactUserFromCollection = async (userId: string) => {
     }
 }
 
-export const verifyEmergencyContact = async (userId: string, code: string) => {
+export const verifyEmergencyContact = async (userId: string, _code: string) => {
     try {
-        if (!userId || !code) {
+        if (!userId || !_code) {
             return { success: false, message: "Faltan datos para verificar la cuenta." };
         }
 
-        // Obtener el código y token almacenados en Redis
-        const redisClient = await connectToRedis();
-        const storedData = await redisClient.get(`registerEmergencyContact:${code}`);
+        // Obtener el código y token almacenados en en mongodb
+        const storedData = await verificationCodeModel.findOne({ code: _code, type: "REGISTER_EMERGENCY_CONTACT" });
 
         if (!storedData) {
             return { success: false, message: "Código expirado o inválido." };
         }
 
-        const { code: storedCode, contactId: contactId, patientId: patientId } = JSON.parse(storedData);
+        const data = storedData.data;
+        const contactId = data.contactId;
+        const patientId = data.patientId;
+        const code = storedData.code;
 
         // Verificar si el código y el token coinciden
-        if (code !== storedCode) {
+        if (_code !== code) {
             return { success: false, message: "Código es inválido." };
         }
 
@@ -341,7 +367,7 @@ export const verifyEmergencyContact = async (userId: string, code: string) => {
         }
 
         // Eliminar el código y token de Redis
-        await redisClient.del(`registerEmergencyContact:${code}`);
+        await verificationCodeModel.deleteOne({ code: code, type: "REGISTER_EMERGENCY_CONTACT" });
 
         return { success: true, message: "Contacto de emergencia vinculado con éxito." };
 
