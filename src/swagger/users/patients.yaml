@@ -517,12 +517,12 @@ paths:
                     type: string
                     example: "No se pudo enviar el correo de activación."
 
-  /patient/register-emergency-contact:
+  /emergency-contact/register-emergency-contact-to-start-emergency:
     post:
       summary: Registrar contacto de emergencia y activar emergencia
       description: Registra un contacto de emergencia usando un código de verificación y un token de activación.
       tags:
-        - Patients
+        - Emergency Contact
       requestBody:
         required: true
         content:
@@ -530,19 +530,11 @@ paths:
             schema:
               type: object
               required:
-                - firstName
-                - lastName
                 - email
                 - password
                 - phoneNumber
                 - verification_code
               properties:
-                firstName:
-                  type: string
-                  example: "Juan"
-                lastName:
-                  type: string
-                  example: "Pérez"
                 email:
                   type: string
                   format: email

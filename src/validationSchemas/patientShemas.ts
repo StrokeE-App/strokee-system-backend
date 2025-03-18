@@ -86,7 +86,6 @@ export const patientSchema = Joi.object({
 });
 
 export const patientEmergencyContactSchema = Joi.object({
-    ...commonValidations,
     verification_code: Joi.string().required().messages({
         "any.required": "El código de verificación es obligatorio."
     }),
