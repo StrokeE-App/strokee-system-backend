@@ -130,7 +130,8 @@ export const getAllUsers = async () => {
                         firstName: 1, // Ajusta según los campos relevantes
                         lastName: 1,
                         email: 1,
-                        role: { $ifNull: ["$roleData.role", "Sin rol"] } // Agrega el rol y maneja valores nulos
+                        role: { $ifNull: ["$roleData.role", "Sin rol"] }, // Agrega el rol y maneja valores nulos
+                        isActive: "$roleData.isActive"
                     }
                 }
             ]),
@@ -150,7 +151,8 @@ export const getAllUsers = async () => {
                         firstName: 1,
                         lastName: 1,
                         email: 1,
-                        role: { $ifNull: ["$roleData.role", "Sin rol"] }
+                        role: { $ifNull: ["$roleData.role", "Sin rol"] },
+                        isActive: "$roleData.isActive"
                     }
                 }
             ]),
@@ -170,7 +172,8 @@ export const getAllUsers = async () => {
                         firstName: 1,
                         lastName: 1,
                         email: 1,
-                        role: { $ifNull: ["$roleData.role", "Sin rol"] }
+                        role: { $ifNull: ["$roleData.role", "Sin rol"] },
+                        isActive: "$roleData.isActive"
                     }
                 }
             ]),
@@ -190,7 +193,8 @@ export const getAllUsers = async () => {
                         firstName: 1,
                         lastName: 1,
                         email: 1,
-                        role: { $ifNull: ["$roleData.role", "Sin rol"] }
+                        role: { $ifNull: ["$roleData.role", "Sin rol"] },
+                        isActive: "$roleData.isActive"
                     }
                 }
             ]),
@@ -210,7 +214,8 @@ export const getAllUsers = async () => {
                         firstName: 1,
                         lastName: 1,
                         email: 1,
-                        role: { $ifNull: ["$roleData.role", "Sin rol"] }
+                        role: { $ifNull: ["$roleData.role", "Sin rol"] },
+                        isActive: "$roleData.isActive"
                     }
                 }
             ])
@@ -226,5 +231,27 @@ export const getAllUsers = async () => {
     } catch (error) {
         console.error(`Error al obtener los usuarios: ${error}`);
         return { success: false, message: "Error al obtener los usuarios." };
+    }
+};
+
+export const inactivateUser = async (userId: string) => {
+    try {
+        await rolesModel.updateOne({ userId: userId }, { $set: { isActive: false } });
+        firebaseAdmin.updateUser(userId, { disabled: true });
+        return { success: true, message: "Usuario inactivado exitosamente." };
+    } catch (error) {
+        console.error(`Error al inactivar el usuario: ${error}`);
+        return { success: false, message: "Error al inactivar el usuario." };
+    }
+};
+
+export const activateUser = async (userId: string) => {
+    try {
+        await rolesModel.updateOne({ userId: userId }, { $set: { isActive: true } });
+        firebaseAdmin.updateUser(userId, { disabled: false });
+        return { success: true, message: "Usuario activado exitosamente." };
+    } catch (error) {
+        console.error(`Error al activar el usuario: ${error}`);
+        return { success: false, message: "Error al activar el usuario." };
     }
 };

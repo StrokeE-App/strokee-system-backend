@@ -34,6 +34,11 @@ export const verifyTokenWithRole = (allowedRoles: string[]) => {
                 return;
             }
 
+            if(user.isActive === false) {
+                res.status(403).json({ message: "Acceso denegado. El usuario se encuentra inactivo." });
+                return;
+            }
+
             if (!allowedRoles.includes(user.role)) {
                 res.status(403).json({ message: "Acceso denegado. No tienes permisos para esta acción." });
                 return;
