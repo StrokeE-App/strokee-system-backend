@@ -85,6 +85,36 @@ export const patientSchema = Joi.object({
     })
 });
 
+export const patientUpadteSchema = Joi.object({
+    ...commonValidations,
+    age: Joi.number().integer().required().messages({
+        "number.base": "La edad debe ser un número.",
+        "any.required": "La edad es obligatoria."
+    }),
+    birthDate: Joi.string().pattern(/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/).required()
+        .messages({
+           "string.pattern.base": "La fecha de nacimiento debe tener el formato YYYY-MM-DD.",
+            "any.required": "La fecha de nacimiento es obligatoria."
+        }),
+    weight: Joi.number().required().messages({
+        "number.base": "El peso debe ser un número.",
+        "any.required": "El peso es obligatorio."
+    }),
+    height: Joi.number().required().messages({
+        "number.base": "La altura debe ser un número.",
+        "any.required": "La altura es obligatoria."
+    }),
+    medications: Joi.array().items(Joi.string()).required().messages({
+        "array.base": "La lista de medicamentos debe ser un array de textos.",
+        "any.required": "Los medicamentos son obligatorios."
+    }),
+    conditions: Joi.array().items(Joi.string()).required().messages({
+        "array.base": "La lista de condiciones debe ser un array de textos.",
+        "any.required": "Las condiciones son obligatorias."
+    })
+});
+
+
 export const patientEmergencyContactSchema = Joi.object({
     verification_code: Joi.string().required().messages({
         "any.required": "El código de verificación es obligatorio."

@@ -351,20 +351,14 @@ paths:
                   enum: ["patient", "emergencyContact"]
                   description: "Rol del usuario que inicia la emergencia. Debe ser 'patient' o 'emergencyContact'."
                   example: "patient"
-                emergencyContactId:
+                phoneNumber:
                   type: string
-                  description: "El ID del contacto de emergencia. Obligatorio si el rol es 'emergencyContact'."
-                  example: "abc123"
+                  description: "El número de teléfono del usuario que inicia la emergencia."
+                  example: "1234567890"
               required:
                 - patientId
                 - role
-              anyOf:
-                - properties:
-                    role:
-                      const: "emergencyContact"
-                    emergencyContactId:
-                      type: string
-                      description: "Obligatorio si el rol es 'emergencyContact'."
+                - phoneNumber
       responses:
         '201':
           description: Emergencia creada con éxito

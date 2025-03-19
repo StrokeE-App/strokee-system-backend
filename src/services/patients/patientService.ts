@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { publishToExchange } from "../publisherService";
 import { IEmergencyContact } from "../../models/usersModels/emergencyContactModel";
 import { firebaseAdmin } from "../../config/firebase-config";
-import { patientSchema } from "../../validationSchemas/patientShemas";
+import { patientSchema, patientUpadteSchema } from "../../validationSchemas/patientShemas";
 import { PatientUpdate } from "./patient.dto";
 import { sendMessage } from "../whatsappService";
 import { hashEmail, validateVerificationCodePatient } from "../utils";
@@ -115,7 +115,7 @@ export const addPatientIntoPatientCollection = async (data: any): Promise<{
         session.endSession();
 
         // Eliminar el token de mongo
-       await verificationCode.deleteOne({ email: email, type: "REGISTER_PATIENT" });
+        await verificationCode.deleteOne({ email: email, type: "REGISTER_PATIENT" });
 
         return { success: true, message: "Paciente agregado exitosamente.", patientId: firebaseUserId };
 
@@ -140,62 +140,58 @@ export const getAllPatientsFromCollection = async () => {
     }
 }
 
-export const addEmergencyToCollection = async (patientId: string, role: string, emergencyContactId?: string | null): Promise<{ success: boolean, message: string, emergencyId?: string }> => {
+export const addEmergencyToCollection = async (patientId: string, role: string, phoneNumber: string): Promise<{ success: boolean, message: string, emergencyId?: string }> => {
     try {
-
-        let phoneNumber = "";
-
         if (!patientId) {
             return { success: false, message: "El ID del paciente es obligatorio." };
         }
 
-        console.log("role", role)
+        if (!phoneNumber || !/^\d{7,15}$/.test(phoneNumber)) {
+            return { success: false, message: "El número de teléfono no es válido." };
+        }
 
         const allowedRoles = ["patient", "emergencyContact"];
         if (!allowedRoles.includes(role)) {
-            return { success: false, message: "El rol no es valido" };
+            return { success: false, message: "El rol no es válido." };
         }
 
-        const existingPatient = await Patient.findOne({ patientId: patientId }, { firstName: 1, lastName: 1, height: 1, weight: 1, phoneNumber: 1 });
+        const existingPatient = await Patient.findOne(
+            { patientId },
+            { firstName: 1, lastName: 1, height: 1, weight: 1, phoneNumber: 1 }
+        );
         if (!existingPatient) {
             return { success: false, message: "No se encontró un paciente con ese ID." };
         }
 
-        // 🚧 Verificación de emergencia activa
+        // Verificación de emergencia activa
         const existingEmergency = await emergencyModel.findOne({
             patientId,
-            status: { $in: ["PENDING", "TO_AMBULANCE", "CONFIRMED"] } // Verifica si hay una emergencia en curso
+            status: { $in: ["PENDING", "TO_AMBULANCE", "CONFIRMED"] }
         });
 
         if (existingEmergency) {
             return { success: false, message: "Ya tienes una emergencia activa. Espera a que sea atendida antes de solicitar otra." };
         }
 
-        phoneNumber = existingPatient.phoneNumber
+        let userId = patientId; // Paciente como activador por defecto
 
         if (role === "emergencyContact") {
-            if (!emergencyContactId) {
-                return { success: false, message: "El ID del contacto de emergencia es obligatorio." };
+            const emergencyContact = await patientEmergencyContactModel.findOne({ "patients.patientId" : patientId });
+            if (!emergencyContact || !emergencyContact.fireBaseId) {
+                return { success: false, message: "No se encontró un contacto de emergencia válido para el paciente." };
             }
-            const emergencyContact = await patientEmergencyContactModel.findOne({ patients: patientId, fireBaseId: emergencyContactId });
-            if (!emergencyContact) {
-                return { success: false, message: "No se encontró un contacto de emergencia con ese ID." };
-            }
-
-            phoneNumber = emergencyContact.phoneNumber;
+            userId = emergencyContact.fireBaseId;
         }
-
-        console.log(patientId)
 
         const emergencyId = uuidv4();
 
         const newEmergency = new emergencyModel({
-            emergencyId: emergencyId,
+            emergencyId,
             startDate: new Date().toISOString(),
             pickupDate: null,
             deliveredDate: null,
-            patientId: patientId,
-            activatedBy: { rol: role, phoneNumber: phoneNumber, userId: role === "emergencyContact" ? emergencyContactId : patientId },
+            patientId,
+            activatedBy: { rol: role, phoneNumber, userId },
             ambulanceId: null,
             nihScale: null,
             status: "PENDING",
@@ -204,23 +200,28 @@ export const addEmergencyToCollection = async (patientId: string, role: string, 
 
         const savedEmergency = await newEmergency.save();
 
-
-        await sendMessage(existingPatient.firstName, existingPatient.lastName, phoneNumber);
-
         const message = {
             emergencyId,
             status: "PENDING",
         };
 
         await publishToExchange("patient_exchange", "patient_report_queue", message);
+
+        try {
+            await sendMessage(existingPatient.firstName, existingPatient.lastName, phoneNumber);
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : "Error desconocido";
+            console.warn(`No se pudo enviar el mensaje al paciente: ${errorMessage}`);
+        }
+
         return { success: true, message: "Emergencia creada exitosamente.", emergencyId: savedEmergency.emergencyId };
 
     } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "Error";
+        const errorMessage = error instanceof Error ? error.message : "Error desconocido";
         console.error(`Error al agregar la emergencia: ${errorMessage}`);
         return { success: false, message: `Error al agregar la emergencia: ${errorMessage}` };
     }
-}
+};
 
 export const getAllEmergencyContactFromCollection = async (patientId: string): Promise<{ success: boolean, message: string, data: { email: string }[] | null }> => {
     try {
@@ -271,7 +272,7 @@ export const updatePatientFromCollection = async (patientId: string, patientData
             return { success: false, message: "El ID del paciente es obligatorio." };
         }
 
-        const { error } = patientSchema.validate(patientData);
+        const { error } = patientUpadteSchema.validate(patientData);
         if (error) {
             return { success: false, message: `Error de validación: ${error.details[0].message}` };
         }

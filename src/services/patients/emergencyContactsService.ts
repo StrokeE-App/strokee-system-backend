@@ -41,6 +41,7 @@ export const addEmergencyContactIntoCollection = async (
         }
 
         newContact.emergencyContactId = uuidv4();
+        newContact.canActivateEmergency = false;
 
         await patientModel.updateOne(
             { patientId },
