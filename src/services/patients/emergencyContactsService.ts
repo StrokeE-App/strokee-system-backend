@@ -238,7 +238,13 @@ export const updateEmergencyContactFromCollection = async (patientId: string, em
             { patientId, "emergencyContact.emergencyContactId": emergencyContactId },
             {
                 $set: {
-                    "emergencyContact.$[elem]": updatedContact
+                    "emergencyContact.$[elem].firstName": updatedContact.firstName,
+                    "emergencyContact.$[elem].lastName": updatedContact.lastName,
+                    "emergencyContact.$[elem].email": updatedContact.email,
+                    "emergencyContact.$[elem].phoneNumber": updatedContact.phoneNumber,
+                    "emergencyContact.$[elem].relationship": updatedContact.relationship,
+                    "emergencyContact.$[elem].emergencyContactId": updatedContact.emergencyContactId,
+                    "emergencyContact.$[elem].canActivateEmergency": updatedContact.canActivateEmergency
                 }
             },
             {
