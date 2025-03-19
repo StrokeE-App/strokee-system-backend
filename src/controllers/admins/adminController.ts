@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { registerAdminIntoCollection, deleteAdmin, getAdmin, updateAdmin, getAllUsers } from "../../services/admins/adminService";
+import { registerAdminIntoCollection, deleteAdmin, getAdmin, updateAdmin, getAllUsers, activateUser, inactivateUser } from "../../services/admins/adminService";
 
 export const addAdmin = async (req: Request, res: Response, next: NextFunction) => {
     const adminData = req.body;
@@ -83,6 +83,42 @@ export const getAllAppUsers = async (req: Request, res: Response, next: NextFunc
             res.status(200).json({
                 message: result.message,
                 users: result.users
+            });
+        } else {
+            res.status(400).json({
+                message: result.message,
+            });
+        }
+    } catch (error) {
+        next(error);
+    }
+}
+
+export const activateUserController = async (req: Request, res: Response, next: NextFunction) => {
+    const { userId } = req.body;
+    try {
+        const result = await activateUser(userId);
+        if (result.success) {
+            res.status(200).json({
+                message: result.message,
+            });
+        } else {
+            res.status(400).json({
+                message: result.message,
+            });
+        }
+    } catch (error) {
+        next(error);
+    }
+}
+
+export const inactivateUserController = async (req: Request, res: Response, next: NextFunction) => {
+    const { userId } = req.body;
+    try {
+        const result = await inactivateUser(userId);
+        if (result.success) {
+            res.status(200).json({
+                message: result.message,
             });
         } else {
             res.status(400).json({
