@@ -7,7 +7,14 @@ export const hashEmail = (email: string) => {
 
 export async function validateVerificationCodePatient(email: string, verificationCode: string) {
 
+    console.log(email, verificationCode);
+
+    const test = await modelVerificationCode.find({});
+    console.log(test);
+
     const storedData = await modelVerificationCode.findOne({ email: email, type: "REGISTER_PATIENT" });
+
+    console.log(storedData);
 
     if (!storedData) {
         throw new Error("El correo electronico o el codigo de verificacion es incorrecto.");
