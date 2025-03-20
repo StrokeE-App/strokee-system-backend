@@ -29,7 +29,7 @@ const RABBITMQ_URL = process.env.RABBIT_MQ || 'amqp://localhost';
 
 const connectToMongo = () => {
 
-  const MONGO_URI = process.env.MONGOURI!
+  const MONGO_URI = process.env.MONGOURI || 'mongodb://localhost:27017';
 
   mongoose.Promise = Promise;
   mongoose.connect(MONGO_URI)
