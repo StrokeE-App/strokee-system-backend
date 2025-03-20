@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   app-strokee-system-api:
-    build: .
+    image:  carlos29ac/strokee-api-service:latest
     container_name: strokee-system-api
     restart: always
     depends_on:
