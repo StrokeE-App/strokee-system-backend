@@ -17,8 +17,10 @@ const firebaseErrorMessages: Record<string, string> = {
 // Función para traducir errores de Firebase
 function translateFirebaseError(error: any): string {
     if (error?.code && firebaseErrorMessages[error.code]) {
+        console.error("Error de Firebase traducido:", error);
         return firebaseErrorMessages[error.code]; // Traducción personalizada
     }
+    console.error("Error desconocido de Firebase:", error);
     return "Ocurrió un error inesperado con Firebase."; // Mensaje genérico
 }
 
