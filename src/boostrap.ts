@@ -26,10 +26,12 @@ import path = require('path');
 dotenv.config();
 const app = express();
 const RABBITMQ_URL = process.env.RABBIT_MQ || 'amqp://localhost';
+console.log(RABBITMQ_URL)
 
 const connectToMongo = () => {
 
   const MONGO_URI = process.env.MONGOURI || 'mongodb://localhost:27017';
+  console.log(MONGO_URI)
 
   mongoose.Promise = Promise;
   mongoose.connect(MONGO_URI)

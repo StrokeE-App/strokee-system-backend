@@ -2,12 +2,14 @@ version: '3.8'
 
 services:
   app-strokee-system-api:
-    image:  carlos29ac/strokee-api-service:latest
+    image: carlos29ac/strokee-api-service:latest
+    env_file:
+      - .env
     container_name: strokee-system-api
     restart: always
     depends_on:
       mongo-strokee-system:
-        condition: service_started
+        condition: service_healthy
       rabbitmq-strokee-system:
         condition: service_healthy
     environment:
@@ -32,7 +34,7 @@ services:
       rabbitmq-strokee-system:
         condition: service_healthy
     environment:
-      MONGO_URI: mongodb://mongo-strokee-system:27017/strokeedb
+      MONGO_URI: mongodb://mongo-strokee-system:27018/strokeedb
       RABBIT_MQ: amqp://rabbitmq-strokee-system:5672
       PORT: 4002
     ports:
@@ -51,6 +53,11 @@ services:
       - mongo_data:/data/db
     networks:
       - strokee_network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      retries: 5
+      start_period: 10s
 
   rabbitmq-strokee-system:
     image: rabbitmq:3-management
