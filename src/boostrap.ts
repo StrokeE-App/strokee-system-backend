@@ -66,17 +66,17 @@ app.use(cookieParser());
 app.use(cors({ credentials: true, origin: true }));
 app.use(bodyParser.json());
 app.use(indexRoute)
-app.use("/patient", patientsRoutes);
-app.use("/healthCenter", healthCenterRoutes);
-app.use("/emergency-contact", emergencyContactRoutes);
-app.use("/ambulance", ambulanceRoutes);
-app.use("/admin", adminRoutes);
-app.use("/paramedic", paramedicsRoutes);
-app.use("/emergency", emergencyRoutes);
-app.use("/operator", operatorRoutes)
-app.use("/credentials", creentialsRoute)
-app.use("/", indexRoutes);
-app.use('/swagger', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+app.use("/api/patient", patientsRoutes);
+app.use("/api/healthCenter", healthCenterRoutes);
+app.use("/api/emergency-contact", emergencyContactRoutes);
+app.use("/api/ambulance", ambulanceRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/paramedic", paramedicsRoutes);
+app.use("/api/emergency", emergencyRoutes);
+app.use("/api/operator", operatorRoutes)
+app.use("/api/credentials", creentialsRoute)
+app.use("/api/", indexRoutes);
+app.use('/api/swagger', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 // Middleware para manejar errores debe ser el último middleware
 app.use(errorHandler);
