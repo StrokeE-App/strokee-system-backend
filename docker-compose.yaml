@@ -1,21 +1,34 @@
 version: '3.8'
 
 services:
-  app-strokee-system-api:
+
+  strokee-nginx:
+    image: nginx:latest
+    container_name: strokee-nginx
+    restart: always
+    depends_on:
+      - strokee-system-api-service
+      - strokee-notification-service
+    ports:
+      - "8080:80" 
+      - "8443:443" 
+    volumes:
+      - ./nginx/strokee.conf:/etc/nginx/conf.d/strokee.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+    networks:
+      - strokee_network
+
+  strokee-system-api-service:
     image: carlos29ac/strokee-api-service:latest
     env_file:
       - .env
-    container_name: strokee-system-api
+    container_name: strokee-system-api-service
     restart: always
     depends_on:
       mongo-strokee-system:
         condition: service_healthy
       rabbitmq-strokee-system:
         condition: service_healthy
-    environment:
-      MONGOURI: mongodb://mongo-strokee-system:27017/strokeedb
-      RABBIT_MQ: amqp://rabbitmq-strokee-system:5672
-      PORT: 4001
     ports:
       - "4001:4001"
     volumes:
@@ -24,29 +37,27 @@ services:
     networks:
       - strokee_network
   
-  app-strokee-system-notification-service:
-    image:  carlos29ac/strokee-notification-service:latest 
-    container_name: notification-service
+  strokee-notification-service:
+    image: carlos29ac/strokee-notification-service:latest
+    env_file:
+      - .env
+    container_name: strokee-notification-service
     restart: always
     depends_on:
       mongo-strokee-system:
         condition: service_started
       rabbitmq-strokee-system:
         condition: service_healthy
-    environment:
-      MONGO_URI: mongodb://mongo-strokee-system:27018/strokeedb
-      RABBIT_MQ: amqp://rabbitmq-strokee-system:5672
-      PORT: 4002
     ports:
       - "4002:4002"
     networks:
       - strokee_network
 
   mongo-strokee-system:
-    image: mongo:6
+    image: mongo:latest
     container_name: mongo-strokee-system
     restart: always
-    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
+    command: ["/bin/sh", "-c", "mongod --replSet rs0 --bind_ip_all & sleep 5 && mongosh --eval 'rs.initiate({_id: \"rs0\", members: [{ _id: 0, host: \"mongo-strokee-system:27017\" }]})' && wait"]
     ports:
       - "27018:27017"
     volumes:
