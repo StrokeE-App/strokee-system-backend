@@ -4,12 +4,12 @@ import { loginUser, logoutUser, getToken } from "../controllers/auth/authControl
 
 const router = Router()
 
-router.get("/", (req: Request, res: Response) => {
+router.get("/api/", (req: Request, res: Response) => {
     res.send("Server running...")
 });
 
-router.post("/login", loginUser);
-router.post("/logout", verifyTokenWithRole(["admin", "paramedic", "operator", "patient", "clinic"]), logoutUser);
-router.post("/token", getToken);
+router.post("/api/login", loginUser);
+router.post("/api/logout", verifyTokenWithRole(["admin", "paramedic", "operator", "patient", "clinic"]), logoutUser);
+router.post("/api/token", getToken);
 
 export default router;

@@ -1,8 +1,10 @@
 # strokee-system-backend
 
-# Docker Compose para StrokeE System
+## 🐳 **Docker Compose para StrokeE System**
 
 Este archivo describe cómo usar `docker-compose` para levantar la infraestructura del proyecto, incluyendo MongoDB y RabbitMQ. También explica los comandos necesarios para inicializar el Replica Set en MongoDB.
+
+---
 
 ## 📌 **Requisitos previos**
 
@@ -36,53 +38,16 @@ Esto mostrará una lista de los contenedores activos. Debes ver algo similar a:
 
 ```plaintext
 CONTAINER ID   IMAGE                                      STATUS           PORTS
-xxxxxxxxxxxx   mongo:6                                    Up X minutes     27018->27017/tcp
-xxxxxxxxxxxx   carlos29ac/strokee-notification-service   Up X minutes     4002->4002/tcp
-xxxxxxxxxxxx   strokee-system-api                        Up X minutes     4001->4001/tcp
-xxxxxxxxxxxx   rabbitmq:3-management                     Up X minutes     5672->5672/tcp, 15672->15672/tcp
+xxxxxxxxxxxx   mongo:6                                    Up X minutos     27018->27017/tcp
+xxxxxxxxxxxx   carlos29ac/strokee-notification-service   Up X minutos     4002->4002/tcp
+xxxxxxxxxxxx   strokee-system-api                        Up X minutos     4001->4001/tcp
+xxxxxxxxxxxx   rabbitmq:3-management                     Up X minutos     5672->5672/tcp, 15672->15672/tcp
 ```
 
 Si algún contenedor no está corriendo, revisa los logs:
 ```bash
 docker logs mongo-strokee-system
 ```
-
----
-
-## 🛠 **Inicializar el Replica Set en MongoDB**
-
-### 3️⃣ **Ingresar al contenedor de MongoDB**
-Ejecuta:
-
-```bash
-docker exec -it mongo-strokee-system mongosh
-```
-
----
-
-### 4️⃣ **Configurar el Replica Set**
-Dentro del shell de MongoDB, ejecuta:
-
-```javascript
-rs.initiate()
-```
-
-Verifica que se haya configurado correctamente con:
-```javascript
-rs.status()
-```
-Si ves `"ok": 1`, significa que el Replica Set está activo.
-
----
-
-### 5️⃣ **Salir del shell de MongoDB**
-
-Escribe:
-```bash
-exit
-```
-
----
 
 ## 📦 **Apagar y eliminar los contenedores**
 
@@ -100,6 +65,8 @@ docker-compose down -v
 
 ## ✅ **Resumen de Comandos Útiles**
 
+### 🐳 **Docker Compose**
+
 | Acción | Comando |
 |--------|---------|
 | Construir y levantar contenedores | `docker-compose up -d --build` |
@@ -112,5 +79,55 @@ docker-compose down -v
 | Apagar contenedores sin borrar volúmenes | `docker-compose down` |
 | Apagar y borrar volúmenes | `docker-compose down -v` |
 
+### ☸️ **Kubernetes**
+
+| Acción | Comando |
+|--------|---------|
+| Ver lista de pods | `kubectl get pods` |
+| Ver lista de despliegues | `kubectl get deployments` |
+| Ver servicios en ejecución | `kubectl get services` |
+| Ver logs de un pod | `kubectl logs <nombre_pod>` |
+| Describir un pod | `kubectl describe pod <nombre_pod>` |
+| Ingresar a un pod en ejecución | `kubectl exec -it <nombre_pod> -- /bin/sh` |
+| Ver eventos del clúster | `kubectl get events` |
+| Ver estado de los nodos | `kubectl get nodes` |
+
 Con esto, tendrás tu infraestructura lista para usar. 🚀
+
+---
+
+## ☸️ **Despliegue en Kubernetes**
+
+Para desplegar la configuración en un clúster de Kubernetes, sigue los siguientes pasos:
+
+### 1️⃣ **Crear secretos de aplicación**
+Es necesario crear un secreto en Kubernetes a partir del archivo `.env` que contiene las variables de entorno:
+
+```bash
+kubectl create secret generic app-secrets --from-env-file=.env
+```
+
+Este secreto almacenará información sensible que será utilizada por los pods en el clúster.
+
+### 2️⃣ **Crear ConfigMap para Nginx**
+El siguiente comando crea un `ConfigMap` con la configuración de Nginx a partir de un archivo de configuración personalizado:
+
+```bash
+kubectl create configmap nginx-config --from-file=nginx.conf=nginx/strokee.conf
+```
+
+Este `ConfigMap` permitirá gestionar la configuración de Nginx sin necesidad de modificar directamente los pods.
+
+### 3️⃣ **Crear secreto TLS para Nginx**
+Para habilitar TLS en Nginx, es necesario crear un secreto con los certificados SSL:
+
+```bash
+kubectl create secret tls strokee-tls-secret --cert=nginx/ssl/nginx.crt --key=nginx/ssl/nginx.key
+```
+
+Esto garantiza una comunicación segura mediante HTTPS dentro del clúster.
+
+---
+
+Con estos pasos, tendrás tu infraestructura desplegada correctamente en Kubernetes, asegurando un entorno seguro y bien configurado. 🚀
 
