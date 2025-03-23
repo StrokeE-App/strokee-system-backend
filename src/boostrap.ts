@@ -7,6 +7,7 @@ import swaggerDocs from './swagger/swagger-index';
 import patientsRoutes from './routes/patientRoutes'
 import paramedicsRoutes from './routes/paramedicRoutes'
 import emergencyContactRoutes from './routes/emergencyContactRoute'
+import clinicRoutes from './routes/clinicRoute'
 import emergencyRoutes from './routes/emergencyRoutes'
 import operatorRoutes from './routes/operatorRoutes'
 import healthCenterRoutes from './routes/healthCenterRoute'
@@ -68,6 +69,7 @@ app.use(bodyParser.json());
 app.use(indexRoute)
 app.use("/api/patient", patientsRoutes);
 app.use("/api/healthCenter", healthCenterRoutes);
+app.use("/api/clinic", clinicRoutes);
 app.use("/api/emergency-contact", emergencyContactRoutes);
 app.use("/api/ambulance", ambulanceRoutes);
 app.use("/api/admin", adminRoutes);

@@ -5,6 +5,7 @@ export interface IhealthCenter extends Document {
     firstName: string;
     lastName: string;
     email: string;
+    healthcenterId: string;
     isDeleted : boolean;
 }
 
@@ -14,6 +15,7 @@ const MedicSchema: Schema = new Schema(
         firstName: { type: String, required: true },
         lastName: { type: String, required: true },
         email: { type: String, required: true, unique: true },
+        healthcenterId: { type: String, required: true },
         isDeleted: { type: Boolean, default: false },
     },
     {
