@@ -8,7 +8,6 @@ export interface IAmbulance extends Document {
 const AmbulanceSchema: Schema = new Schema(
     {
         ambulanceId: { type: String, required: true, unique: true },
-        status: { type: String, required: true, default: "AVAILABLE" },
     },
     {
         timestamps: true,

@@ -4,7 +4,7 @@ paths:
       summary: Registra un nuevo centro de salud
       description: Crea un nuevo centro de salud en la base de datos y en Firebase Authentication.
       tags:
-        - Clinic
+        - Health center
       requestBody:
         required: true
         content:
@@ -16,6 +16,7 @@ paths:
                 - password
                 - firstName
                 - lastName
+                - healthcenterId
               properties:
                 email:
                   type: string
@@ -31,6 +32,9 @@ paths:
                 lastName:
                   type: string
                   example: "Doe"
+                healthcenterId:
+                  type: string
+                  example: "healthcenter-12345"
       responses:
         "201":
           description: Centro de salud agregado exitosamente.
@@ -70,7 +74,7 @@ paths:
       summary: Obtener un integrante del centro de salud
       description: Obtiene la información de un integrante del centro de salud por su ID.
       tags:
-        - Clinic
+        - Health center
       parameters:
         - name: medicId
           in: path
@@ -95,6 +99,7 @@ paths:
                       firstName: "Carlos"
                       lastName: "Gómez"
                       email: "carlos.gomez@example"
+                      healthcenterId: "healthcenter-12345"
         "400":
           description: No se encontró el integrante.
           content:
@@ -120,7 +125,7 @@ paths:
       summary: Actualizar un integrante del centro de salud
       description: Actualiza la información de un integrante del centro de salud.
       tags:
-        - Clinic
+        - Health center
       parameters:
         - name: medicId
           in: path
@@ -177,7 +182,7 @@ paths:
       summary: Eliminar un integrante del centro de salud
       description: Elimina un integrante del centro de salud por su ID.
       tags:
-        - Clinic
+        - Health center
       parameters:
         - name: medicId
           in: path
@@ -221,7 +226,7 @@ paths:
       summary: Marcar una emergencia como entregada
       description: Actualiza el estado de una emergencia a "DELIVERED" en la base de datos.
       tags:
-        - Clinic
+        - Health center
       operationId: deliverPatient
       requestBody:
         required: true
@@ -288,7 +293,7 @@ paths:
       description: Envía un correo electrónico a un paciente con un código de activación para su registro.
       operationId: invitePatient
       tags:
-        - Clinic
+        - Health center
       requestBody:
         required: true
         content:

@@ -60,7 +60,7 @@ export const editAmbulance = async (ambulanceId: string, updateData: IAmbulance)
 
 export const getAmbulance = async (ambulanceId: string) => {
     try {
-        const ambulance = await ambulanceModel.findOne({ ambulanceId }, { ambulanceId: 1, status: 1, _id: 0 });
+        const ambulance = await ambulanceModel.findOne({ ambulanceId }, { ambulanceId: 1, _id: 0 });
         if (!ambulance) {
             return { success: false, message: `La ambulancia con ID ${ambulanceId} no existe.` };
         }
@@ -74,7 +74,7 @@ export const getAmbulance = async (ambulanceId: string) => {
 
 export const getAllAmbulances = async () => {
     try {
-        const ambulances = await ambulanceModel.find({}, { ambulanceId: 1, status: 1, _id: 0 });
+        const ambulances = await ambulanceModel.find({}, { ambulanceId: 1, _id: 0 });
         return { success: true, message: "Ambulancias obtenidas correctamente.", ambulances };
     } catch (error) {
         console.error(`Error al obtener las ambulancias: ${error}`);

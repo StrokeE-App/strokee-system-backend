@@ -16,6 +16,9 @@ export const healthCenterStaffSchema = Joi.object({
     password: Joi.string().min(8).required().messages({
         "string.min": "La contraseña debe tener al menos 8 caracteres.",
         "any.required": "La contraseña es obligatoria."
+    }),
+    healthcenterId: Joi.string().required().messages({
+        "any.required": "El ID de centro de salud es obligatorio."
     })
 });
 
