@@ -122,9 +122,6 @@ paths:
                       ambulanceId:
                         type: string
                         example: "12345"
-                      status:
-                        type: string
-                        example: "TO_AMBULANCE"
         400:
           description: Error en la solicitud
           content:
@@ -168,9 +165,6 @@ paths:
                         ambulanceId:
                           type: string
                           example: "12345"
-                        status:
-                          type: string
-                          example: "TO_AMBULANCE"
         400:
           description: Error en la solicitud
           content:
@@ -208,9 +202,6 @@ paths:
                 updateData:
                   type: object
                   properties:
-                    status:
-                      type: string
-                      example: "TO_AMBULANCE"
                     ambulanceId:
                       type: string
                       example: "12345"

@@ -1,6 +1,7 @@
 import healthCenterModel from "../../models/usersModels/healthCenterModel";
 import emergencyModel from "../../models/emergencyModel";
 import rolesModel from "../../models/usersModels/rolesModel";
+import clinicModel from "../../models/usersModels/clinicModel";
 import { firebaseAdmin } from "../../config/firebase-config";
 import { AddHealthCenterStaff } from "./healthCenter.dto";
 import { healthCenterStaffSchema, updateHealthCenterStaffSchema } from "../../validationSchemas/healthCenterStaff";
@@ -18,8 +19,12 @@ export async function addHealthCenterIntoCollection(healthCenterStaff: AddHealth
         if (error) {
             return { success: false, message: `Error de validación: ${error.details[0].message}` };
         }
+
+        const existingClinic = await clinicModel.findOne({ healthcenterId: healthCenterStaff.healthcenterId });
+        if (!existingClinic) {
+            return { success: false, message: "El centro de salud no existe." };
+        }
         const healthCenterStaffExists = await healthCenterModel.findOne({ email: healthCenterStaff.email });
-        console.log(healthCenterStaffExists);
         if (healthCenterStaffExists) {
             return { success: false, message: "El correo electrónico ya está registrado." };
         }
@@ -34,6 +39,7 @@ export async function addHealthCenterIntoCollection(healthCenterStaff: AddHealth
             firstName: healthCenterStaff.firstName,
             lastName: healthCenterStaff.lastName,
             email: healthCenterStaff.email,
+            healthcenterId: healthCenterStaff.healthcenterId,
             isDeleted: false,
         });
 
@@ -86,7 +92,12 @@ export async function updateHealthCenterStaff(userId: string, updateData: Partia
 
         const updatedHealthCenterStaff = await healthCenterModel.findOneAndUpdate(
             { medicId: userId, isDeleted: false },
-            updateData,
+            {
+                $set: {
+                    firstName: updateData.firstName,
+                    lastName: updateData.lastName
+                }
+            },
             { new: true }
         );
 

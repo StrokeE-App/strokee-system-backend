@@ -287,44 +287,48 @@ export const deleteEmergencyContactFromCollection = async (patientId: string, em
 
 export const getEmergencyContactUserFromCollection = async (userId: string) => {
     try {
-        const contactWithPatients = await patientEmergencyContactModel.aggregate([
-            {
-                $match: { fireBaseId: userId },
-            },
-            {
-                $lookup: {
-                    from: "patients", // Nombre de la colección de pacientes
-                    localField: "patients.patientId",
-                    foreignField: "patientId",
-                    as: "patientDetails",
-                },
-            },
-            {
-                $project: {
-                    _id: 0,
-                    userId: "$fireBaseId",
-                    email: 1,
-                    firstName: 1,
-                    lastName: 1,
-                    phoneNumber: 1,
-                    patientDetails: {
-                        patientId: 1,
-                        firstName: 1,
-                        lastName: 1,
-                        email: 1,
-                        phoneNumber: 1,
-                        conditions: 1,
-                        medications: 1,
-                    },
-                },
-            },
-        ]);
-        return contactWithPatients;
+        // Paso 1: Obtener el contacto de emergencia
+        const contact = await patientEmergencyContactModel.findOne(
+            { fireBaseId: userId },
+            { _id: 0, fireBaseId: 1, email: 1, phoneNumber: 1, patients: 1 }
+        ).lean(); // Usar .lean() para obtener un objeto plano
+
+        if (!contact) {
+            return null; // Si no se encuentra el contacto, retornar null
+        }
+
+        // Paso 2: Obtener los IDs de los pacientes
+        const patientIds = contact.patients.map((p: any) => p.patientId);
+
+        // Paso 3: Obtener los detalles de los pacientes
+        const patientDetails = await patientModel.find(
+            { patientId: { $in: patientIds } },
+            { _id: 0, patientId: 1, firstName: 1, lastName: 1, email: 1, phoneNumber: 1, conditions: 1, medications: 1 }
+        ).lean(); // Usar .lean() para obtener objetos planos
+
+        // Paso 4: Combinar los datos
+        const combinedData = {
+            userId: contact.fireBaseId,
+            email: contact.email,
+            phoneNumber: contact.phoneNumber,
+            patientDetails: contact.patients.map((p: any) => {
+                const detail = patientDetails.find((d: any) => d.patientId === p.patientId);
+                return {
+                    ...detail,
+                    emergencyContactId: p.emergencyContactId, // Asociar el emergencyContactId
+                };
+            }),
+        };
+
+        return {
+            message: "Contacto de emergencia obtenido exitosamente.",
+            data: combinedData,
+        };
     } catch (error) {
         console.error('Error al obtener el contacto de emergencia:', error);
         return null;
     }
-}
+};
 
 export const verifyEmergencyContact = async (userId: string, _code: string) => {
     try {

@@ -3,4 +3,5 @@ export type AddHealthCenterStaff = {
     firstName: string;
     lastName: string;
     password: string;
+    healthcenterId: string;
 }
