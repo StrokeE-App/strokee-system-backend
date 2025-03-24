@@ -79,19 +79,6 @@ docker-compose down -v
 | Apagar contenedores sin borrar volúmenes | `docker-compose down` |
 | Apagar y borrar volúmenes | `docker-compose down -v` |
 
-### ☸️ **Kubernetes**
-
-| Acción | Comando |
-|--------|---------|
-| Ver lista de pods | `kubectl get pods` |
-| Ver lista de despliegues | `kubectl get deployments` |
-| Ver servicios en ejecución | `kubectl get services` |
-| Ver logs de un pod | `kubectl logs <nombre_pod>` |
-| Describir un pod | `kubectl describe pod <nombre_pod>` |
-| Ingresar a un pod en ejecución | `kubectl exec -it <nombre_pod> -- /bin/sh` |
-| Ver eventos del clúster | `kubectl get events` |
-| Ver estado de los nodos | `kubectl get nodes` |
-
 Con esto, tendrás tu infraestructura lista para usar. 🚀
 
 ---
@@ -122,12 +109,54 @@ Este `ConfigMap` permitirá gestionar la configuración de Nginx sin necesidad d
 Para habilitar TLS en Nginx, es necesario crear un secreto con los certificados SSL:
 
 ```bash
-kubectl create secret tls strokee-tls-secret --cert=nginx/ssl/nginx.crt --key=nginx/ssl/nginx.key
+kubectl create secret tls strokee-tls-secret --cert=nginx/ssl/tls.crt --key=nginx/ssl/tls.key
 ```
 
 Esto garantiza una comunicación segura mediante HTTPS dentro del clúster.
 
 ---
+
+# Realizar deployment
+```bash
+kubectl apply -f deployment.yaml
+```
+# Verificar que servicio Api es accesible
+```bash
+https://localhost:30443/api/
+```
+
+# Verificar que servicio Notification es accesible
+```bash
+https://localhost:30443/notification/
+```
+
+# Documentacion de servicios
+## Servicio Api
+```bash
+https://localhost:30443/api/swagger/
+```
+## Servicio Notification
+```bash
+https://localhost:30443/notification/swagger/
+```
+
+# Resumen de Comandos Útiles 
+### ☸️ **Kubernetes**
+
+| Acción | Comando |
+|--------|---------|
+| Ver lista de pods | `kubectl get pods` |
+| Ver lista de despliegues | `kubectl get deployments` |
+| Ver servicios en ejecución | `kubectl get services` |
+| Ver logs de un pod | `kubectl logs <nombre_pod>` |
+| Describir un pod | `kubectl describe pod <nombre_pod>` |
+| Ingresar a un pod en ejecución | `kubectl exec -it <nombre_pod> -- /bin/sh` |
+| Ver eventos del clúster | `kubectl get events` |
+| Ver estado de los nodos | `kubectl get nodes` |
+| Ver config maps | `kubectl get configmaps -n default` |
+| Ver contenido de config maps | `kubectl describe configmap nginx-config -n default` |
+| Ver secrets | `kubectl get secrets -n default` |
+| Ver contenido de secrets | `kubectl get secret app-secrets -o json` |
 
 Con estos pasos, tendrás tu infraestructura desplegada correctamente en Kubernetes, asegurando un entorno seguro y bien configurado. 🚀
 
