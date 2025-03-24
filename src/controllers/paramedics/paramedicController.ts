@@ -5,7 +5,8 @@ import {
     cancelEmergencyCollection,
     updateParamedicFromCollection,
     getParamedicsFromCollection,
-    deleteParamedicsFromCollection
+    deleteParamedicsFromCollection,
+    getPatientDeliverdToHealthCenter
 } from "../../services/paramedics/paramedicService";
 
 export const registerParamedic = async (req: Request, res: Response, next: NextFunction) => {
@@ -32,15 +33,16 @@ export const registerParamedic = async (req: Request, res: Response, next: NextF
 export const confirmEmergency = async (req: Request, res: Response, next: NextFunction) => {
     try {
 
-        const { emergencyId, pickupDate } = req.body
+        const { emergencyId, pickupDate, healthcenterId } = req.body
 
-        if (!emergencyId || !pickupDate) {
+        if (!emergencyId || !pickupDate || !healthcenterId) {
             res.status(400).json({
-                message: "Por favor, ingresar un emergencyid y un pickdate valido",
+                message: "Por favor, ingresar un emergencyid, un pickdate y un clinicid valido",
             });
+            return;
         }
 
-        const result = await updateEmergencyPickUpFromCollection(emergencyId, pickupDate);
+        const result = await updateEmergencyPickUpFromCollection(emergencyId, pickupDate, healthcenterId);
 
         if (!result.success) {
             if (result.message.includes("No se encontró una emergencia")) {
@@ -144,3 +146,16 @@ export const deleteParamedic = async (req: Request, res: Response, next: NextFun
         next(error);
     }
 }
+
+export const deliverPatient = async (req: Request, res: Response, next: NextFunction) => {
+    const { emergencyId, deliveredDate } = req.body;
+
+    try {
+        const result = await getPatientDeliverdToHealthCenter(emergencyId, deliveredDate);
+
+        res.status(result.code).json({ message: result.message });
+
+    } catch (error) {
+        next(error);
+    }
+};

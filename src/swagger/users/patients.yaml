@@ -98,6 +98,15 @@ paths:
                     type: string
                   example: ['condition1']
                   description: Lista de las condiciones médicas preexistentes del paciente.
+                termsAndConditions:
+                  type: boolean
+                  example: true
+                  description: Indica si el paciente ha aceptado los t&eacute;rminos y condiciones.
+                registerDate:
+                  type: string
+                  format: date-time
+                  example: '2023-06-01T10:00:00.000Z'
+                  description: La fecha y hora de registro del paciente.
       responses:
         '201':
           description: Paciente registrado exitosamente.
@@ -351,14 +360,14 @@ paths:
                   enum: ["patient", "emergencyContact"]
                   description: "Rol del usuario que inicia la emergencia. Debe ser 'patient' o 'emergencyContact'."
                   example: "patient"
-                phoneNumber:
+                emergencyContactId:
                   type: string
-                  description: "El número de teléfono del usuario que inicia la emergencia."
-                  example: "1234567890"
+                  description: ID del contacto de emergencia.
+                  example: "12345"
               required:
                 - patientId
                 - role
-                - phoneNumber
+                - emergencyContactId
       responses:
         '201':
           description: Emergencia creada con éxito

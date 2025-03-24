@@ -15,6 +15,8 @@ export interface IPatient extends Document {
   height: number;
   medications: string[];
   conditions: string[];
+  termsAndConditions: boolean;
+  registerDate: Date;
   isDeleted: boolean;
 }
 
@@ -33,6 +35,8 @@ const PatientSchema: Schema = new Schema(
     height: { type: Number, required: true },
     medications: { type: [String], default: [] },
     conditions: { type: [String], default: [] },
+    termsAndConditions: { type: Boolean, required: true },
+    registerDate: { type: Date, default: Date.now },
     isDeleted: { type: Boolean, default: false },
   },
   {

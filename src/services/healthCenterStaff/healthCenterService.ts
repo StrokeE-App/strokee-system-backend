@@ -127,20 +127,20 @@ export async function getHealthCenterStaff(userId: string) {
     }
 }
 
-export async function getPatientDeliverdToHealthCenter(emergencyId: string, deliveredDate: Date) {
+export async function getPatientAttendedByHealthCenter(emergencyId: string, attendedDate: Date) {
     try {
         if (!emergencyId) {
             return { success: false, code: 400, message: "El ID de la emergencia es obligatorio." };
         }
 
-        const parsedDeliveredDate = new Date(deliveredDate);
-        if (isNaN(parsedDeliveredDate.getTime())) {
+        const parsedAttendedDate = new Date(attendedDate);
+        if (isNaN(parsedAttendedDate.getTime())) {
             return { success: false, code: 400, message: "La fecha de entrega no es válida." };
         }
 
         const emergencyDelivered = await emergencyModel.findOneAndUpdate(
             { emergencyId },
-            { $set: { status: "DELIVERED", deliveredDate: parsedDeliveredDate } },
+            { $set: { status: "ATTENDED", attendedDate: parsedAttendedDate } },
             { returnDocument: "after" }
         );
 
@@ -151,7 +151,7 @@ export async function getPatientDeliverdToHealthCenter(emergencyId: string, deli
         const message = {
             ambulanceId: emergencyDelivered.ambulanceId,
             emergencyId,
-            status: "DELIVERED",
+            status: "ATTENDED",
         }
 
         await publishToExchange("paramedic_exchange", "paramedic_update_queue", message);
