@@ -185,7 +185,6 @@ export async function getPatientDeliverdToHealthCenter(emergencyId: string, deli
         }
 
         await publishToExchange("paramedic_exchange", "paramedic_update_queue", message);
-        await publishToExchange("paramedic_exchange", "paramedic_update_queue", message)
 
         return { success: true, code: 200, message: "Emergencia entregada correctamente." };
     } catch (error) {
@@ -208,19 +207,23 @@ export const cancelEmergencyCollection = async (emergencyId: string, pickupDate:
             return { success: false, message: "La fecha de recogida no es válida." };
         }
 
-        const updateResult = await emergencyModel.updateOne(
+        const updateResult = await emergencyModel.findOneAndUpdate(
             { emergencyId },
             { $set: { pickupDate: parsedPickUpDate.toISOString(), status: "CANCELLED" } },
-            { upsert: false }
+            { returnDocument: "after" }
         );
 
-        if (updateResult.matchedCount === 0) {
+        if (!updateResult) {
             return { success: false, message: "No se encontró una emergencia con ese ID." };
         }
 
-        if (updateResult.modifiedCount === 0) {
-            return { success: false, message: "No se realizaron cambios en la emergencia." };
+        const message = {
+            ambulanceId: updateResult.ambulanceId,
+            emergencyId,
+            status: "CANCELLED_BY_PARAMEDIC",
         }
+
+        await publishToExchange("paramedic_exchange", "paramedic_update_queue", message);
 
         return { success: true, message: "Emergencia stroke descartada." };
     } catch (error) {
