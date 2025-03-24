@@ -7,7 +7,7 @@ servers:
   - url: http://localhost:3000/api
     description: Servidor local
 paths:
-  /ambulances/register:
+  /ambulance/register:
     post:
       summary: Agregar una ambulancia
       tags:
@@ -53,7 +53,7 @@ paths:
                   message:
                     type: string
 
-  /ambulances/delete/{ambulanceId}:
+  /ambulance/delete/{ambulanceId}:
     delete:
       summary: Eliminar una ambulancia
       tags: 
@@ -94,7 +94,7 @@ paths:
                   message:
                     type: string
 
-  /ambulances/{ambulanceId}:
+  /ambulance/{ambulanceId}:
     get:
       summary: Obtener una ambulancia
       tags:
@@ -141,7 +141,7 @@ paths:
                   message:
                     type: string
 
-  /ambulances/all:
+  /ambulance/all:
     get:
       summary: Obtener todas las ambulancias
       tags:
@@ -184,7 +184,7 @@ paths:
                   message:
                     type: string
 
-  /ambulances/update/{ambulanceId}:
+  /ambulance/update/{ambulanceId}:
     put:
       summary: Editar una ambulancia
       tags:
