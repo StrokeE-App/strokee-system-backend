@@ -26,7 +26,7 @@ export const addOperatorIntoCollection = async (
     password: string,
 ): Promise<{ success: boolean, message: string, operatorId?: string }> => {
     try {
-        
+
         const { error } = operatorRegisterSchema.validate({ firstName, lastName, email, password });
 
         if (error) {
@@ -100,11 +100,11 @@ export const updateEmergencyPickUpFromCollectionOperator = async (
             return { success: false, message: "El ID de la ambulancia es obligatoria." };
         }
 
-        const existingAssignment = await emergencyModel.findOne({ 
-            ambulanceId: ambulanceId, 
-            status: { $in: ["TO_AMBULANCE", "CONFIRMED"] } 
+        const existingAssignment = await emergencyModel.findOne({
+            ambulanceId: ambulanceId,
+            status: { $in: ["TO_AMBULANCE", "CONFIRMED"] }
         });
-        
+
         if (existingAssignment) {
             return { success: false, message: `La ambulancia con ID ${ambulanceId} ya está asignada a otra emergencia.` };
         }
@@ -160,6 +160,13 @@ export const cancelEmergencyCollectionOperator = async (emergencyId: string) => 
             return { success: false, message: "No se realizaron cambios en la emergencia." };
         }
 
+        const message = {
+            emergencyId,
+            status: "CANCELLED_BY_OPERATOR"
+        };
+
+        await publishToExchange("patient_exchange", "patient_report_queue", message);
+
         return { success: true, message: "Emergencia stroke descartada." };
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "Error";
@@ -170,7 +177,7 @@ export const cancelEmergencyCollectionOperator = async (emergencyId: string) => 
 
 export const updateOperatorFromCollection = async (operatorId: string, operatorData: UpdateOperator) => {
     try {
-        if (!operatorId) {  
+        if (!operatorId) {
             return { success: false, message: "El ID del operador es obligatorio." };
         }
 
@@ -212,7 +219,7 @@ export const getOperatorFromCollection = async (operatorId: string) => {
 
         if (!operator) {
             return { success: false, message: "No se encontró un operador con ese ID." };
-        }   
+        }
 
         return { success: true, message: "Operador obtenido exitosamente.", operator };
     } catch (error) {
@@ -233,7 +240,7 @@ export const deleteOperatorFromCollection = async (operatorId: string) => {
         if (!exsistingOperator) {
             return { success: false, message: "No se encontró un operador con ese ID." };
         }
-        
+
         await firebaseAdmin.deleteUser(operatorId);
 
         await operatorModel.deleteOne({ operatorId });
@@ -245,5 +252,5 @@ export const deleteOperatorFromCollection = async (operatorId: string) => {
         const errorMessage = error instanceof Error ? error.message : "Error";
         console.error(`Error al eliminar el operador: ${errorMessage}`);
         return { success: false, message: `Error al eliminar el operador: ${errorMessage}` };
-    }   
+    }
 }
