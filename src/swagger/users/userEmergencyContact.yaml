@@ -33,6 +33,7 @@ paths:
                         phoneNumber: "3057521276"
                         conditions: ["gripa"]
                         medications: ["dolex"]
+                        emergencyContactId: "1234512512512341"
         "400":
           description: No se pudo obtener el contacto de emergencia.
           content:
