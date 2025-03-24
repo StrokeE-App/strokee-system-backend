@@ -5,7 +5,7 @@ import { addClinicController, deleteClinicController, getClinicController, getCl
 const router = Router()
 
 router.post("/register", verifyTokenWithRole(["admin"]), addClinicController);
-router.get("/all", verifyTokenWithRole(["admin", "clinic"]), getClinicsController);
+router.get("/all", verifyTokenWithRole(["admin", "clinic", "paramedic"]), getClinicsController);
 router.get("/:healthcenterId", verifyTokenWithRole(["admin", "clinic"]), getClinicController);
 router.put("/update/:healthcenterId", verifyTokenWithRole(["admin"]), updateClinicController);
 router.delete("/delete/:healthcenterId", verifyTokenWithRole(["admin"]), deleteClinicController);
