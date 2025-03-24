@@ -17,7 +17,9 @@ export const addHealthcenter = async (healthcenterName: string) => {
 
         const healthcenterId = uuidv4();
 
-        await healthcenterModel.create({ healthcenterId, healthcenterName });
+        const transformedHealthCenterName = healthcenterName.toLowerCase().replace(/\s+/g, "");
+
+        await healthcenterModel.create({ healthcenterId: healthcenterId, healthcenterName: transformedHealthCenterName });
 
         return { success: true, message: "El centro de salud ha sido agregado correctamente." };
     } catch (error) {

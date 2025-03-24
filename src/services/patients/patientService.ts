@@ -28,10 +28,16 @@ export const addPatientIntoPatientCollection = async (data: any): Promise<{
         return { success: false, message: `Error de validación: ${error.details[0].message}` };
     }
 
+    if(data.termsAndConditions !== true) {
+        return { success: false, message: "Debe aceptar los terminos y condiciones." };
+    }
+
     const {
         firstName, lastName, email, password, phoneNumber, age, birthDate,
-        weight, height, emergencyContact, medications, conditions, token
+        weight, height, emergencyContact, medications, conditions, token, registerDate
     } = data;
+
+    const formattedRegisterDate = new Date(registerDate);
 
     // Validar el token de registro
     let invitedByMedicId: string;
@@ -87,6 +93,8 @@ export const addPatientIntoPatientCollection = async (data: any): Promise<{
             height,
             medications,
             conditions,
+            termsAndConditions: true,
+            registerDate: formattedRegisterDate.toISOString(),
             isDeleted: false,
         };
 
@@ -140,14 +148,10 @@ export const getAllPatientsFromCollection = async () => {
     }
 }
 
-export const addEmergencyToCollection = async (patientId: string, role: string, phoneNumber: string): Promise<{ success: boolean, message: string, emergencyId?: string }> => {
+export const addEmergencyToCollection = async (patientId: string, role: string, emergencyContactId?: string): Promise<{ success: boolean, message: string, emergencyId?: string }> => {
     try {
         if (!patientId) {
             return { success: false, message: "El ID del paciente es obligatorio." };
-        }
-
-        if (!phoneNumber || !/^\d{7,15}$/.test(phoneNumber)) {
-            return { success: false, message: "El número de teléfono no es válido." };
         }
 
         const allowedRoles = ["patient", "emergencyContact"];
@@ -163,6 +167,8 @@ export const addEmergencyToCollection = async (patientId: string, role: string, 
             return { success: false, message: "No se encontró un paciente con ese ID." };
         }
 
+        let phoneNumber = existingPatient.phoneNumber;
+
         // Verificación de emergencia activa
         const existingEmergency = await emergencyModel.findOne({
             patientId,
@@ -176,11 +182,15 @@ export const addEmergencyToCollection = async (patientId: string, role: string, 
         let userId = patientId; // Paciente como activador por defecto
 
         if (role === "emergencyContact") {
-            const emergencyContact = await patientEmergencyContactModel.findOne({ "patients.patientId" : patientId });
+            if (!emergencyContactId) {
+                return { success: false, message: "El ID del contacto de emergencia es obligatorio." };
+            }
+            const emergencyContact = await patientEmergencyContactModel.findOne({ "patients.emergencyContactId" : emergencyContactId });
             if (!emergencyContact || !emergencyContact.fireBaseId) {
                 return { success: false, message: "No se encontró un contacto de emergencia válido para el paciente." };
             }
             userId = emergencyContact.fireBaseId;
+            phoneNumber = emergencyContact.phoneNumber;
         }
 
         const emergencyId = uuidv4();
@@ -190,6 +200,7 @@ export const addEmergencyToCollection = async (patientId: string, role: string, 
             startDate: new Date().toISOString(),
             pickupDate: null,
             deliveredDate: null,
+            attendedDate: null,
             patientId,
             activatedBy: { rol: role, phoneNumber, userId },
             ambulanceId: null,
