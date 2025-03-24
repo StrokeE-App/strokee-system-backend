@@ -95,7 +95,7 @@ paths:
                   format: date-time
                   description: La fecha y hora de recogida de la emergencia.
                   example: "2025-01-22T15:30:00"
-                healthCenterId:
+                healthcenterId:
                   type: string
                   description: El identificador único del centro de salud.
                   example: "HCS123"
