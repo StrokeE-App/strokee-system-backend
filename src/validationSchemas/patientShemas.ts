@@ -82,6 +82,14 @@ export const patientSchema = Joi.object({
     conditions: Joi.array().items(Joi.string()).required().messages({
         "array.base": "La lista de condiciones debe ser un array de textos.",
         "any.required": "Las condiciones son obligatorias."
+    }),
+    termsAndConditions: Joi.boolean().required().messages({
+        "boolean.base": "Los terminos y condiciones deben ser un booleano.",
+        "any.required": "Los terminos y condiciones son obligatorios."
+    }), 
+    registerDate: Joi.date().required().messages({
+        "date.base": "La fecha de registro debe ser una fecha.",
+        "any.required": "La fecha de registro es obligatoria."
     })
 });
 

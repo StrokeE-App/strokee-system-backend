@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { addHealthCenterIntoCollection, deleteHealthCenterStaff, getHealthCenterStaff, updateHealthCenterStaff, getPatientDeliverdToHealthCenter, sendEmailToRegisterPatient } from "../../services/healthCenterStaff/healthCenterService";
+import { addHealthCenterIntoCollection, deleteHealthCenterStaff, getHealthCenterStaff, updateHealthCenterStaff, getPatientAttendedByHealthCenter, sendEmailToRegisterPatient } from "../../services/healthCenterStaff/healthCenterService";
 
 export const addHealthCenter = async (req: Request, res: Response, next: NextFunction) => {
     const healthCenterData = req.body;
@@ -76,11 +76,11 @@ export const deleteHealthCenter = async (req: Request, res: Response, next: Next
     }
 }
 
-export const deliverPatient = async (req: Request, res: Response, next: NextFunction) => {
-    const { emergencyId, deliveredDate } = req.body;
+export const attendedPatient = async (req: Request, res: Response, next: NextFunction) => {
+    const { emergencyId, attendedDate } = req.body;
 
     try {
-        const result = await getPatientDeliverdToHealthCenter(emergencyId, deliveredDate);
+        const result = await getPatientAttendedByHealthCenter(emergencyId, attendedDate);
 
         res.status(result.code).json({ message: result.message });
 

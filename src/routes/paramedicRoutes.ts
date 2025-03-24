@@ -5,13 +5,15 @@ import {
     cancelEmergency, 
     updateParamedic,
     getParamedic,
-    deleteParamedic
+    deleteParamedic,
+    deliverPatient
  } from "../controllers/paramedics/paramedicController";
 import { verifyTokenWithRole } from "../middlewares/authMiddleware";
 
 const router = Router();
 
 router.post("/register", registerParamedic);
+router.post("/deliver-patient", verifyTokenWithRole(["paramedic", "admin"]), deliverPatient);
 router.post("/confirm-stroke", verifyTokenWithRole(["paramedic", "admin"]), confirmEmergency)
 router.post("/discard-stroke", verifyTokenWithRole(["paramedic", "admin"]), cancelEmergency)
 router.get("/:paramedicId", verifyTokenWithRole(["paramedic", "admin"]), getParamedic)

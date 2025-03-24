@@ -1,6 +1,7 @@
 import paramedicModel from "../../models/usersModels/paramedicModel";
 import emergencyModel from "../../models/emergencyModel";
 import rolesModel from "../../models/usersModels/rolesModel";
+import clinicModel from "../../models/usersModels/clinicModel";
 import Patient from "../../models/usersModels/patientModel";
 import { publishToExchange } from "../publisherService";
 import { firebaseAdmin } from "../../config/firebase-config";
@@ -82,7 +83,8 @@ export const addParamedicIntoCollection = async (
 
 export const updateEmergencyPickUpFromCollection = async (
     emergencyId: string,
-    pickupDate: string
+    pickupDate: string,
+    healthcenterId: string
 ) => {
     try {
         if (!emergencyId) {
@@ -92,6 +94,16 @@ export const updateEmergencyPickUpFromCollection = async (
             return { success: false, message: "La fecha de recogida es obligatoria." };
         }
 
+        if (!healthcenterId) {
+            return { success: false, message: "El ID del centro de salud es obligatorio." };
+        }
+
+        const existingClinic = await clinicModel.findOne({ healthcenterId });
+        console.log(existingClinic);
+        if (!existingClinic) {
+            return { success: false, message: "El centro de salud no existe." };
+        }
+
         const parsedPickUpDate = new Date(pickupDate);
         if (isNaN(parsedPickUpDate.getTime())) {
             return { success: false, message: "La fecha de recogida no es válida." };
@@ -99,7 +111,7 @@ export const updateEmergencyPickUpFromCollection = async (
 
         const updatedEmergency = await emergencyModel.findOneAndUpdate(
             { emergencyId },
-            { $set: { pickupDate: parsedPickUpDate.toISOString(), status: "CONFIRMED" } },
+            { $set: { pickupDate: parsedPickUpDate.toISOString(), status: "CONFIRMED", healthcenterId } },
             { new: true }
         );
 
@@ -114,7 +126,9 @@ export const updateEmergencyPickUpFromCollection = async (
             status: "CONFIRMED",
         };
 
-        await publishToExchange("paramedic_exchange", "paramedic_update_queue", message);
+        if(existingClinic.healthcenterId === "imbanaco"){
+            await publishToExchange("paramedic_exchange", "paramedic_update_queue", message);
+        }
 
         const patient = await Patient.findOne({ patientId: updatedEmergency.patientId });
         if (!patient) {
@@ -142,6 +156,43 @@ export const updateEmergencyPickUpFromCollection = async (
         return { success: false, message: `Error al actualizar la hora de recogida: ${errorMessage}` };
     }
 };
+
+export async function getPatientDeliverdToHealthCenter(emergencyId: string, deliveredDate: Date) {
+    try {
+        if (!emergencyId) {
+            return { success: false, code: 400, message: "El ID de la emergencia es obligatorio." };
+        }
+
+        const parsedDeliveredDate = new Date(deliveredDate);
+        if (isNaN(parsedDeliveredDate.getTime())) {
+            return { success: false, code: 400, message: "La fecha de entrega no es válida." };
+        }
+
+        const emergencyDelivered = await emergencyModel.findOneAndUpdate(
+            { emergencyId },
+            { $set: { status: "DELIVERED", deliveredDate: parsedDeliveredDate } },
+            { returnDocument: "after" }
+        );
+
+        if (!emergencyDelivered) {
+            return { success: false, code: 404, message: "No se encontró una emergencia con ese ID." };
+        }
+
+        const message = {
+            ambulanceId: emergencyDelivered.ambulanceId,
+            emergencyId,
+            status: "DELIVERED",
+        }
+
+        await publishToExchange("paramedic_exchange", "paramedic_update_queue", message);
+        await publishToExchange("paramedic_exchange", "paramedic_update_queue", message)
+
+        return { success: true, code: 200, message: "Emergencia entregada correctamente." };
+    } catch (error) {
+        console.error(`Error al entregar la emergencia: ${error}`);
+        return { success: false, code: 500, message: "Error interno del servidor." };
+    }
+}
 
 export const cancelEmergencyCollection = async (emergencyId: string, pickupDate: string) => {
     try {

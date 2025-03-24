@@ -5,10 +5,12 @@ export interface IEmeregency extends Document {
     startDate: Date;
     pickupDate: Date;
     deliveredDate: Date;
+    attendedDate: Date;
     patientId: string; 
     ambulanceId: string;
     nihScale: string;
     status: string;
+    healthcenterId: string;
     activatedBy: {
         rol : string;
         phoneNumber : string;
@@ -30,10 +32,12 @@ const EmergencySchema: Schema = new Schema (
         startDate: { type: Date, required: true },
         pickupDate: { type: Date, required: false },
         deliveredDate: { type: Date, required: false },
+        attendedDate: { type: Date, required: false },
         patientId: { type: String, required: true },
         ambulanceId: { type: String, required: false },
         nihScale: { type: String, required: false },
         status: { type: String, required: true, default: "PENDING" },
+        healthcenterId: { type: String, required: false },
     },
     {
         timestamps: true,
