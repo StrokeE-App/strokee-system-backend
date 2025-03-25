@@ -17,19 +17,18 @@ import verificationCode from "../../models/verificationCode";
 
 dotenv.config();
 
-export const addPatientIntoPatientCollection = async (data: any): Promise<{
+export const addPatientIntoPatientCollection = async (data: any): Promise<{ 
     success: boolean;
     message: string;
     patientId?: string;
 }> => {
-    // Validar datos con schema
     const { error } = patientSchema.validate(data);
     if (error) {
         return { success: false, message: `Error de validación: ${error.details[0].message}` };
     }
 
-    if(data.termsAndConditions !== true) {
-        return { success: false, message: "Debe aceptar los terminos y condiciones." };
+    if (data.termsAndConditions !== true) {
+        return { success: false, message: "Debe aceptar los términos y condiciones." };
     }
 
     const {
@@ -38,8 +37,6 @@ export const addPatientIntoPatientCollection = async (data: any): Promise<{
     } = data;
 
     const formattedRegisterDate = new Date(registerDate);
-
-    // Validar el token de registro
     let invitedByMedicId: string;
     try {
         const { medicId } = await validateVerificationCodePatient(email, token);
@@ -48,38 +45,21 @@ export const addPatientIntoPatientCollection = async (data: any): Promise<{
         return { success: false, message: "El correo electrónico o el código de verificación es incorrecto." };
     }
 
-    // Iniciar transacción en MongoDB
-    const session = await mongoose.startSession();
-    session.startTransaction();
-
-    let firebaseUserId: string | undefined;
-
     try {
-        // Verificar si el paciente ya existe
-        const existingPatient = await Patient.findOne({ email }).session(session);
+        const existingPatient = await Patient.findOne({ email });
         if (existingPatient) {
             return { success: false, message: `El email ${email} ya está registrado.` };
         }
 
-        // Asignar ID único a contactos de emergencia
         for (const contact of emergencyContact) {
             contact.emergencyContactId = uuidv4();
             contact.canActivateEmergency = false;
         }
 
-        // Crear usuario en Firebase
-        try {
-            const patientRecord = await firebaseAdmin.createUser({ email, password });
-            firebaseUserId = patientRecord.uid;
-        } catch (error: any) {
-            if (error.code === "auth/email-already-exists") {
-                throw new Error("Ya existe un usuario registrado con este correo.");
-            }
-            throw new Error(`Error al crear el usuario en Firebase: ${error.message}`);
-        }
+        const firebaseUser = await firebaseAdmin.createUser({ email, password });
+        const firebaseUserId = firebaseUser.uid;
 
-        // Crear documento del paciente en la base de datos
-        const newPatient = {
+        const newPatient = new Patient({
             patientId: firebaseUserId,
             firstName,
             lastName,
@@ -96,46 +76,27 @@ export const addPatientIntoPatientCollection = async (data: any): Promise<{
             termsAndConditions: true,
             registerDate: formattedRegisterDate.toISOString(),
             isDeleted: false,
-        };
+        });
 
-        await Patient.updateOne(
-            { patientId: firebaseUserId, isDeleted: false },
-            { $set: newPatient },
-            { upsert: true, session }
-        );
-
-        // Asignar rol al usuario
-        const newRole = {
-            userId: firebaseUserId,
-            role: "patient",
-            allowedApps: ["patients"],
-            isDeleted: false,
-        };
+        await newPatient.save();
 
         await rolesModel.updateOne(
             { userId: firebaseUserId, isDeleted: false },
-            { $set: newRole },
-            { upsert: true, session }
+            { $set: { userId: firebaseUserId, role: "patient", allowedApps: ["patients"], isDeleted: false } },
+            { upsert: true }
         );
 
-        // Confirmar la transacción
-        await session.commitTransaction();
-        session.endSession();
-
-        // Eliminar el token de mongo
         await verificationCode.deleteOne({ email: email, type: "REGISTER_PATIENT" });
 
         return { success: true, message: "Paciente agregado exitosamente.", patientId: firebaseUserId };
-
     } catch (error) {
-        return await handleAsyncErrorRegister({
-            error,
-            session,
-            firebaseUserId,
-            contextMessage: "Error al agregar al paciente"
-        });
+        const errorMessage = error instanceof Error ? error.message : "Error desconocido";
+        console.error(`Error al agregar la emergencia: ${errorMessage}`);
+
+        return { success: false, message: `Error al agregar paciente: ${errorMessage}` };
     }
 };
+
 export const getAllPatientsFromCollection = async () => {
     try {
 
