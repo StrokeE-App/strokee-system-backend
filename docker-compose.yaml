@@ -10,8 +10,8 @@ services:
       - strokee-system-api-service
       - strokee-notification-service
     ports:
-      - "8080:80" 
-      - "8443:443" 
+      - "8080:80"
+      - "8443:443"
     volumes:
       - ./nginx/strokee.conf:/etc/nginx/conf.d/strokee.conf
       - ./nginx/ssl:/etc/nginx/ssl
@@ -29,8 +29,6 @@ services:
         condition: service_healthy
       rabbitmq-strokee-system:
         condition: service_healthy
-    ports:
-      - "4001:4001"
     volumes:
       - .:/app
       - /app/node_modules
@@ -48,8 +46,6 @@ services:
         condition: service_started
       rabbitmq-strokee-system:
         condition: service_healthy
-    ports:
-      - "4002:4002"
     networks:
       - strokee_network
 
@@ -57,15 +53,23 @@ services:
     image: mongo:latest
     container_name: mongo-strokee-system
     restart: always
-    command: ["/bin/sh", "-c", "mongod --replSet rs0 --bind_ip_all & sleep 5 && mongosh --eval 'rs.initiate({_id: \"rs0\", members: [{ _id: 0, host: \"mongo-strokee-system:27017\" }]})' && wait"]
+    env_file:
+      - .env
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+    command: mongod --bind_ip_all --auth
     ports:
-      - "27018:27017"
+      - "27017"
     volumes:
       - mongo_data:/data/db
+      - ./database/mongo.conf:/etc/mongo.conf
     networks:
       - strokee_network
     healthcheck:
-      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      test: >
+        echo 'db.runCommand({usersInfo: {user: \"$$MONGO_INITDB_ROOT_USERNAME\", db: \"admin\"}})' | 
+        mongosh --username $$MONGO_INITDB_ROOT_USERNAME --password $$MONGO_INITDB_ROOT_PASSWORD --quiet
       interval: 10s
       retries: 5
       start_period: 10s
@@ -74,9 +78,13 @@ services:
     image: rabbitmq:3-management
     container_name: rabbitmq-strokee-system
     restart: always
+    env_file:
+      - .env
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      - "15672"
     networks:
       - strokee_network
     healthcheck:

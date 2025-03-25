@@ -140,6 +140,12 @@ https://localhost:30443/api/swagger/
 https://localhost:30443/notification/swagger/
 ```
 
+# Conexion a BD localmente
+Hay que habilatar un puerto desde kubernetes a la maquina 
+```bash
+kubectl port-forward svc/mongo-strokee-system 27018:27017
+```
+
 # Resumen de Comandos Útiles 
 ### ☸️ **Kubernetes**
 
@@ -156,7 +162,7 @@ https://localhost:30443/notification/swagger/
 | Ver config maps | `kubectl get configmaps -n default` |
 | Ver contenido de config maps | `kubectl describe configmap nginx-config -n default` |
 | Ver secrets | `kubectl get secrets -n default` |
-| Ver contenido de secrets | `kubectl get secret app-secrets -o json` |
+| Reiniciar un deployment | `kubectl rollout restart deployment <deployment>` |
 
 Con estos pasos, tendrás tu infraestructura desplegada correctamente en Kubernetes, asegurando un entorno seguro y bien configurado. 🚀
 
