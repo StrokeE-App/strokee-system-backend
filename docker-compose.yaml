@@ -10,8 +10,8 @@ services:
       - strokee-system-api-service
       - strokee-notification-service
     ports:
-      - "8080:80"
-      - "8443:443"
+      - "80:80"
+      - "443:443"
     volumes:
       - ./nginx/strokee.conf:/etc/nginx/conf.d/strokee.conf
       - ./nginx/ssl:/etc/nginx/ssl
