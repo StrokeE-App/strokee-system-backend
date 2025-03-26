@@ -118,7 +118,11 @@ Esto garantiza una comunicación segura mediante HTTPS dentro del clúster.
 
 # Realizar deployment
 ```bash
-kubectl apply -f deployment.yaml
+kubectl apply -f k8s/deployment.yaml
+```
+# Conectar a contetenedor
+```bash
+kubectl exec -it <pod-name> -- mongosh -u <username> -p <password>
 ```
 # Verificar que servicio Api es accesible
 ```bash
