@@ -171,7 +171,6 @@ spec:
       containers:
         - name: mongo
           image: mongo:latest
-          command: ["/bin/sh", "-c", "mongod --replSet rs0 --bind_ip_all & sleep 5 && mongosh --eval 'rs.initiate({_id: \"rs0\", members: [{ _id: 0, host: \"mongo-strokee-system:27017\" }]})' && wait"]
           env:
             - name: MONGO_INITDB_ROOT_USERNAME
               valueFrom:
