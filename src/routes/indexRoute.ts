@@ -4,12 +4,12 @@ import { loginUser, logoutUser, getToken } from "../controllers/auth/authControl
 
 const router = Router()
 
-router.get("/api/", (req: Request, res: Response) => {
+router.get("/strokeebackend/api/", (req: Request, res: Response) => {
     res.send("Server running...")
 });
 
-router.post("/api/login", loginUser);
-router.post("/api/logout", verifyTokenWithRole(["admin", "paramedic", "operator", "patient", "clinic"]), logoutUser);
-router.post("/api/token", getToken);
+router.post("/strokeebackend/api/login", loginUser);
+router.post("/strokeebackend/api/logout", verifyTokenWithRole(["admin", "paramedic", "operator", "patient", "clinic"]), logoutUser);
+router.post("/strokeebackend/api/token", getToken);
 
 export default router;

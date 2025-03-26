@@ -67,18 +67,18 @@ app.use(cookieParser());
 app.use(cors({ credentials: true, origin: true }));
 app.use(bodyParser.json());
 app.use(indexRoute)
-app.use("/api/patient", patientsRoutes);
-app.use("/api/healthCenter", healthCenterRoutes);
-app.use("/api/clinic", clinicRoutes);
-app.use("/api/emergency-contact", emergencyContactRoutes);
-app.use("/api/ambulance", ambulanceRoutes);
-app.use("/api/admin", adminRoutes);
-app.use("/api/paramedic", paramedicsRoutes);
-app.use("/api/emergency", emergencyRoutes);
-app.use("/api/operator", operatorRoutes)
-app.use("/api/credentials", creentialsRoute)
-app.use("/api/", indexRoutes);
-app.use('/api/swagger', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+app.use("/strokeebackend/api/patient", patientsRoutes);
+app.use("/strokeebackend/api/healthCenter", healthCenterRoutes);
+app.use("/strokeebackend/api/clinic", clinicRoutes);
+app.use("/strokeebackend/api/emergency-contact", emergencyContactRoutes);
+app.use("/strokeebackend/api/ambulance", ambulanceRoutes);
+app.use("/strokeebackend/api/admin", adminRoutes);
+app.use("/strokeebackend/api/paramedic", paramedicsRoutes);
+app.use("/strokeebackend/api/emergency", emergencyRoutes);
+app.use("/strokeebackend/api/operator", operatorRoutes)
+app.use("/strokeebackend/api/credentials", creentialsRoute)
+app.use("/strokeebackend/api/", indexRoutes);
+app.use('/strokeebackend/api/swagger', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 // Middleware para manejar errores debe ser el último middleware
 app.use(errorHandler);
