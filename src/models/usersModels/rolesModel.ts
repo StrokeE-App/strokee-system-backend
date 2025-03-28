@@ -5,7 +5,6 @@ export interface IRole extends Document {
     role: string;
     allowedApps: string[];
     isActive: boolean;
-    isDeleted: boolean;
 }
 
 const RoleSchema: Schema = new Schema(
@@ -14,7 +13,6 @@ const RoleSchema: Schema = new Schema(
         role: { type: String, required: true },
         allowedApps: { type: [String], default: [] },
         isActive: { type: Boolean, default: true },
-        isDeleted: { type: Boolean, default: false },
     },
     {
         timestamps: true,

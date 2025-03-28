@@ -25,7 +25,7 @@ export const loginUserService = async (token: string, appIdentifier: string) => 
             return { success: false, message: "Identificador de aplicación no válido." };
         }
 
-        const userRole = await rolesModel.findOne({ userId: userId, isDeleted: false });
+        const userRole = await rolesModel.findOne({ userId: userId });
 
         if (!userRole || !Array.isArray(userRole.allowedApps)) {
             return { success: false, message: "El usuario no tiene un rol asignado o no tiene aplicaciones permitidas." };

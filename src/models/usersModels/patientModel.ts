@@ -17,7 +17,6 @@ export interface IPatient extends Document {
   conditions: string[];
   termsAndConditions: boolean;
   registerDate: Date;
-  isDeleted: boolean;
 }
 
 const PatientSchema: Schema = new Schema(
@@ -37,7 +36,6 @@ const PatientSchema: Schema = new Schema(
     conditions: { type: [String], default: [] },
     termsAndConditions: { type: Boolean, required: true },
     registerDate: { type: Date, default: Date.now },
-    isDeleted: { type: Boolean, default: false },
   },
   {
     timestamps: true,

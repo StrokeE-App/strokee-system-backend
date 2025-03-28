@@ -107,8 +107,8 @@ describe("addHealthCenterIntoCollection", () => {
         
             const result = await deleteHealthCenterStaff("12345");
         
-            expect(healthCenterModel.findOne).toHaveBeenCalledWith({ medicId: "12345", isDeleted: false });
-            expect(healthCenterModel.deleteOne).toHaveBeenCalledWith({ medicId: "12345", isDeleted: false });
+            expect(healthCenterModel.findOne).toHaveBeenCalledWith({ medicId: "12345" });
+            expect(healthCenterModel.deleteOne).toHaveBeenCalledWith({ medicId: "12345" });
             expect(firebaseAdmin.deleteUser).toHaveBeenCalledWith("12345");
             expect(rolesModel.deleteOne).toHaveBeenCalledWith({ userId: "12345" });
         
@@ -121,7 +121,7 @@ describe("addHealthCenterIntoCollection", () => {
         
             const result = await deleteHealthCenterStaff("notfound");
         
-            expect(healthCenterModel.findOne).toHaveBeenCalledWith({ medicId: "notfound", isDeleted: false });
+            expect(healthCenterModel.findOne).toHaveBeenCalledWith({ medicId: "notfound" });
         
             expect(result.success).toBe(false);
             expect(result.message).toBe("No se encontró el integrante del centro de salud o ya fue eliminado.");

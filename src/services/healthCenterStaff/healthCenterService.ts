@@ -2,7 +2,7 @@ import healthCenterModel from "../../models/usersModels/healthCenterModel";
 import emergencyModel from "../../models/emergencyModel";
 import rolesModel from "../../models/usersModels/rolesModel";
 import clinicModel from "../../models/usersModels/clinicModel";
-import { firebaseAdmin } from "../../config/firebase-config";
+import { firebaseAdmin, firebaseMessaging } from "../../config/firebase-config";
 import { AddHealthCenterStaff } from "./healthCenter.dto";
 import { healthCenterStaffSchema, updateHealthCenterStaffSchema } from "../../validationSchemas/healthCenterStaff";
 import { sendPatientRegistrationEmail } from "../mail";
@@ -40,7 +40,6 @@ export async function addHealthCenterIntoCollection(healthCenterStaff: AddHealth
             lastName: healthCenterStaff.lastName,
             email: healthCenterStaff.email,
             healthcenterId: healthCenterStaff.healthcenterId,
-            isDeleted: false,
         });
 
         await newHealthCenter.save();
@@ -48,7 +47,6 @@ export async function addHealthCenterIntoCollection(healthCenterStaff: AddHealth
             userId: newHealthCenter.medicId,
             role: "clinic",
             allowedApps: ["clinics"],
-            isDeleted: false,
         });
 
         return { success: true, message: "Integrante de centro de salud agregado correctamente.", healthCenterId: newHealthCenter.medicId };
@@ -62,13 +60,13 @@ export async function addHealthCenterIntoCollection(healthCenterStaff: AddHealth
 export async function deleteHealthCenterStaff(userId: string) {
     try {
 
-        const exisistingHealthCenterStaff = await healthCenterModel.findOne({ medicId: userId, isDeleted: false });
+        const exisistingHealthCenterStaff = await healthCenterModel.findOne({ medicId: userId });
 
         if (!exisistingHealthCenterStaff) {
             return { success: false, message: "No se encontró el integrante del centro de salud o ya fue eliminado." };
         }
 
-        await healthCenterModel.deleteOne({ medicId: userId, isDeleted: false });
+        await healthCenterModel.deleteOne({ medicId: userId });
 
         await firebaseAdmin.deleteUser(userId);
 
@@ -91,7 +89,7 @@ export async function updateHealthCenterStaff(userId: string, updateData: Partia
         }
 
         const updatedHealthCenterStaff = await healthCenterModel.findOneAndUpdate(
-            { medicId: userId, isDeleted: false },
+            { medicId: userId },
             {
                 $set: {
                     firstName: updateData.firstName,
@@ -114,7 +112,7 @@ export async function updateHealthCenterStaff(userId: string, updateData: Partia
 
 export async function getHealthCenterStaff(userId: string) {
     try {
-        const healthCenterStaff = await healthCenterModel.findOne({ medicId: userId, isDeleted: false }, { _id: 0, medicId: 0, isDeleted: 0, createdAt: 0, updatedAt: 0 });
+        const healthCenterStaff = await healthCenterModel.findOne({ medicId: userId }, { _id: 0, medicId: 0, createdAt: 0, updatedAt: 0 });
 
         if (!healthCenterStaff) {
             return { success: false, message: "No se encontró el integrante del centro de salud." };
@@ -203,4 +201,79 @@ export const sendEmailToRegisterPatient = async (email: string, medicId: string)
         return { success: false, message: `Error: ${(error as any).message || "Error"}` };
     }
 }
+
+export const notifyHealthCenterAboutEmergency = async (
+    emergencyId: string,
+    message: string
+  ): Promise<{ success: boolean, message: string }> => {
+    try {
+      // 1. Obtener todos los centro medico activos con tokens FCM registrados
+      const activeHealthCenter = await healthCenterModel.find({
+        'notificationPreferences.emergencies': true,
+        'fcmTokens.0': { $exists: true } // centro medico con al menos un token
+      }).select('fcmTokens');
+  
+      if (activeHealthCenter.length === 0) {
+        return { success: false, message: "No hay centro medico disponibles para notificar." };
+      }
+  
+      // 2. Preparar el mensaje de notificación
+      const notificationPayload = {
+        notification: {
+          title: '🚨 Nueva Emergencia',
+          body: message
+        },
+        data: {
+          type: 'NEW_EMERGENCY',
+          emergencyId,
+          timestamp: new Date().toISOString()
+        }
+      };
+  
+      // 3. Recoger todos los tokens FCM de los centro medico
+      const tokens = activeHealthCenter.flatMap(operator => 
+        operator.fcmTokens.map(token => token.token)
+      );
+  
+      // 4. Enviar notificaciones en lotes (límite de FCM: 500 por lote)
+      const batchSize = 500;
+      const batches = Math.ceil(tokens.length / batchSize);
+      const results = [];
+  
+      for (let i = 0; i < batches; i++) {
+        const batchTokens = tokens.slice(i * batchSize, (i + 1) * batchSize);
+        const response = await firebaseMessaging.sendEachForMulticast({
+          ...notificationPayload,
+          tokens: batchTokens
+        });
+        results.push(response);
+      }
+  
+      // 5. Manejar tokens inválidos o fallidos
+      const failedTokens: string[] = [];
+      results.forEach(result => {
+        result.responses.forEach((resp, idx) => {
+          if (!resp.success) {
+            failedTokens.push(tokens[idx]);
+          }
+        });
+      });
+  
+      if (failedTokens.length > 0) {
+        console.warn(`Tokens fallidos: ${failedTokens.length}`);
+        await healthCenterModel.updateMany({}, { $pull: { fcmTokens: { token: { $in: failedTokens } } } })
+      }
+  
+      return { 
+        success: true, 
+        message: `Notificaciones enviadas a ${tokens.length - failedTokens.length} centro medico. ${failedTokens.length} fallidos.` 
+      };
+  
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      console.error(`Error al notificar centro medico: ${errorMessage}`);
+      return { success: false, message: `Error al notificar centro medico: ${errorMessage}` };
+    }
+  };
+
 
