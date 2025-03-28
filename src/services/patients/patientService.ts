@@ -12,6 +12,7 @@ import { PatientUpdate } from "./patient.dto";
 import { sendMessage } from "../whatsappService";
 import { hashEmail, validateVerificationCodePatient } from "../utils";
 import { handleAsyncErrorRegister } from "../errorHandlers";
+import { notifyOperatorsAboutEmergency } from "../operators/operatorService";
 import dotenv from "dotenv";
 import verificationCode from "../../models/verificationCode";
 
@@ -75,14 +76,13 @@ export const addPatientIntoPatientCollection = async (data: any): Promise<{
             conditions,
             termsAndConditions: true,
             registerDate: formattedRegisterDate.toISOString(),
-            isDeleted: false,
         });
 
         await newPatient.save();
 
         await rolesModel.updateOne(
-            { userId: firebaseUserId, isDeleted: false },
-            { $set: { userId: firebaseUserId, role: "patient", allowedApps: ["patients"], isDeleted: false } },
+            { userId: firebaseUserId },
+            { $set: { userId: firebaseUserId, role: "patient", allowedApps: ["patients"] } },
             { upsert: true }
         );
 
@@ -176,6 +176,12 @@ export const addEmergencyToCollection = async (patientId: string, role: string, 
             emergencyId,
             status: "PENDING",
         };
+
+        await notifyOperatorsAboutEmergency(
+            emergencyId,
+            patientId,
+            `${existingPatient.firstName} ${existingPatient.lastName}`
+        );
 
         await publishToExchange("patient_exchange", "patient_report_queue", message);
 
@@ -284,7 +290,7 @@ export const getPatientFromCollection = async (patientId: string) => {
             return { success: false, message: "El ID del paciente es obligatorio." };
         }
 
-        const existingPatient = await Patient.findOne({ patientId: patientId }, { _id: 0, isDeleted: 0, createdAt: 0, updatedAt: 0 });
+        const existingPatient = await Patient.findOne({ patientId: patientId }, { _id: 0, createdAt: 0, updatedAt: 0 });
         if (!existingPatient) {
             return { success: false, message: "No se encontró un paciente con ese ID." };
         }

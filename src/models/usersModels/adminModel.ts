@@ -5,7 +5,6 @@ export interface IAdmin extends Document {
     firstName: string;
     lastName: string;
     email: string;
-    isDeleted : boolean;
 }
 
 const AdminSchema: Schema = new Schema(
@@ -14,7 +13,6 @@ const AdminSchema: Schema = new Schema(
         firstName: { type: String, required: true },
         lastName: { type: String, required: true },
         email: { type: String, required: true, unique: true },
-        isDeleted: { type: Boolean, default: false },
     },
     {
         timestamps: true,

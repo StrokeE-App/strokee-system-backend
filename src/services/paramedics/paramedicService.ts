@@ -4,7 +4,8 @@ import rolesModel from "../../models/usersModels/rolesModel";
 import clinicModel from "../../models/usersModels/clinicModel";
 import Patient from "../../models/usersModels/patientModel";
 import { publishToExchange } from "../publisherService";
-import { firebaseAdmin } from "../../config/firebase-config";
+import { firebaseAdmin, firebaseMessaging } from "../../config/firebase-config";
+import { notifyHealthCenterAboutEmergency } from "../healthCenterStaff/healthCenterService";
 import { ParamedicUpdate } from "./paramedic.dto";
 import { paramedicSchema, paramedicRegisterSchema } from "../../validationSchemas/paramedicSchemas";
 import { sendNotification } from "../mail";
@@ -47,11 +48,10 @@ export const addParamedicIntoCollection = async (
             firstName,
             lastName,
             email,
-            isDeleted: false,
         };
 
         const result = await paramedicModel.updateOne(
-            { ambulanceId: paramedicRecord.uid, isDeleted: false },
+            { ambulanceId: paramedicRecord.uid },
             newParamedic,
             { upsert: true }
         );
@@ -59,12 +59,11 @@ export const addParamedicIntoCollection = async (
         const newRole = {
             userId: paramedicRecord.uid,
             role: "paramedic",
-            allowedApps: ["paramedics"],
-            isDeleted: false,
+            allowedApps: ["paramedics"]
         }
 
         const addRole = await rolesModel.updateOne(
-            { userId: paramedicRecord.uid, isDeleted: false },
+            { userId: paramedicRecord.uid },
             newRole,
             { upsert: true }
         );
@@ -126,6 +125,11 @@ export const updateEmergencyPickUpFromCollection = async (
             status: "CONFIRMED",
         };
 
+        await notifyHealthCenterAboutEmergency(
+            emergencyId,
+            "Tienes una emergencia en camino",
+        );
+
         if(existingClinic.healthcenterId === "imbanaco"){
             await publishToExchange("paramedic_exchange", "paramedic_update_queue", message);
         }
@@ -183,6 +187,11 @@ export async function getPatientDeliverdToHealthCenter(emergencyId: string, deli
             emergencyId,
             status: "DELIVERED",
         }
+
+        await notifyHealthCenterAboutEmergency(
+            emergencyId,
+            "El paciente ha sido entregado",
+        );
 
         await publishToExchange("paramedic_exchange", "paramedic_update_queue", message);
 
@@ -273,13 +282,14 @@ export const getParamedicsFromCollection = async (paramedicId: string) => {
         }
 
         const paramedics = await paramedicModel.findOne(
-            { paramedicId: paramedicId, isDeleted: false },
+            { paramedicId: paramedicId },
             {
                 _id: 0,
                 ambulanceId: 1,
                 firstName: 1,
                 lastName: 1,
-                email: 1
+                email: 1,
+                fcmTokens: 1
             }
         );
 
@@ -321,3 +331,78 @@ export const deleteParamedicsFromCollection = async (paramedicId: string) => {
         return { success: false, message: `Error al eliminar el paramedico: ${errorMessage}` };
     }
 }
+
+export const notifyParamedicAboutEmergency = async (
+    emergencyId: string,
+    ambulanceId: string
+  ): Promise<{ success: boolean, message: string }> => {
+    try {
+      // 1. Obtener todos los paramedicos activos con tokens FCM registrados
+      const activeParamedic = await paramedicModel.find({
+        'ambulanceId': ambulanceId,
+        'notificationPreferences.emergencies': true,
+        'fcmTokens.0': { $exists: true } // paramedicos con al menos un token
+      }).select('fcmTokens');
+  
+      if (activeParamedic.length === 0) {
+        return { success: false, message: "No hay paramedicos disponibles para notificar." };
+      }
+  
+      // 2. Preparar el mensaje de notificación
+      const notificationPayload = {
+        notification: {
+          title: '🚨 Nueva Emergencia',
+          body: `Tienes una nueva emergencia`
+        },
+        data: {
+          type: 'NEW_EMERGENCY',
+          emergencyId,
+          timestamp: new Date().toISOString()
+        }
+      };
+  
+      // 3. Recoger todos los tokens FCM de los paramedicos
+      const tokens = activeParamedic.flatMap(operator => 
+        operator.fcmTokens.map(token => token.token)
+      );
+  
+      // 4. Enviar notificaciones en lotes (límite de FCM: 500 por lote)
+      const batchSize = 500;
+      const batches = Math.ceil(tokens.length / batchSize);
+      const results = [];
+  
+      for (let i = 0; i < batches; i++) {
+        const batchTokens = tokens.slice(i * batchSize, (i + 1) * batchSize);
+        const response = await firebaseMessaging.sendEachForMulticast({
+          ...notificationPayload,
+          tokens: batchTokens
+        });
+        results.push(response);
+      }
+  
+      // 5. Manejar tokens inválidos o fallidos
+      const failedTokens: string[] = [];
+      results.forEach(result => {
+        result.responses.forEach((resp, idx) => {
+          if (!resp.success) {
+            failedTokens.push(tokens[idx]);
+          }
+        });
+      });
+  
+      if (failedTokens.length > 0) {
+        console.warn(`Tokens fallidos: ${failedTokens.length}`);
+        await paramedicModel.updateMany({}, { $pull: { fcmTokens: { token: { $in: failedTokens } } } })
+      }
+  
+      return { 
+        success: true, 
+        message: `Notificaciones enviadas a ${tokens.length - failedTokens.length} paramedicos. ${failedTokens.length} fallidos.` 
+      };
+  
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      console.error(`Error al notificar paramedicos: ${errorMessage}`);
+      return { success: false, message: `Error al notificar paramedicos: ${errorMessage}` };
+    }
+  };

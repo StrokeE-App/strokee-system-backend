@@ -30,7 +30,6 @@ export const registerAdminIntoCollection = async (adminData: RegisterAdmin) => {
             firstName: adminData.firstName,
             lastName: adminData.lastName,
             email: adminData.email,
-            isDeleted: false,
         });
 
         const savedAdmin = await newAdmin.save();
@@ -38,7 +37,6 @@ export const registerAdminIntoCollection = async (adminData: RegisterAdmin) => {
             userId: savedAdmin.adminId,
             allowedApps: ["admins"],
             role: "admin",
-            isDeleted: false,
         });
 
         return { success: true, message: "Administrador registrado exitosamente.", adminId: savedAdmin.adminId };
@@ -59,7 +57,7 @@ export async function updateAdmin(userId: string, updateData: Partial<RegisterAd
         }
 
         const updatedAdmin = await adminModel.findOneAndUpdate(
-            { adminId: userId, isDeleted: false },
+            { adminId: userId },
             updateData,
             { new: true }
         );
@@ -77,13 +75,13 @@ export async function updateAdmin(userId: string, updateData: Partial<RegisterAd
 
 export async function deleteAdmin(userId: string) {
     try {
-        const existingAdmin = await adminModel.findOne({ adminId: userId, isDeleted: false });
+        const existingAdmin = await adminModel.findOne({ adminId: userId });
 
         if (!existingAdmin) {
             return { success: false, message: "No se encontró el administrador o ya fue eliminado." };
         }
 
-        await adminModel.deleteOne({ adminId: userId, isDeleted: false });
+        await adminModel.deleteOne({ adminId: userId });
         await firebaseAdmin.deleteUser(userId);
         await rolesModel.deleteOne({ userId });
 
@@ -97,8 +95,8 @@ export async function deleteAdmin(userId: string) {
 export async function getAdmin(userId: string) {
     try {
         const admin = await adminModel.findOne(
-            { adminId: userId, isDeleted: false },
-            { _id: 0, adminId: 0, isDeleted: 0, createdAt: 0, updatedAt: 0 }
+            { adminId: userId },
+            { _id: 0, adminId: 0, createdAt: 0, updatedAt: 0 }
         );
 
         if (!admin) {

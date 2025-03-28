@@ -5,7 +5,14 @@ export interface IOperator extends Document {
     firstName: string;
     lastName: string;
     email: string;
-    isDeleted : boolean;
+    fcmTokens: Array<{
+        token: string;
+        device: 'web'|'android'|'ios';
+        createdAt: Date;
+    }>;
+    notificationPreferences: {
+        emergencies: boolean;
+    };
 }
 
 const OperatorSchema: Schema = new Schema(
@@ -14,7 +21,10 @@ const OperatorSchema: Schema = new Schema(
         firstName: { type: String, required: true },
         lastName: { type: String, required: true },
         email: { type: String, required: true, unique: true },
-        isDeleted: { type: Boolean, default: false },
+        fcmTokens: { type: [Object], default: [] },
+        notificationPreferences: {
+            emergencies: { type: Boolean, default: true },
+        },
     },
     {
         timestamps: true,

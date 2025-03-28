@@ -6,7 +6,14 @@ export interface IhealthCenter extends Document {
     lastName: string;
     email: string;
     healthcenterId: string;
-    isDeleted : boolean;
+    fcmTokens: Array<{
+        token: string;
+        device: 'web'|'android'|'ios';
+        createdAt: Date;
+    }>;
+    notificationPreferences: {
+        emergencies: boolean;
+    };
 }
 
 const MedicSchema: Schema = new Schema(
@@ -16,7 +23,10 @@ const MedicSchema: Schema = new Schema(
         lastName: { type: String, required: true },
         email: { type: String, required: true, unique: true },
         healthcenterId: { type: String, required: true },
-        isDeleted: { type: Boolean, default: false },
+        fcmTokens: { type: [Object], default: [] },
+        notificationPreferences: {
+            emergencies: { type: Boolean, default: true },
+        },
     },
     {
         timestamps: true,
