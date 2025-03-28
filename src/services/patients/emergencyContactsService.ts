@@ -185,7 +185,6 @@ export const registerEmergencyContactToActivateEmergencyIntoCollection = async (
         const role = await rolesModel.create({
             userId: emergencyContactRecord.uid,
             role: "emergencyContact",
-            isDeleted: false,
             allowedApps: ["patients"]
         });
 

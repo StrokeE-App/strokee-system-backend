@@ -1,0 +1,147 @@
+openapi: 3.0.0
+info:
+  title: Notification API
+  description: API para gestión de tokens de notificaciones push
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000/api
+    description: Servidor de desarrollo
+  - url: https://api.tudominio.com/v1
+    description: Servidor de producción
+tags:
+  - name: Notifications
+    description: Operaciones con tokens de notificaciones push
+paths:
+  /push-notifications/subscribe-notification:
+    post:
+      tags:
+        - Notifications
+      summary: Registrar token para notificaciones push
+      description: Registra un token FCM para un usuario específico y dispositivo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - role
+                - userId
+                - token
+                - device
+              properties:
+                role:
+                  type: string
+                  enum: [operator, paramedic, healthCenter]
+                  description: Rol del usuario
+                  example: operator
+                userId:
+                  type: string
+                  description: ID único del usuario
+                  example: "5c6mpv26QyOUxRmxqqXoazdAdEE3"
+                token:
+                  type: string
+                  description: Token FCM del dispositivo
+                  example: "fcm-token-generado-por-firebase"
+                device:
+                  type: string
+                  enum: [web, android, ios]
+                  description: Tipo de dispositivo
+                  example: android
+      responses:
+        '200':
+          description: Token registrado exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Token registrado exitosamente"
+        '400':
+          description: Error en la solicitud
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Dispositivo no permitido"
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /push-notifications/unsubscribe-notification:
+    post:
+      tags:
+        - Notifications
+      summary: Eliminar registro de token
+      description: Elimina un token FCM previamente registrado
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - role
+                - userId
+                - token
+              properties:
+                role:
+                  type: string
+                  enum: [operator, paramedic, healthCenter]
+                  description: Rol del usuario
+                  example: operator
+                userId:
+                  type: string
+                  description: ID único del usuario
+                  example: "5c6mpv26QyOUxRmxqqXoazdAdEE3"
+                token:
+                  type: string
+                  description: Token FCM a eliminar
+                  example: "fcm-token-generado-por-firebase"
+      responses:
+        '200':
+          description: Token eliminado exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Token eliminado correctamente"
+        '400':
+          description: Error en la solicitud
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Token no encontrado"
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Mensaje de error
+          example: "Error interno del servidor"
+        stack:
+          type: string
+          description: Stack trace (solo en desarrollo)
+          example: "Error: ...\n    at ..."

@@ -7,6 +7,7 @@ import swaggerDocs from './swagger/swagger-index';
 import patientsRoutes from './routes/patientRoutes'
 import paramedicsRoutes from './routes/paramedicRoutes'
 import emergencyContactRoutes from './routes/emergencyContactRoute'
+import pushNotificationsRoutes from './routes/pushNotificationsRoute'
 import clinicRoutes from './routes/clinicRoute'
 import emergencyRoutes from './routes/emergencyRoutes'
 import operatorRoutes from './routes/operatorRoutes'
@@ -68,6 +69,7 @@ app.use(cors({ credentials: true, origin: true }));
 app.use(bodyParser.json());
 app.use(indexRoute)
 app.use("/strokeebackend/api/patient", patientsRoutes);
+app.use("/strokeebackend/api/push-notifications", pushNotificationsRoutes);
 app.use("/strokeebackend/api/healthCenter", healthCenterRoutes);
 app.use("/strokeebackend/api/clinic", clinicRoutes);
 app.use("/strokeebackend/api/emergency-contact", emergencyContactRoutes);

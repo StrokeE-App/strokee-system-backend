@@ -1,8 +1,10 @@
 import operatorModel from "../../models/usersModels/operatorModel";
+import { getMessaging } from 'firebase-admin/messaging';
 import rolesModel from "../../models/usersModels/rolesModel";
 import { publishToExchange } from "../publisherService";
 import emergencyModel from "../../models/emergencyModel";
-import { firebaseAdmin } from "../../config/firebase-config";
+import { firebaseAdmin, firebaseMessaging } from "../../config/firebase-config";
+import { notifyParamedicAboutEmergency } from "../paramedics/paramedicService";
 import { UpdateOperator } from "./operator.dto";
 import { operatorSchema, operatorRegisterSchema } from "../../validationSchemas/operatorSchema";
 
@@ -54,11 +56,10 @@ export const addOperatorIntoCollection = async (
             firstName,
             lastName,
             email,
-            isDeleted: false,
         };
 
         const result = await operatorModel.updateOne(
-            { operatorId: operatorRecord.uid, isDeleted: false },
+            { operatorId: operatorRecord.uid },
             newOperator,
             { upsert: true }
         );
@@ -67,11 +68,10 @@ export const addOperatorIntoCollection = async (
             userId: operatorRecord.uid,
             role: "operator",
             allowedApps: ["operators"],
-            isDeleted: false,
         }
 
         const addRole = await rolesModel.updateOne(
-            { userId: operatorRecord.uid, isDeleted: false },
+            { userId: operatorRecord.uid },
             newRole,
             { upsert: true }
         );
@@ -128,6 +128,11 @@ export const updateEmergencyPickUpFromCollectionOperator = async (
             status: "TO_AMBULANCE",
             ambulanceId
         };
+
+        await notifyParamedicAboutEmergency(
+            emergencyId,
+            ambulanceId
+        );
 
         await publishToExchange("operator_exchange", "emergency_started_queue", message);
         await publishToExchange("patient_exchange", "patient_report_queue", message);
@@ -254,3 +259,80 @@ export const deleteOperatorFromCollection = async (operatorId: string) => {
         return { success: false, message: `Error al eliminar el operador: ${errorMessage}` };
     }
 }
+
+export const notifyOperatorsAboutEmergency = async (
+    emergencyId: string,
+    patientId: string,
+    patientName: string
+  ): Promise<{ success: boolean, message: string }> => {
+    try {
+      // 1. Obtener todos los operadores activos con tokens FCM registrados
+      const activeOperators = await operatorModel.find({
+        'notificationPreferences.emergencies': true,
+        'fcmTokens.0': { $exists: true } // Operadores con al menos un token
+      }).select('fcmTokens');
+  
+      if (activeOperators.length === 0) {
+        return { success: false, message: "No hay operadores disponibles para notificar." };
+      }
+  
+      // 2. Preparar el mensaje de notificación
+      const notificationPayload = {
+        notification: {
+          title: '🚨 Nueva Emergencia',
+          body: `Paciente ${patientName} (ID: ${patientId}) ha activado una emergencia`
+        },
+        data: {
+          type: 'NEW_EMERGENCY',
+          emergencyId,
+          patientId,
+          patientName,
+          timestamp: new Date().toISOString()
+        }
+      };
+  
+      // 3. Recoger todos los tokens FCM de los operadores
+      const tokens = activeOperators.flatMap(operator => 
+        operator.fcmTokens.map(token => token.token)
+      );
+  
+      // 4. Enviar notificaciones en lotes (límite de FCM: 500 por lote)
+      const batchSize = 500;
+      const batches = Math.ceil(tokens.length / batchSize);
+      const results = [];
+  
+      for (let i = 0; i < batches; i++) {
+        const batchTokens = tokens.slice(i * batchSize, (i + 1) * batchSize);
+        const response = await firebaseMessaging.sendEachForMulticast({
+          ...notificationPayload,
+          tokens: batchTokens
+        });
+        results.push(response);
+      }
+  
+      // 5. Manejar tokens inválidos o fallidos
+      const failedTokens: string[] = [];
+      results.forEach(result => {
+        result.responses.forEach((resp, idx) => {
+          if (!resp.success) {
+            failedTokens.push(tokens[idx]);
+          }
+        });
+      });
+  
+      if (failedTokens.length > 0) {
+        console.warn(`Tokens fallidos: ${failedTokens.length}`);
+        await operatorModel.updateMany({}, { $pull: { fcmTokens: { token: { $in: failedTokens } } } })
+      }
+  
+      return { 
+        success: true, 
+        message: `Notificaciones enviadas a ${tokens.length - failedTokens.length} operadores. ${failedTokens.length} fallidos.` 
+      };
+  
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      console.error(`Error al notificar operadores: ${errorMessage}`);
+      return { success: false, message: `Error al notificar operadores: ${errorMessage}` };
+    }
+  };

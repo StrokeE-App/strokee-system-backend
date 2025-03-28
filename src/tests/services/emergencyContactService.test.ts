@@ -42,7 +42,6 @@ describe('addEmergencyContactIntoCollection', () => {
     //         phoneNumber: '5551234567',
     //         relationship: 'Sister',
     //         emergencyContactId: '',
-    //         isDeleted: false,
     //     });
 
     //     expect(result.success).toBe(false);
@@ -60,7 +59,6 @@ describe('addEmergencyContactIntoCollection', () => {
     //         phoneNumber: '5551234567',
     //         relationship: 'Sister',
     //         emergencyContactId: '',
-    //         isDeleted: false, // Add this property
     //     };
 
     //     const result = await addEmergencyContactIntoCollection('valid_patient_id', newContact);

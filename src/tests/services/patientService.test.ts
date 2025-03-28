@@ -286,7 +286,6 @@ describe('addPatientIntoPatientCollection', () => {
             height: 170,
             medications: [],
             conditions: [],
-            isDeleted: false,
             save: jest.fn().mockResolvedValue(true), // Simulamos la función de Mongoose
         };
 

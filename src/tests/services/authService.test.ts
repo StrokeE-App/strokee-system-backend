@@ -30,7 +30,7 @@ describe("Auth Functions", () => {
             const result = await loginUserService(token, appIdentifier);
 
             expect(firebaseAdmin.verifyIdToken).toHaveBeenCalledWith(token);
-            expect(rolesModel.findOne).toHaveBeenCalledWith({ userId: mockedUserId, isDeleted: false });
+            expect(rolesModel.findOne).toHaveBeenCalledWith({ userId: mockedUserId });
             expect(result).toEqual({ userId: mockedUserId });
         });
 
