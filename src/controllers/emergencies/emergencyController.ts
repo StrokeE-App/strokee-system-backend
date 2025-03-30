@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { getEmergencyFromCollection } from "../../services/emergencies/emeregencyService";
+import { getEmergencyFromCollection, getAllEmergencyFromCollection } from "../../services/emergencies/emeregencyService";
 
 export const getEmergency = async(req: Request, res: Response, next: NextFunction) => {
     const { emergencyId } = req.params;
@@ -14,6 +14,25 @@ export const getEmergency = async(req: Request, res: Response, next: NextFunctio
                 });
                 return;
             }
+            res.status(200).json({
+                message: result.message,
+                data: result.data,
+            });
+        } else {
+            res.status(400).json({
+                message: result.message,
+            });
+        }
+    } catch (error) {
+        next(error);
+    }
+}
+
+export const getAllEmergency = async(req: Request, res: Response, next: NextFunction) => {
+    try {
+        const result = await getAllEmergencyFromCollection();
+
+        if (result.success) {
             res.status(200).json({
                 message: result.message,
                 data: result.data,
