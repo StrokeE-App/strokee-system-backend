@@ -320,7 +320,10 @@ export const deletePatientFromCollection = async (patientId: string) => {
 
         await Patient.deleteOne({ patientId: patientId });
         await rolesModel.deleteOne({ userId: patientId });
-        await patientEmergencyContactModel.deleteOne({ patientId: patientId });
+        await patientEmergencyContactModel.updateMany(
+            { "patients.patientId": patientId }, 
+            { $pull: { patients: { patientId: patientId } } }
+        );
 
         return { success: true, message: "Paciente eliminado exitosamente." };
 
