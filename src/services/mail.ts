@@ -31,15 +31,9 @@ export async function sendNotification(recipient: string, nombrePaciente: string
 
 export const sendRegistrationEmail = async (email: string, code: string) => {
     console.log(email, code);
-    const loginLink = '#'
+    const loginLink = 'https://strokee-patient-app.vercel.app/login'
 
-    let url = "http://localhost:4000"
-
-    if(process.env.NODE_ENV === "staging") {
-        url = "https://strokee-system-backend.onrender.com"
-    }
-
-    const registrationLink = `${url}/patient/register-emergency-contact`;
+    const registrationLink = `https://strokee-patient-app.vercel.app/register-emergency-contact`;
 
     const mailOptions = {
         from: "tu_correo@gmail.com",
@@ -48,19 +42,17 @@ export const sendRegistrationEmail = async (email: string, code: string) => {
         html: activiationEmailTemplate(registrationLink, code, loginLink),
     };
 
-    await transporter.sendMail(mailOptions);
+    try {
+        await transporter.sendMail(mailOptions);
+    } catch (error) {
+        console.error('Error al enviar el correo de activación:', error);
+    }
 };
 
 export const sendPatientRegistrationEmail = async (email: string, code: string) => {
     console.log(email, code);
 
-    let url = "http://localhost:4000"
-
-    if(process.env.NODE_ENV === "staging") {
-        url = "https://strokee-system-backend.onrender.com"
-    }
-
-    const registrationLink = `${url}/patient/register-emergency-contact`;
+    const registrationLink = `https://strokee-patient-app.vercel.app/register`;
 
     const mailOptions = {
         from: "tu_correo@gmail.com",

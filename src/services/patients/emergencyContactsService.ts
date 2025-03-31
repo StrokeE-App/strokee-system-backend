@@ -268,6 +268,12 @@ export const updateEmergencyContactFromCollection = async (patientId: string, em
 
 export const deleteEmergencyContactFromCollection = async (patientId: string, emergencyContactId: string) => {
     try {
+
+        const patientEmergencyContact = await patientEmergencyContactModel.updateOne(
+            {"patients.patientId": patientId, "patients.emergencyContactId": emergencyContactId},
+            { $pull: { patients: { emergencyContactId: emergencyContactId } } }
+        );
+        
         const result = await patientModel.updateOne(
             { patientId, "emergencyContact.emergencyContactId": emergencyContactId },
             { $pull: { emergencyContact: { emergencyContactId } } }
