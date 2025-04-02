@@ -98,7 +98,7 @@ export const updateEmergencyPickUpFromCollection = async (
         }
 
         const existingClinic = await clinicModel.findOne({ healthcenterId });
-        console.log(existingClinic);
+        
         if (!existingClinic) {
             return { success: false, message: "El centro de salud no existe." };
         }
@@ -130,7 +130,7 @@ export const updateEmergencyPickUpFromCollection = async (
             "Tienes una emergencia en camino",
         );
 
-        if(existingClinic.healthcenterId === "imbanaco"){
+        if(existingClinic.healthcenterName === "imbanaco"){
             await publishToExchange("paramedic_exchange", "paramedic_update_queue", message);
         }
 
