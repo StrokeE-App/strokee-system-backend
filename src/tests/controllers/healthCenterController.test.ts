@@ -1,5 +1,5 @@
-import { addHealthCenter, getHealthCenter, deleteHealthCenter, updateHealthCenter,deliverPatient } from "../../controllers/healthCenterStaff/healthCenterController";
-import { addHealthCenterIntoCollection, deleteHealthCenterStaff, getHealthCenterStaff, updateHealthCenterStaff, getPatientDeliverdToHealthCenter } from "../../services/healthCenterStaff/healthCenterService";
+import { addHealthCenter, getHealthCenter, deleteHealthCenter, updateHealthCenter } from "../../controllers/healthCenterStaff/healthCenterController";
+import { addHealthCenterIntoCollection, deleteHealthCenterStaff, getHealthCenterStaff, updateHealthCenterStaff } from "../../services/healthCenterStaff/healthCenterService";
 import { Request, Response, NextFunction } from "express";
 
 jest.mock("../../services/healthCenterStaff/healthCenterService", () => ({
@@ -184,55 +184,4 @@ describe("addHealthCenter Controller", () => {
     });
   });
 
-  describe("deliverPatient Controller", () => {
-    let req: Partial<Request>;
-    let res: Partial<Response>;
-    let next: NextFunction;
-  
-    beforeEach(() => {
-      req = {
-        body: {
-          emergencyId: "emergency-123",
-        },
-      };
-      res = {
-        status: jest.fn().mockReturnThis(),
-        json: jest.fn(),
-      };
-      next = jest.fn();
-    });
-  
-    afterEach(() => {
-      jest.clearAllMocks();
-    });
-  
-    it("debería retornar el código y mensaje correcto si la entrega es exitosa", async () => {
-      const result = { code: 200, message: "Paciente entregado al centro de salud correctamente." };
-      (getPatientDeliverdToHealthCenter as jest.Mock).mockResolvedValue(result);
-  
-      await deliverPatient(req as Request, res as Response, next);
-  
-      expect(res.status).toHaveBeenCalledWith(result.code);
-      expect(res.json).toHaveBeenCalledWith({ message: result.message });
-    });
-  
-    it("debería retornar un código de error si la entrega falla", async () => {
-      const result = { code: 400, message: "No se pudo entregar el paciente al centro de salud." };
-      (getPatientDeliverdToHealthCenter as jest.Mock).mockResolvedValue(result);
-  
-      await deliverPatient(req as Request, res as Response, next);
-  
-      expect(res.status).toHaveBeenCalledWith(result.code);
-      expect(res.json).toHaveBeenCalledWith({ message: result.message });
-    });
-  
-    it("debería llamar a next con un error si getPatientDeliverdToHealthCenter lanza una excepción", async () => {
-      const errorMessage = "Error interno del servidor.";
-      (getPatientDeliverdToHealthCenter as jest.Mock).mockRejectedValue(new Error(errorMessage));
-  
-      await deliverPatient(req as Request, res as Response, next);
-  
-      expect(next).toHaveBeenCalledWith(new Error(errorMessage));
-    });
-  });
 });

@@ -1,4 +1,4 @@
-import { loginUserService } from "../../services/auth/authService";
+import { loginUserService, logoutUserService } from "../../services/auth/authService";
 import { firebaseAdmin } from "../../config/firebase-config";
 import  rolesModel  from "../../models/usersModels/rolesModel"; // Import rolesModel to mock it
 
@@ -33,6 +33,29 @@ describe("Auth Functions", () => {
             expect(rolesModel.findOne).toHaveBeenCalledWith({ userId: mockedUserId });
             expect(result).toEqual({ userId: mockedUserId });
         });
+
+        it("should successfully logout user with valid token", async () => {
+            // Mock data
+            const mockToken = "valid-firebase-token";
+            const mockUserId = "user-123";
+            const mockRevokeTime = Date.now() / 1000;
+            
+            // Mock Firebase methods
+            firebaseAdmin.verifyIdToken = jest.fn().mockResolvedValue({
+              sub: mockUserId
+            });
+            firebaseAdmin.revokeRefreshTokens = jest.fn().mockResolvedValue(true);
+            firebaseAdmin.getUser = jest.fn().mockResolvedValue({
+              tokensValidAfterTime: new Date(mockRevokeTime * 1000).toUTCString()
+            });
+          
+            // Execute
+            const result = await logoutUserService(mockToken);
+          
+            // Assertions
+            expect(result.success).toBe(true);
+            expect(result.message).toBe("Sesión cerrada exitosamente.");
+          });
 
         it("should return null if token is invalid", async () => {
             const token = "invalid-token";

@@ -2,7 +2,6 @@ import mongoose, { Schema, Document } from "mongoose";
 
 export interface IAmbulance extends Document {
     ambulanceId: string;
-    status: string;
 }
 
 const AmbulanceSchema: Schema = new Schema(

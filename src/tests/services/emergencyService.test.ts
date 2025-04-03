@@ -24,7 +24,6 @@ it('should return an error when emergencyId is missing', async () => {
             startDate: '2022-01-01',
             pickupDate: '2022-01-02',
             deliveredDate: '2022-01-03',
-            nihScale: 10,
             patient: {
                 age: 24,
                 firstName: "John",

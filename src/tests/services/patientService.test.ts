@@ -1,393 +1,287 @@
-import * as patientService from '../../services/patients/patientService';
-import Patient from '../../models/usersModels/patientModel';
-import rolesModel from '../../models/usersModels/rolesModel';
-import patientEmergencyContactModel from '../../models/usersModels/patientEmergencyContact';
-import emergencyModel from '../../models/emergencyModel';
-import { publishToExchange } from '../../services/publisherService';
+import {
+    addPatientIntoPatientCollection,
+    getAllPatientsFromCollection,
+    addEmergencyToCollection,
+    getAllEmergencyContactFromCollection,
+    getEmergencyContactFromCollection,
+    updatePatientFromCollection,
+    getPatientFromCollection,
+    deletePatientFromCollection
+} from "../../services/patients/patientService";
+import { patientUpadteSchema } from "../../validationSchemas/patientShemas";
+import { notifyOperatorsAboutEmergency } from "../../services/operators/operatorService";
+import { publishToExchange } from "../../services/publisherService";
+import { sendMessage } from "../../services/whatsappService";
+import patientModel from "../../models/usersModels/patientModel";
+import rolesModel from "../../models/usersModels/rolesModel";
+import emergencyModel from "../../models/emergencyModel";
+import patientEmergencyContactModel from "../../models/usersModels/patientEmergencyContact";
+import verificationCodeModel from "../../models/verificationCode";
+import { validateVerificationCodePatient } from "../../services/utils";
 import { firebaseAdmin } from "../../config/firebase-config";
-import { connectToRedis } from '../../boostrap';
+import { v4 as uuidv4 } from "uuid";
 
-jest.mock('../../models/usersModels/patientModel');
-jest.mock('../../models/usersModels/patientEmergencyContact');
-jest.mock('../../models/emergencyModel');
+jest.mock("../../models/usersModels/patientModel");
+jest.mock("../../models/usersModels/rolesModel");
+jest.mock("../../models/usersModels/patientEmergencyContact");
+jest.mock("../../models/verificationCode");
+jest.mock("../../models/emergencyModel");
+jest.mock("../../validationSchemas/patientShemas", () => ({
+    patientSchema: {
+        validate: jest.fn().mockReturnValue({ error: null }), 
+    },
+    patientUpadteSchema: {
+        validate: jest.fn(), 
+    },
+}))
+jest.mock("../../services/whatsappService");
+jest.mock("../../services/utils");
+jest.mock("uuid");
+jest.mock("../../config/firebase-config");
 jest.mock('../../services/publisherService', () => ({
-    publishToExchange: jest.fn().mockResolvedValue(undefined), // Simula que no falla
+    ...jest.requireActual('../../services/publisherService'),
+    publishToExchange: jest.fn() // Mock the specific method
 }));
-jest.mock('../../config/firebase-config');
-jest.mock('uuid', () => ({
-    v4: jest.fn(() => 'mocked-uuid')  // Mockea la función para que siempre devuelva 'mocked-uuid'
-}));
-
-jest.mock('../../services/patients/patientService', () => ({
-    validateVerificationCodePatient: jest.fn().mockResolvedValue({ medicId: 'mocked-medic-id' })
+jest.mock("../../services/operators/operatorService", () => ({
+    notifyOperatorsAboutEmergency: jest.fn(),
 }));
 
-// jest.mock('mongoose', () => {
-//     const actualMongoose = jest.requireActual('mongoose');
-//     return {
-//         ...actualMongoose,
-//         startSession: jest.fn().mockResolvedValue({
-//             startTransaction: jest.fn(),
-//             commitTransaction: jest.fn(),
-//             abortTransaction: jest.fn(),
-//             endSession: jest.fn(),
-//         }),
-//     };
-// });
-
-describe('addPatientIntoPatientCollection', () => {
-
-    it('should return an error when a required field is missing', async () => {
-        const result = await patientService.addPatientIntoPatientCollection(
-            '',  // firstName is missing
-            'Doe',
-            'johndoe@example.com',
-            'password123',
-            '123456789',
-            30,
-            new Date('1995-05-15'),
-            70,
-            175,
-            [],
-            ['medication1'],
-            ['condition1'],
-            'mocked-uuid'
-        );
-
-        expect(result.success).toBe(false);
-        expect(result.message).toBe('Error al agregar al paciente: El campo firstName es requerido.');
+describe("Patient", () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
     });
 
-    it('should return an error if the email is already registered', async () => {
-        Patient.findOne = jest.fn().mockImplementation(() => ({
-            session: jest.fn().mockResolvedValue({ email: 'johndoe@example.com' })
-        }));
-        const result = await patientService.addPatientIntoPatientCollection(
-            'John',
-            'Doe',
-            'johndoe@example.com',
-            'password123',
-            '123456789',
-            30,
-            new Date('1995-05-15'),
-            70,
-            175,
-            [
-                {
-                    emergencyContactId: "contact1",
-                    firstName: "Jane",
-                    lastName: "caceres",
-                    email: "jane.doe@example.com",
-                    phoneNumber: "1234567990",
-                    relationship: "Friend",
-                    canActivateEmergency: false
-                }
-            ],
-            ['medication1'],
-            ['condition1'],
-            'mocked-uuid'
-        );
+    it("debe agregar correctamente un paciente si todo es válido", async () => {
+        (validateVerificationCodePatient as jest.Mock).mockResolvedValue({ medicId: "12345" });
+        (patientModel.findOne as jest.Mock).mockResolvedValue(null);
+        (firebaseAdmin.createUser as jest.Mock).mockResolvedValue({ uid: "firebase123" });
+        (patientModel.prototype.save as jest.Mock).mockResolvedValue({});
+        (rolesModel.updateOne as jest.Mock).mockResolvedValue({});
+        (verificationCodeModel.deleteOne as jest.Mock).mockResolvedValue({});
 
-        expect(result.success).toBe(false);
-        expect(result.message).toBe('El email johndoe@example.com ya está registrado.');
-    });
-
-    it('should return an error when Firebase user creation fails', async () => {
-
-        Patient.findOne = jest.fn().mockImplementation(() => ({
-            session: jest.fn().mockResolvedValue(null)
-        }));
-        firebaseAdmin.createUser = jest.fn().mockImplementation(() => ({
-            session: jest.fn().mockResolvedValue({})
-        }));
-
-        const result = await patientService.addPatientIntoPatientCollection(
-            'John',
-            'Doe',
-            'johndoe@example.com',
-            'password123',
-            '123456789',
-            30,
-            new Date('1995-05-15'),
-            70,
-            175,
-            [],
-            ['medication1'],
-            ['condition1'],
-            'mocked-uuid'
-        );
-
-        expect(result.success).toBe(false);
-        expect(result.message).toBe('Error al agregar al paciente: No se pudo crear el usuario en Firebase.');
-    });
-
-    it("should return success when the patient is added successfully", async () => {
-        Patient.findOne = jest.fn().mockImplementation(() => ({
-            session: jest.fn().mockResolvedValue(null)
-        }));
-
-        firebaseAdmin.createUser = jest.fn().mockResolvedValue({ uid: "patient123" });
-
-        Patient.updateOne = jest.fn().mockResolvedValue({ modifiedCount: 1 });
-        rolesModel.updateOne = jest.fn().mockResolvedValue({ modifiedCount: 1 });
-
-        patientEmergencyContactModel.prototype.save = jest.fn().mockResolvedValue({});
-
-        const result = await patientService.addPatientIntoPatientCollection(
-            "John",
-            "Doe",
-            "johndoe@example.com",
-            "password123",
-            "123456789",
-            30,
-            new Date("1995-05-15"),
-            70,
-            175,
-            [],
-            ["medication1"],
-            ["condition1"],
-            "mocked-uuid"
-        );
-
-        expect(result.success).toBe(true);
-        expect(result.message).toBe("Paciente agregado exitosamente.");
-        expect(result.patientId).toBe("patient123");
-    });
-
-    it('should return success but with no changes when patient is already up-to-date', async () => {
-        Patient.findOne = jest.fn().mockImplementation(() => ({
-            session: jest.fn().mockResolvedValue(null)
-        }));
-
-        firebaseAdmin.createUser = jest.fn().mockResolvedValue({ uid: "patient123" });
-
-        Patient.updateOne = jest.fn().mockResolvedValue({ modifiedCount: 1 });
-        rolesModel.updateOne = jest.fn().mockResolvedValue({ modifiedCount: 0 });
-
-        patientEmergencyContactModel.prototype.save = jest.fn().mockResolvedValue({});
-
-        const result = await patientService.addPatientIntoPatientCollection(
-            'John',
-            'Doe',
-            'johndoe@example.com',
-            'password123',
-            '123456789',
-            30,
-            new Date('1995-05-15'),
-            70,
-            175,
-            [],
-            ['medication1'],
-            ['condition1'],
-            'mocked-uuid'
-        );
-
-        expect(result.success).toBe(true);
-        expect(result.message).toBe('Paciente agregado exitosamente.');
-    });
-
-    describe('addEmergencyToCollection', () => {
-        it('should return an error if patientId is missing', async () => {
-            const result = await patientService.addEmergencyToCollection('', '', '');
-            expect(result.success).toBe(false);
-            expect(result.message).toBe('El ID del paciente es obligatorio.');
-        });
-
-        it('should return an error if the patient does not exist', async () => {
-            Patient.findOne = jest.fn().mockResolvedValue(null);
-            const result = await patientService.addEmergencyToCollection('patient123', 'patient');
-            expect(result.success).toBe(false);
-            expect(result.message).toBe('No se encontró un paciente con ese ID.');
-        });
-
-        // it('should create an emergency and return success', async () => {
-        //     const mockPatient = {
-        //         firstName: 'John',
-        //         lastName: 'Doe',
-        //         height: 180,
-        //         weight: 75,
-        //         phoneNumber: '123456789',
-        //     };
-
-        //     Patient.findOne = jest.fn().mockResolvedValue(mockPatient);
-
-        //     const saveMock = jest.fn().mockResolvedValue({
-        //         emergencyId: 'mocked-uuid',
-        //     });
-        //     emergencyModel.prototype.save = saveMock; 
-
-        //     const result = await addEmergencyToCollection('patient123', 'patient');
-
-        //     expect(result.success).toBe(true);
-        //     expect(result.message).toBe('Emergencia creada exitosamente.');
-        //     expect(result.emergencyId).toBe('mocked-uuid');
-
-        //     expect(publishToExchange).toHaveBeenCalledWith('patient_exchange', 'patient_report_queue', {
-        //         emergencyId: 'mocked-uuid',
-        //         status: 'PENDING',
-        //     });
-
-        //     expect(saveMock).toHaveBeenCalled();
-        // });
-
-        it('should return an error if an exception occurs', async () => {
-            Patient.findOne = jest.fn().mockRejectedValue(new Error('Database error'));
-            const result = await patientService.addEmergencyToCollection('patient123', 'patient');
-            expect(result.success).toBe(false);
-            expect(result.message).toContain('Error al agregar la emergencia: Database error');
-        });
-    });
-
-    it("debe devolver un error si el ID del paciente no se proporciona", async () => {
-        const result = await patientService.updatePatientFromCollection("", {
+        const data = {
             firstName: "John",
             lastName: "Doe",
-            phoneNumber: "123456789",
-            age: 30,
-            birthDate: '1995-05-15',
-            weight: 70,
-            height: 175,
-            medications: ["medication1"],
-            conditions: ["condition1"],
-        });
-
-        expect(result.success).toBe(false);
-        expect(result.message).toBe("El ID del paciente es obligatorio.");
-    });
-
-    it("debe devolver un error si el paciente no existe", async () => {
-        (Patient.findOne as jest.Mock).mockResolvedValue(null);
-
-        const result = await patientService.updatePatientFromCollection("12345", {
-            firstName: "John",
-            lastName: "Doe",
+            email: "test@example.com",
+            password: "securePassword",
             phoneNumber: "1234567890",
             age: 30,
-            birthDate: '2020-01-20',
+            birthDate: "1993-05-10",
             weight: 70,
             height: 175,
-            medications: ["medication1"],
-            conditions: ["condition1"]
-        });
-
-        expect(result.success).toBe(false);
-        expect(result.message).toBe("No se encontró un paciente con ese ID.");
-    });
-
-    it("debe actualizar correctamente un paciente existente", async () => {
-        const mockPatient = {
-            _id: "12345",
-            firstName: "Old Name",
-            lastName: "Old Last",
-            phoneNumber: "000000000",
-            age: 25,
-            birthDate: '2020-01-20',
-            weight: 65,
-            height: 170,
+            emergencyContact: [{ firstName: "Jane", lastName: "Smith", email: "jane@gmail.com", phoneNumber: "0987654321", relationship: "Sister" }],
             medications: [],
             conditions: [],
-            save: jest.fn().mockResolvedValue(true), // Simulamos la función de Mongoose
+            token: "valid-token",
+            registerDate: "2023-01-01",
+            termsAndConditions: true,
         };
 
-        (Patient.findOne as jest.Mock).mockResolvedValue(mockPatient);
+        const result = await addPatientIntoPatientCollection(data);
 
-        const result = await patientService.updatePatientFromCollection("12345", {
-            firstName: "John",
-            lastName: "Doe",
-            phoneNumber: "1234567890",
+        expect(result).toEqual({
+            success: true,
+            message: "Paciente agregado exitosamente.",
+            patientId: "firebase123",
+        });
+
+        expect(patientModel.prototype.save).toHaveBeenCalled();
+        expect(firebaseAdmin.createUser).toHaveBeenCalledWith({ email: "test@example.com", password: "securePassword" });
+        expect(rolesModel.updateOne).toHaveBeenCalledWith(
+            { userId: "firebase123" },
+            { $set: { userId: "firebase123", role: "patient", allowedApps: ["patients"] } },
+            { upsert: true }
+        );
+        expect(verificationCodeModel.deleteOne).toHaveBeenCalledWith({ email: "test@example.com", type: "REGISTER_PATIENT" });
+    });
+
+    it("debe retornar la lista de pacientes cuando la consulta es exitosa", async () => {
+        const mockPatients = [
+            {
+                firstName: "John",
+                lastName: "Doe",
+                email: "john@example.com"
+            },
+            {
+                firstName: "Jane",
+                lastName: "Smith",
+                email: "jane@example.com"
+            }
+        ];
+
+        (patientModel.find as jest.Mock).mockResolvedValue(mockPatients);
+
+        const result = await getAllPatientsFromCollection();
+
+        expect(result).toEqual(mockPatients);
+        expect(patientModel.find).toHaveBeenCalledTimes(1);
+        expect(patientModel.find).toHaveBeenCalledWith();
+    });
+
+    it("debe crear una emergencia exitosamente para un paciente", async () => {
+        const mockPatient = {
+            patientId: "12345",
+            firstName: "Juan",
+            lastName: "Pérez",
+            phoneNumber: "123456789",
+            height: 170,
+            weight: 70
+        };
+
+        (patientModel.findOne as jest.Mock).mockResolvedValue(mockPatient);
+        (emergencyModel.findOne as jest.Mock).mockResolvedValue(null);
+        (uuidv4 as jest.Mock).mockReturnValue("mocked-emergency-id");
+        (emergencyModel.prototype.save as jest.Mock).mockResolvedValue({ emergencyId: "mocked-emergency-id" });
+        (notifyOperatorsAboutEmergency as jest.Mock).mockResolvedValue({});
+        (publishToExchange as jest.Mock).mockResolvedValue({});
+        (sendMessage as jest.Mock).mockResolvedValue({});
+
+        const result = await addEmergencyToCollection("12345", "patient");
+
+        expect(result).toEqual({
+            success: true,
+            message: "Emergencia creada exitosamente.",
+            emergencyId: "mocked-emergency-id"
+        });
+
+        expect(patientModel.findOne).toHaveBeenCalledWith(
+            { patientId: "12345" },
+            { firstName: 1, lastName: 1, height: 1, weight: 1, phoneNumber: 1 }
+        );
+        expect(emergencyModel.findOne).toHaveBeenCalledWith({
+            patientId: "12345",
+            status: { $in: ["PENDING", "TO_AMBULANCE", "CONFIRMED"] }
+        });
+        expect(emergencyModel.prototype.save).toHaveBeenCalled();
+        expect(notifyOperatorsAboutEmergency).toHaveBeenCalledWith(
+            "mocked-emergency-id",
+            "12345",
+            "Juan Pérez"
+        );
+        expect(publishToExchange).toHaveBeenCalledWith(
+            "patient_exchange",
+            "patient_report_queue",
+            { emergencyId: "mocked-emergency-id", status: "PENDING" }
+        );
+        expect(sendMessage).toHaveBeenCalledWith("Juan", "Pérez", "123456789");
+    });
+
+    it("debe devolver contactos de emergencia si el paciente los tiene", async () => {
+        const mockPatient = {
+            emergencyContact: [{ email: "contacto1@example.com" }, { email: "contacto2@example.com" }],
+        };
+        (patientModel.findOne as jest.Mock).mockResolvedValue(mockPatient);
+
+        const response = await getAllEmergencyContactFromCollection("12345");
+        expect(response).toEqual({
+            success: true,
+            message: "Contactos de emergencia obtenidos exitosamente.",
+            data: mockPatient.emergencyContact,
+        });
+    });
+
+    it("debe devolver contactos de emergencia si el paciente los tiene", async () => {
+        const mockPatient = {
+            emergencyContact: [{ email: "contacto1@example.com" }, { email: "contacto2@example.com" }],
+        };
+        (patientModel.findOne as jest.Mock).mockResolvedValue(mockPatient);
+
+        const response = await getEmergencyContactFromCollection("12345");
+        expect(response).toEqual({
+            success: true,
+            message: "Contactos de emergencia obtenidos exitosamente.",
+            data: mockPatient.emergencyContact,
+        });
+    });
+
+    it("debe actualizar el paciente correctamente", async () => {
+        const mockPatient = {
+            firstName: "Old Name",
+            lastName: "Old LastName",
+            phoneNumber: "0000000000",
             age: 30,
-            birthDate: '2020-01-20',
+            birthDate: "1993-01-01",
             weight: 70,
             height: 175,
-            medications: ["medication1"],
-            conditions: ["condition1"],
-        });
-
-        expect(result.success).toBe(true);
-        expect(result.message).toBe("Paciente actualizado correctamente");
-        expect(mockPatient.save).toHaveBeenCalled();
-    });
-    describe('getPatientFromCollection', () => {
-
-        it('debe devolver un error si el ID del paciente no se proporciona', async () => {
-            const result = await patientService.getPatientFromCollection("");
-
-            expect(result.success).toBe(false);
-            expect(result.message).toBe("El ID del paciente es obligatorio.");
-        });
-
-        it('debe devolver un error si el paciente no existe', async () => {
-            (Patient.findOne as jest.Mock).mockResolvedValue(null);
-
-            const result = await patientService.getPatientFromCollection("12345");
-
-            expect(result.success).toBe(false);
-            expect(result.message).toBe("No se encontró un paciente con ese ID.");
-        });
-
-        it('debe devolver el paciente si existe', async () => {
-            const mockPatient = { patientId: "12345", firstName: "John", lastName: "Doe" };
-            (Patient.findOne as jest.Mock).mockResolvedValue(mockPatient);
-
-            const result = await patientService.getPatientFromCollection("12345");
-
-            expect(result.success).toBe(true);
-            expect(result.message).toBe("Paciente obtenido exitosamente.");
-            expect(result.data).toEqual(mockPatient);
-        });
-
-        it('debe manejar errores inesperados', async () => {
-            (Patient.findOne as jest.Mock).mockRejectedValue(new Error("Database error"));
-
-            const result = await patientService.getPatientFromCollection("12345");
-
-            expect(result.success).toBe(false);
-            expect(result.message).toContain("Error encontrar paciente: Database error");
+            medications: [],
+            conditions: [],
+            save: jest.fn().mockResolvedValue(undefined), // Simula que la función save() se ejecuta correctamente
+        };
+    
+        (patientUpadteSchema.validate as jest.Mock).mockReturnValue({ error: null });
+        (patientModel.findOne as jest.Mock).mockResolvedValue(mockPatient);
+    
+        const patientData = { 
+            firstName: "John", 
+            lastName: "Doe", 
+            phoneNumber: "1234567890",
+            age: 35,
+            birthDate: "1988-01-01",
+            weight: 80,
+            height: 180,
+            medications: ["aspirin"],
+            conditions: ["hypertension"]
+        };
+    
+        const response = await updatePatientFromCollection("12345", patientData);
+    
+        expect(mockPatient.firstName).toEqual("John");
+        expect(mockPatient.lastName).toEqual("Doe");
+        expect(mockPatient.phoneNumber).toEqual("1234567890");
+        expect(mockPatient.age).toEqual(35);
+        expect(mockPatient.birthDate).toEqual("1988-01-01");
+        expect(mockPatient.weight).toEqual(80);
+        expect(mockPatient.height).toEqual(180);
+        expect(mockPatient.medications).toEqual(["aspirin"]);
+        expect(mockPatient.conditions).toEqual(["hypertension"]);
+        expect(mockPatient.save).toHaveBeenCalled(); // Asegura que se guardó el paciente
+        expect(response).toEqual({
+            success: true,
+            message: "Paciente actualizado correctamente",
         });
     });
 
-    describe('deletePatientFromCollection', () => {
+    it("debería retornar el paciente si se encuentra en la base de datos", async () => {
+        const mockPatient = { firstName: "Juan", lastName: "Pérez", age: 30 };
 
-        it('debe devolver un error si el ID del paciente no se proporciona', async () => {
-            const result = await patientService.deletePatientFromCollection("");
+        (patientModel.findOne as jest.Mock).mockResolvedValue(mockPatient);
 
-            expect(result.success).toBe(false);
-            expect(result.message).toBe("El ID del paciente es obligatorio.");
+        const result = await getPatientFromCollection("123");
+
+        expect(result).toEqual({
+            success: true,
+            message: "Paciente obtenido exitosamente.",
+            data: mockPatient
         });
 
-        it('debe devolver un error si el paciente no existe', async () => {
-            (Patient.findOne as jest.Mock).mockResolvedValue(null);
-
-            const result = await patientService.deletePatientFromCollection("12345");
-
-            expect(result.success).toBe(false);
-            expect(result.message).toBe("No se encontró un paciente con ese ID.");
-        });
-
-        it('debe eliminar el paciente si existe', async () => {
-            const mockPatient = { patientId: "12345" };
-            (Patient.findOne as jest.Mock).mockResolvedValue(mockPatient);
-
-            firebaseAdmin.deleteUser = jest.fn().mockResolvedValue(undefined);
-            (Patient.deleteOne as jest.Mock).mockResolvedValue({ deletedCount: 1 });
-            rolesModel.deleteOne = jest.fn().mockResolvedValue({ deletedCount: 1 });
-            (patientEmergencyContactModel.deleteOne as jest.Mock).mockResolvedValue({ deletedCount: 1 });
-
-            const result = await patientService.deletePatientFromCollection("12345");
-
-            expect(result.success).toBe(true);
-            expect(result.message).toBe("Paciente eliminado exitosamente.");
-        });
-
-        it('debe manejar errores inesperados', async () => {
-            (Patient.findOne as jest.Mock).mockRejectedValue(new Error("Database error"));
-
-            const result = await patientService.deletePatientFromCollection("12345");
-
-            expect(result.success).toBe(false);
-            expect(result.message).toContain("Error al eliminar el paciente: Database error");
-        });
-
+        expect(patientModel.findOne).toHaveBeenCalledWith(
+            { patientId: "123" },
+            { _id: 0, createdAt: 0, updatedAt: 0 }
+        );
     });
 
+    it("debería eliminar correctamente al paciente", async () => {
+        const mockPatient = { patientId: "123" };
+
+        (patientModel.findOne as jest.Mock).mockResolvedValue(mockPatient);
+        (patientModel.deleteOne as jest.Mock).mockResolvedValue({ deletedCount: 1 });
+        (rolesModel.deleteOne as jest.Mock).mockResolvedValue({ deletedCount: 1 });
+        (patientEmergencyContactModel.updateMany as jest.Mock).mockResolvedValue({ modifiedCount: 1 });
+
+        const result = await deletePatientFromCollection("123");
+
+        expect(result).toEqual({
+            success: true,
+            message: "Paciente eliminado exitosamente."
+        });
+
+        expect(patientModel.findOne).toHaveBeenCalledWith({ patientId: "123" });
+        expect(firebaseAdmin.deleteUser).toHaveBeenCalledWith("123");
+        expect(patientModel.deleteOne).toHaveBeenCalledWith({ patientId: "123" });
+        expect(rolesModel.deleteOne).toHaveBeenCalledWith({ userId: "123" });
+        expect(patientEmergencyContactModel.updateMany).toHaveBeenCalledWith(
+            { "patients.patientId": "123" },
+            { $pull: { patients: { patientId: "123" } } }
+        );
+    });
 });

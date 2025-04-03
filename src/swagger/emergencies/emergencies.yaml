@@ -42,9 +42,6 @@ paths:
                           type: string
                           format: date-time
                           example: '2025-01-01T01:00:00Z'
-                        nihScale:
-                          type: integer
-                          example: 20
                         status:
                           type: string
                           example: 'CONFIRMED'
@@ -136,7 +133,6 @@ paths:
                     deliveredDate: "2025-03-24T20:35:00.000Z"
                     patientId: "n5ag8p3MtiWn338RIK5vxbLLnvI3"
                     ambulanceId: "AMB123"
-                    nihScale: null
                     status: "DELIVERED"
                     createdAt: "2025-03-20T14:47:06.113Z"
                     updatedAt: "2025-03-24T20:34:54.014Z"
@@ -151,7 +147,6 @@ paths:
                     deliveredDate: null
                     patientId: "n5ag8p3MtiWn338RIK5vxbLLnvI3"
                     ambulanceId: "AM-1"
-                    nihScale: null
                     status: "CANCELLED"
                     createdAt: "2025-03-20T15:20:32.148Z"
                     updatedAt: "2025-03-21T00:29:14.956Z"
