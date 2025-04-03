@@ -33,7 +33,6 @@ export const getEmergencyFromCollection = async (emergencyId: string) => {
                     "pickupDate": 1,
                     "deliveredDate": 1,
                     "attendedDate": 1,
-                    "nihScale": 1,
                     "patient.firstName": 1,
                     "patient.lastName": 1,
                     "patient.age": 1,

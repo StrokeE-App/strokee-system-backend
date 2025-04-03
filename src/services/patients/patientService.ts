@@ -165,7 +165,6 @@ export const addEmergencyToCollection = async (patientId: string, role: string, 
             patientId,
             activatedBy: { rol: role, phoneNumber, userId },
             ambulanceId: null,
-            nihScale: null,
             status: "PENDING",
             patient: existingPatient
         });

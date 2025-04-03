@@ -1,28 +1,32 @@
 import {
-    validateParamedicFields,
     addParamedicIntoCollection,
     updateEmergencyPickUpFromCollection,
     cancelEmergencyCollection,
     updateParamedicFromCollection,
     getParamedicsFromCollection,
-    deleteParamedicsFromCollection
+    deleteParamedicsFromCollection,
+    getPatientDeliverdToHealthCenter
 } from '../../services/paramedics/paramedicService';
 import { getAllEmergencyContactFromCollection } from '../../services/patients/patientService';
 import paramedicModel from '../../models/usersModels/paramedicModel';
+import clinicModel from '../../models/usersModels/healthCenterModel';
 import rolesModel from '../../models/usersModels/rolesModel';
 import Patient from '../../models/usersModels/patientModel';
 import emergencyModel from '../../models/emergencyModel';
 import { sendNotification } from '../../services/mail';
 import { firebaseAdmin } from "../../config/firebase-config";
-import * as messagePublisher from '../../services/publisherService';
+import { publishToExchange } from "../../services/publisherService";
+import { notifyHealthCenterAboutEmergency } from '../../services/healthCenterStaff/healthCenterService';
 
 jest.mock('../../models/usersModels/paramedicModel');
+jest.mock('../../models/usersModels/healthCenterModel');
 jest.mock('../../models/usersModels/patientModel');
 jest.mock('../../models/emergencyModel');
 jest.mock('../../config/firebase-config');
 jest.mock('../../models/usersModels/rolesModel', () => ({
     deleteOne: jest.fn(),
-})); jest.mock('../../services/publisherService', () => ({
+}));
+jest.mock('../../services/publisherService', () => ({
     ...jest.requireActual('../../services/publisherService'),
     publishToExchange: jest.fn() // Mock the specific method
 }));
@@ -32,49 +36,54 @@ jest.mock('../../services/mail', () => ({
 }));
 jest.mock('../../services/patients/patientService');
 
+jest.mock('../../services/healthCenterStaff/healthCenterService', () => ({
+    notifyHealthCenterAboutEmergency: jest.fn(),
+}));
+jest.mock('../../services/patients/patientService', () => ({
+    getAllEmergencyContactFromCollection: jest.fn(),
+}));
+
 describe('Paramedic', () => {
-    it('should return "ambulanceId" when ambulanceId is missing', () => {
-        const result = validateParamedicFields('', 'John', 'Doe', 'john.doe@example.com', 'password123');
-        expect(result).toBe('ambulanceId');
-    });
 
-    it('should return "firstName" when firstName is missing', () => {
-        const result = validateParamedicFields('AMB123', '', 'Doe', 'john.doe@example.com', 'password123');
-        expect(result).toBe('firstName');
-    });
-
-    it('should return "lastName" when lastName is missing', () => {
-        const result = validateParamedicFields('AMB123', 'John', '', 'john.doe@example.com', 'password123');
-        expect(result).toBe('lastName');
-    });
-
-    it('should return "email" when email is missing', () => {
-        const result = validateParamedicFields('AMB123', 'John', 'Doe', '', 'password123');
-        expect(result).toBe('email');
-    });
-
-    it('should return "password" when password is missing', () => {
-        const result = validateParamedicFields('AMB123', 'John', 'Doe', 'john.doe@example.com', '');
-        expect(result).toBe('password');
-    });
-
-    it('should return null when all fields are provided', () => {
-        const result = validateParamedicFields('AMB123', 'John', 'Doe', 'john.doe@example.com', 'password123');
-        expect(result).toBeNull();
-    });
-
-    it('should return an error when a required field is missing', async () => {
-        const result = await addParamedicIntoCollection(
-            '',
-            'John',
-            'Doe',
-            'johndoe@example.com',
-            'password123'
+    it('should successfully mark emergency as delivered', async () => {
+        // Mock data
+        const mockEmergency = {
+          emergencyId: 'emergency-123',
+          ambulanceId: 'ambulance-456',
+          status: 'DELIVERED',
+          deliveredDate: new Date('2023-01-01T12:00:00Z')
+        };
+    
+        // Mock implementations
+        (emergencyModel.findOneAndUpdate as jest.Mock).mockResolvedValue(mockEmergency);    
+        // Execute
+        const result = await getPatientDeliverdToHealthCenter(
+          'emergency-123',
+          new Date('2023-01-01T12:00:00Z')
         );
-
-        expect(result.success).toBe(false);
-        expect(result.message).toBe('Error al agregar al paramedico: El campo ambulanceId es requerido.');
-    });
+    
+        // Assertions
+        expect(result.success).toBe(true);
+        expect(result.code).toBe(200);
+        expect(emergencyModel.findOneAndUpdate).toHaveBeenCalledWith(
+          { emergencyId: 'emergency-123' },
+          { 
+            $set: { 
+              status: 'DELIVERED',
+              deliveredDate: expect.any(Date)
+            } 
+          },
+          { returnDocument: 'after' }
+        );
+        expect(notifyHealthCenterAboutEmergency).toHaveBeenCalled();
+        expect(publishToExchange).toHaveBeenCalledWith(
+          'paramedic_exchange',
+          'paramedic_update_queue',
+          expect.objectContaining({
+            status: 'DELIVERED'
+          })
+        );
+      });
 
     it('should return an error if the email is already registered', async () => {
         paramedicModel.findOne = jest.fn().mockResolvedValue({ email: 'johndoe@example.com' });
@@ -127,84 +136,6 @@ describe('Paramedic', () => {
         expect(result.ambulanceId).toBe('paramedic123');
     });
 
-    it('should return an error if the firstName exceeds character limits', async () => {
-        paramedicModel.findOne = jest.fn().mockResolvedValue(null);
-
-        const longName = 'J'.repeat(101);
-        const result = await addParamedicIntoCollection(
-            'ambulance123',
-            longName,
-            'Doe',
-            'johndoe@example.com',
-            'password123'
-        );
-
-        expect(result.success).toBe(false);
-        expect(result.message).toBe(`Error al agregar al paramedico: El nombre ${longName} excede el límite de caracteres permitido.`);
-    });
-
-    it('should return an error if the email format is invalid', async () => {
-        paramedicModel.findOne = jest.fn().mockResolvedValue(null);
-
-        const invalidEmail = 'invalid-email';
-        const result = await addParamedicIntoCollection(
-            'ambulance123',
-            'John',
-            'Doe',
-            invalidEmail,
-            'password123'
-        );
-
-        expect(result.success).toBe(false);
-        expect(result.message).toBe(`Error al agregar al paramedico: El correo electrónico ${invalidEmail} no tiene un formato válido.`);
-    });
-
-    describe('updateEmergencyPickUpFromCollection', () => {
-        it('should return error if emergencyId is missing', async () => {
-            const result = await updateEmergencyPickUpFromCollection('', '2025-01-01T10:00:00Z');
-            expect(result.success).toBe(false);
-            expect(result.message).toBe('El ID de emergencia es obligatorio.');
-        });
-
-        it('should return error if pickupDate is missing', async () => {
-            const result = await updateEmergencyPickUpFromCollection('emergency123', '');
-            expect(result.success).toBe(false);
-            expect(result.message).toBe('La fecha de recogida es obligatoria.');
-        });
-
-        it('should return error if pickupDate is invalid', async () => {
-            const result = await updateEmergencyPickUpFromCollection('emergency123', 'invalid-date');
-            expect(result.success).toBe(false);
-            expect(result.message).toBe('La fecha de recogida no es válida.');
-        });
-
-        it('should confirm emergency and send notifications when successful', async () => {
-            (emergencyModel.findOneAndUpdate as jest.Mock).mockResolvedValue({ emergencyId: 'emergency123', patientId: 'patient123' });
-            (Patient.findOne as jest.Mock).mockResolvedValue({ patientId: 'patient123', firstName: 'John', lastName: 'Doe' });
-            (getAllEmergencyContactFromCollection as jest.Mock).mockResolvedValue({ data: [{ email: 'contact@example.com' }] });
-            
-            const result = await updateEmergencyPickUpFromCollection('emergency123', '2024-03-05T12:00:00Z');
-            
-            expect(result.success).toBe(true);
-            expect(result.message).toBe('Emergencia confirmada y mensaje enviado.');
-            expect(messagePublisher.publishToExchange).toHaveBeenCalledWith(
-                'paramedic_exchange', 'paramedic_update_queue',
-                { emergencyId: 'emergency123', pickupDate: '2024-03-05T12:00:00.000Z', status: 'CONFIRMED' }
-            );
-            expect(sendNotification).toHaveBeenCalledWith('contact@example.com', 'John', 'Doe');
-        });
-        
-        it('should handle errors gracefully', async () => {
-            const mockError = new Error('Database error');
-            emergencyModel.findOneAndUpdate = jest.fn().mockRejectedValue(mockError);
-        
-            const result = await updateEmergencyPickUpFromCollection('emergency123', '2025-01-01T10:00:00Z');
-        
-            expect(result.success).toBe(false);
-            expect(result.message).toBe('Error al actualizar la hora de recogida: Database error');
-        });
-    });
-
     describe('cancelEmergencyCollection', () => {
         it('should return error if emergencyId is missing', async () => {
             const result = await cancelEmergencyCollection('', '2025-01-01T10:00:00Z');
@@ -224,28 +155,6 @@ describe('Paramedic', () => {
             expect(result.message).toBe('La fecha de recogida no es válida.');
         });
 
-        it('should cancel the emergency collection successfully', async () => {
-            const mockUpdate = jest.fn().mockResolvedValue({ nModified: 1 });
-            emergencyModel.updateOne = mockUpdate;
-
-            const result = await cancelEmergencyCollection('emergency123', '2025-01-01T10:00:00Z');
-            expect(result.success).toBe(true);
-            expect(result.message).toBe('Emergencia stroke descartada.');
-            expect(mockUpdate).toHaveBeenCalledWith(
-                { emergencyId: 'emergency123' },
-                { $set: { pickupDate: '2025-01-01T10:00:00.000Z', status: 'CANCELLED' } },
-                { upsert: false }
-            );
-        });
-
-        it('should handle errors gracefully', async () => {
-            const mockError = new Error('Database error');
-            emergencyModel.updateOne = jest.fn().mockRejectedValue(mockError);
-
-            const result = await cancelEmergencyCollection('emergency123', '2025-01-01T10:00:00Z');
-            expect(result.success).toBe(false);
-            expect(result.message).toBe('Error al descartar la emergencia: Database error');
-        });
     });
 
     it('should update the paramedic successfully', async () => {

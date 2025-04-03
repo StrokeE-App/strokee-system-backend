@@ -8,7 +8,6 @@ export interface IEmeregency extends Document {
     attendedDate: Date;
     patientId: string; 
     ambulanceId: string;
-    nihScale: string;
     status: string;
     healthcenterId: string;
     activatedBy: {
@@ -35,7 +34,6 @@ const EmergencySchema: Schema = new Schema (
         attendedDate: { type: Date, required: false },
         patientId: { type: String, required: true },
         ambulanceId: { type: String, required: false },
-        nihScale: { type: String, required: false },
         status: { type: String, required: true, default: "PENDING" },
         healthcenterId: { type: String, required: false },
     },
