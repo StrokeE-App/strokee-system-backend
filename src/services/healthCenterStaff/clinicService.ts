@@ -17,7 +17,7 @@ export const addHealthcenter = async (healthcenterName: string) => {
 
         const healthcenterId = uuidv4();
 
-        const transformedHealthCenterName = healthcenterName.toLowerCase().replace(/\s+/g, "");
+        const transformedHealthCenterName = healthcenterName.toLowerCase().replace(/\s+/g, "_");
 
         await healthcenterModel.create({ healthcenterId: healthcenterId, healthcenterName: transformedHealthCenterName });
 
@@ -51,32 +51,54 @@ export const getHealthcenter = async (healthcenterId: string) => {
     }
 }
 
-export const updateHealthcenter = async (healthcenterId: string, updateData: Partial<IHealthcenter>) => {
+export const updateHealthcenter = async (
+    healthcenterId: string,
+    updateData: Partial<IHealthcenter>
+) => {
     try {
+        // Aplicar formato si el nombre fue incluido en la actualización
+        if (updateData.healthcenterName) {
+            updateData.healthcenterName = updateData.healthcenterName
+                .toLowerCase()
+                .replace(/\s+/g, "_");
+        }
 
         const { error } = healthcenterUpdateSchema.validate(updateData);
 
         if (error) {
-            return { success: false, message: `Error de validación: ${error.details[0].message}` };
+            return {
+                success: false,
+                message: `Error de validación: ${error.details[0].message}`,
+            };
         }
 
         const existingHealthcenter = await healthcenterModel.findOne({ healthcenterId });
         if (!existingHealthcenter) {
-            return { success: false, message: "El centro de salud no existe." };
+            return {
+                success: false,
+                message: "El centro de salud no existe.",
+            };
         }
 
         await healthcenterModel.updateOne({ healthcenterId }, { $set: updateData });
 
-        return { success: true, message: "Centro de salud actualizado correctamente." };
+        return {
+            success: true,
+            message: "Centro de salud actualizado correctamente.",
+        };
     } catch (error) {
         console.error(`Error al actualizar el centro de salud: ${error}`);
-        return { success: false, message: "Error al actualizar el centro de salud." };
+        return {
+            success: false,
+            message: "Error al actualizar el centro de salud.",
+        };
     }
-}
+};
+
 
 export const deleteHealthcenter = async (healthcenterId: string) => {
     try {
-        if(!healthcenterId){
+        if (!healthcenterId) {
             return { success: false, message: "El id del centro de salud es obligatorio." };
         }
         const existingHealthcenter = await healthcenterModel.findOne({ healthcenterId });
