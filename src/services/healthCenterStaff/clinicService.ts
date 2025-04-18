@@ -73,7 +73,7 @@ export const updateHealthcenter = async (
             };
         }
 
-        const existingHealthcenter = await healthcenterModel.findOne({ healthcenterId });
+        const existingHealthcenter = await healthcenterModel.findOne({ healthcenterId : updateData.healthcenterName });
         if (!existingHealthcenter) {
             return {
                 success: false,
