@@ -11,8 +11,19 @@ export const registerToken = async (rol: string, userId: string, token: string, 
         if (!allowedDevices.includes(device)) {
             return { success: false, message: "Dispositivo no permitido." };
         }
-        console.log(token);
 
+        if (!token) {
+            return { success: false, message: "El token es obligatorio." };
+        }
+        if (!userId) {
+            return { success: false, message: "El id del usuario es obligatorio." };
+        }
+        const allowedRoles = ['operator', 'paramedic', 'healthCenter'];
+        if (!allowedRoles.includes(rol)) {  
+            return { success: false, message: "Rol no permitido." };
+        }
+
+        
         if (rol === 'operator') {
             const result = await operatorModel.findOneAndUpdate(
                 {
@@ -157,6 +168,17 @@ export const registerToken = async (rol: string, userId: string, token: string, 
 
 export const unregisterToken = async (role: string, userId: string, token: string) => {
     try {
+
+        if (!token) {
+            return { success: false, message: "El token es obligatorio." };
+        }
+        if (!userId) {
+            return { success: false, message: "El id del usuario es obligatorio." };
+        }
+        const allowedRoles = ['operator', 'paramedic', 'healthCenter'];
+        if (!allowedRoles.includes(role)) { 
+            return { success: false, message: "Rol no permitido." };
+        }
         if (role === 'operator') {
             const existingOperator = await operatorModel.findOne({ operatorId: userId });
             if (!existingOperator) {
