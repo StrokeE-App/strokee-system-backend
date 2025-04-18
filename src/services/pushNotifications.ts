@@ -15,25 +15,27 @@ export const registerToken = async (rol: string, userId: string, token: string, 
 
         if (rol === 'operator') {
             const result = await operatorModel.findOneAndUpdate(
-                { 
+                {
                     operatorId: userId,
-                    "fcmTokens.token": { $ne: token } 
+                    "fcmTokens.token": { $ne: token }
                 },
-                { 
-                    $addToSet: { 
-                        fcmTokens: { 
+                {
+                    $addToSet: {
+                        fcmTokens: {
                             token,
                             device: device as 'web' | 'android' | 'ios',
                             createdAt: new Date()
                         },
+                    },
+                    $set: {
                         notificationPreferences: {
-                            emergencies: true,
+                            emergencies: true
                         }
-                    } 
+                    }
                 },
-                { 
-                    new: true, 
-                    upsert: false 
+                {
+                    new: true,
+                    upsert: false
                 }
             );
 
@@ -43,82 +45,86 @@ export const registerToken = async (rol: string, userId: string, token: string, 
                 // Caso 1: El operador no existe
                 // Caso 2: El token ya existía
                 const existingOperator = await operatorModel.findOne({ operatorId: userId });
-                
+
                 if (!existingOperator) {
                     return { success: false, message: "No se encontró un operador con ese ID." };
                 }
-                
-                return { 
-                    success: true, 
-                    message: "El token ya estaba registrado para este operador." 
+
+                return {
+                    success: true,
+                    message: "El token ya estaba registrado para este operador."
                 };
             }
 
             return { success: true, message: "Token registrado exitosamente." };
         }
-        
+
 
         if (rol === 'paramedic') {
             const result = await paramedicModel.findOneAndUpdate(
-                { 
+                {
                     paramedicId: userId,
-                    "fcmTokens.token": { $ne: token } 
+                    "fcmTokens.token": { $ne: token }
                 },
-                { 
-                    $addToSet: { 
-                        fcmTokens: { 
+                {
+                    $addToSet: {
+                        fcmTokens: {
                             token,
                             device: device as 'web' | 'android' | 'ios',
                             createdAt: new Date()
                         },
+                    },
+                    $set: {
                         notificationPreferences: {
                             emergencies: true
                         }
-                    } 
+                    }
                 },
-                { 
-                    new: true, 
-                    upsert: false 
+                {
+                    new: true,
+                    upsert: false
                 }
-            );  
+            );
 
             if (!result) {
                 // Caso 1: El operador no existe
                 // Caso 2: El token ya existía
                 const existingParamedic = await paramedicModel.findOne({ paramedicId: userId });
-                
+
                 if (!existingParamedic) {
                     return { success: false, message: "No se encontró un paramédico con ese ID." };
                 }
-                
-                return { 
-                    success: true, 
-                    message: "El token ya estaba registrado para este paramédico." 
+
+                return {
+                    success: true,
+                    message: "El token ya estaba registrado para este paramédico."
                 };
             }
         }
 
         if (rol === 'healthCenter') {
             const result = await healthCenterModel.findOneAndUpdate(
-                { 
+                {
                     medicId: userId,
-                    "fcmTokens.token": { $ne: token } 
+                    "fcmTokens.token": { $ne: token }
                 },
-                { 
-                    $addToSet: { 
-                        fcmTokens: { 
+                {
+                    $addToSet: {
+                        fcmTokens: {
                             token,
                             device: device as 'web' | 'android' | 'ios',
                             createdAt: new Date()
                         },
+                    },
+                    $set: {
                         notificationPreferences: {
                             emergencies: true
                         }
-                    } 
+                    }
                 },
-                { 
-                    new: true, 
-                    upsert: false 
+                {
+                    new: true,
+                    upsert: false
                 }
             )
 
@@ -126,14 +132,14 @@ export const registerToken = async (rol: string, userId: string, token: string, 
                 // Caso 1: El operador no existe
                 // Caso 2: El token ya existía
                 const existingHealthCenter = await healthCenterModel.findOne({ medicId: userId });
-                
+
                 if (!existingHealthCenter) {
                     return { success: false, message: "No se encontró un medico con ese ID." };
                 }
-                
-                return { 
-                    success: true, 
-                    message: "El token ya estaba registrado para este medico." 
+
+                return {
+                    success: true,
+                    message: "El token ya estaba registrado para este medico."
                 };
             }
 
