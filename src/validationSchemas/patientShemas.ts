@@ -133,8 +133,8 @@ export const patientEmergencyContactSchema = Joi.object({
         "any.required": "El número de teléfono es obligatorio."
     }),
     email: Joi.string().email().required().messages({
-        "string.email": "El correo-elected debe ser valido.",
-        "any.required": "El correo-elected es obligatorio."
+        "string.email": "El correo debe ser valido.",
+        "any.required": "El correo es obligatorio."
     }),
     password: Joi.string().min(8).required().messages({
         "string.min": "La contraseña debe tener al menos 8 caracteres.",
