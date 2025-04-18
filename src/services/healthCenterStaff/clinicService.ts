@@ -9,7 +9,7 @@ export const addHealthcenter = async (healthcenterName: string) => {
         if (!healthcenterName) {
             return { success: false, message: "El nombre del centro de salud es obligatorio." };
         }
-        
+
         const transformedHealthCenterName = healthcenterName.toLowerCase().replace(/\s+/g, "_");
 
         const existingHealthcenter = await healthcenterModel.findOne({ healthcenterName: transformedHealthCenterName });
@@ -58,11 +58,9 @@ export const updateHealthcenter = async (
 ) => {
     try {
         // Aplicar formato si el nombre fue incluido en la actualización
-        if (updateData.healthcenterName) {
-            updateData.healthcenterName = updateData.healthcenterName
-                .toLowerCase()
-                .replace(/\s+/g, "_");
-        }
+        const transformedHealthCenterName = updateData.healthcenterName
+            ? updateData.healthcenterName.toLowerCase().replace(/\s+/g, "_")
+            : undefined;
 
         const { error } = healthcenterUpdateSchema.validate(updateData);
 
@@ -82,7 +80,7 @@ export const updateHealthcenter = async (
         }
 
         const existingHealthcenterWithName = await healthcenterModel.findOne({
-            healthcenterName: updateData.healthcenterName
+            healthcenterName: transformedHealthCenterName
         });
         if (existingHealthcenterWithName) {
             return {
