@@ -9,15 +9,16 @@ export const addHealthcenter = async (healthcenterName: string) => {
         if (!healthcenterName) {
             return { success: false, message: "El nombre del centro de salud es obligatorio." };
         }
+        
+        const transformedHealthCenterName = healthcenterName.toLowerCase().replace(/\s+/g, "_");
 
-        const existingHealthcenter = await healthcenterModel.findOne({ healthcenterName });
+        const existingHealthcenter = await healthcenterModel.findOne({ healthcenterName: transformedHealthCenterName });
         if (existingHealthcenter) {
             return { success: false, message: `El centro de salud con el nombre ${healthcenterName} ya existe.` };
         }
 
         const healthcenterId = uuidv4();
 
-        const transformedHealthCenterName = healthcenterName.toLowerCase().replace(/\s+/g, "_");
 
         await healthcenterModel.create({ healthcenterId: healthcenterId, healthcenterName: transformedHealthCenterName });
 
