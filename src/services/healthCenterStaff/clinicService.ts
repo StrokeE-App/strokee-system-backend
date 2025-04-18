@@ -73,11 +73,21 @@ export const updateHealthcenter = async (
             };
         }
 
-        const existingHealthcenter = await healthcenterModel.findOne({ healthcenterId : updateData.healthcenterName });
+        const existingHealthcenter = await healthcenterModel.findOne({ healthcenterId });
         if (!existingHealthcenter) {
             return {
                 success: false,
                 message: "El centro de salud no existe.",
+            };
+        }
+
+        const existingHealthcenterWithName = await healthcenterModel.findOne({
+            healthcenterName: updateData.healthcenterName
+        });
+        if (existingHealthcenterWithName) {
+            return {
+                success: false,
+                message: `El centro de salud con el nombre ${updateData.healthcenterName} ya existe.`,
             };
         }
 
