@@ -89,7 +89,7 @@ export const updateHealthcenter = async (
             };
         }
 
-        await healthcenterModel.updateOne({ healthcenterId }, { $set: updateData });
+        await healthcenterModel.updateOne({ healthcenterId }, { $set: { healthcenterName: transformedHealthCenterName } });
 
         return {
             success: true,
