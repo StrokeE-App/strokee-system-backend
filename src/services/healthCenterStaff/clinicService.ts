@@ -64,6 +64,13 @@ export const updateHealthcenter = async (
 
         const { error } = healthcenterUpdateSchema.validate(updateData);
 
+        if(updateData.healthcenterName === "") {
+            return {    
+                success: false,
+                message: "El nombre del centro de salud no puede estar vacío.",
+            };
+        }
+
         if (error) {
             return {
                 success: false,

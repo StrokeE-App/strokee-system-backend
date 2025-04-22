@@ -234,7 +234,10 @@ export const getAllUsers = async () => {
 
 export const inactivateUser = async (userId: string) => {
     try {
-        await rolesModel.updateOne({ userId: userId }, { $set: { isActive: false } });
+        const result = await rolesModel.updateOne({ userId: userId }, { $set: { isActive: false } });
+        if (result.modifiedCount === 0) {
+            return { success: false, message: "No se encontró el usuario" };
+        }
         firebaseAdmin.updateUser(userId, { disabled: true });
         return { success: true, message: "Usuario inactivado exitosamente." };
     } catch (error) {
@@ -245,7 +248,10 @@ export const inactivateUser = async (userId: string) => {
 
 export const activateUser = async (userId: string) => {
     try {
-        await rolesModel.updateOne({ userId: userId }, { $set: { isActive: true } });
+        const result = await rolesModel.updateOne({ userId: userId }, { $set: { isActive: true } });
+        if (result.modifiedCount === 0) {
+            return { success: false, message: "No se encontró el usuario" };
+        }
         firebaseAdmin.updateUser(userId, { disabled: false });
         return { success: true, message: "Usuario activado exitosamente." };
     } catch (error) {

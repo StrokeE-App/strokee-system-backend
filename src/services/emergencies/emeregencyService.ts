@@ -43,6 +43,8 @@ export const getEmergencyFromCollection = async (emergencyId: string) => {
             }
         ]);
 
+        console.log("emergency", emergency);
+
         if (!emergency || emergency.length === 0) {
             return { success: true, message: "No se encontró la emergencia" };
         }
