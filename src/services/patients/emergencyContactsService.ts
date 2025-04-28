@@ -252,7 +252,7 @@ export const updateEmergencyContactFromCollection = async (patientId: string, em
         );
 
         if (result && result.modifiedCount === 0) {
-            return { success: false, message: "No se pudo actualizar el contacto de emergencia." };
+            return { success: false, message: "No se encontró el contacto de emergencia, el ID del paciente o el ID del contacto de emergencia proporcionado" };
         }
 
         if (result === undefined) {
@@ -280,7 +280,7 @@ export const deleteEmergencyContactFromCollection = async (patientId: string, em
         );
 
         if (result.modifiedCount === 0) {
-            return { success: false, message: "No se pudo eliminar el contacto de emergencia." };
+            return { success: false, message: "No se encontró el contacto de emergencia, el ID del paciente o el ID del contacto de emergencia proporcionado" };
         }
 
         return { success: true, message: "Contacto de emergencia eliminado exitosamente." };
