@@ -5,6 +5,10 @@ import { ambulanceUpdateSchema } from "../../validationSchemas/ambulanceSchema";
 export const addAmbulance = async (ambulanceId: string) => {
     try {
 
+        if (!ambulanceId) {
+            return { success: false, message: "El ID de la ambulancia es obligatorio." };
+        }
+
         const existingAmbualnce = await ambulanceModel.findOne({ ambulanceId });
         if (existingAmbualnce) {
             return { success: false, message: `La ambulancia con ID ${ambulanceId} ya existe.` };
@@ -39,6 +43,10 @@ export const editAmbulance = async (ambulanceId: string, updateData: IAmbulance)
     try {
 
         const{ error } = ambulanceUpdateSchema.validate(updateData);
+
+        if(!updateData.ambulanceId) {
+            return { success: false, message: "El ID de la ambulancia es obligatorio." };
+        }
 
         if (error) {
             return { success: false, message: `Error de validación: ${error.details[0].message}` };

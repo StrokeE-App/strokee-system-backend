@@ -136,7 +136,7 @@ export const updateEmergencyPickUpFromCollection = async (
 
         const patient = await Patient.findOne({ patientId: updatedEmergency.patientId });
         if (!patient) {
-            return { success: false, message: "No se encontró un paciente con ese ID." };
+            return { success: false, message: "No se encontró un paramedic con ese ID." };
         }
 
         const listEmergencyContacts = await getAllEmergencyContactFromCollection(patient.patientId);
@@ -256,7 +256,7 @@ export const updateParamedicFromCollection = async (paramedicId: string, paramei
 
         const existingParamedic = await paramedicModel.findOne({ paramedicId: paramedicId });
         if (!existingParamedic) {
-            return { success: false, message: "No se encontró un paciente con ese ID." };
+            return { success: false, message: "No se encontró un paramedico con ese ID." };
         }
 
         const { firstName, lastName, ambulanceId } = parameidcData;
@@ -315,7 +315,7 @@ export const deleteParamedicsFromCollection = async (paramedicId: string) => {
 
         const existingParamedic = await paramedicModel.findOne({ paramedicId: paramedicId });
         if (!existingParamedic) {
-            return { success: false, message: "No se encontró un paciente con ese ID." };
+            return { success: false, message: "No se encontró un paramedico con ese ID." };
         }
 
         await firebaseAdmin.deleteUser(paramedicId);
