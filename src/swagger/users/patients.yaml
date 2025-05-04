@@ -364,10 +364,22 @@ paths:
                   type: string
                   description: ID del contacto de emergencia.
                   example: "12345"
+                latitude:
+                  type: number
+                  format: float
+                  description: Latitud de la ubicación del paciente.
+                  example: 4.60971
+                longitude:
+                  type: number
+                  format: float
+                  description: Longitud de la ubicación del paciente.
+                  example: -74.08175
               required:
                 - patientId
                 - role
                 - emergencyContactId
+                - latitude
+                - longitude
       responses:
         '201':
           description: Emergencia creada con éxito
