@@ -109,7 +109,7 @@ export const getAllPatientsFromCollection = async () => {
     }
 }
 
-export const addEmergencyToCollection = async (patientId: string, role: string, emergencyContactId?: string): Promise<{ success: boolean, message: string, emergencyId?: string }> => {
+export const addEmergencyToCollection = async (patientId: string, role: string, emergencyContactId?: string, latitude?: string, longitude?: string): Promise<{ success: boolean, message: string, emergencyId?: string }> => {
     try {
         if (!patientId) {
             return { success: false, message: "El ID del paciente es obligatorio." };
@@ -162,6 +162,8 @@ export const addEmergencyToCollection = async (patientId: string, role: string, 
             pickupDate: null,
             deliveredDate: null,
             attendedDate: null,
+            latitude: latitude? parseFloat(latitude) : 0,
+            longitude: longitude? parseFloat(longitude) : 0,
             patientId,
             activatedBy: { rol: role, phoneNumber, userId },
             ambulanceId: null,
