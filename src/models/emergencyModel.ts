@@ -10,6 +10,8 @@ export interface IEmeregency extends Document {
     ambulanceId: string;
     status: string;
     healthcenterId: string;
+    latitude: number;
+    longitude: number;
     activatedBy: {
         rol : string;
         phoneNumber : string;
@@ -28,6 +30,8 @@ const EmergencySchema: Schema = new Schema (
     {
         emergencyId: { type: String, required: true, unique: true },
         activatedBy: { type: Object, required: true },
+        latitude: { type: Number, required: false, default: 0 },
+        longitude: { type: Number, required: false, default: 0 },
         startDate: { type: Date, required: true },
         pickupDate: { type: Date, required: false },
         deliveredDate: { type: Date, required: false },
