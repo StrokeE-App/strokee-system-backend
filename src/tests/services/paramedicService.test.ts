@@ -219,7 +219,7 @@ describe('Paramedic', () => {
 
         const result = await deleteParamedicsFromCollection("paramedic123");
         expect(result.success).toBe(false);
-        expect(result.message).toBe("No se encontró un paciente con ese ID.");
+        expect(result.message).toBe("No se encontró un paramedico con ese ID.");
     });
 
     it("should delete paramedic successfully", async () => {

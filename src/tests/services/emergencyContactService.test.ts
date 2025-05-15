@@ -182,7 +182,7 @@ describe('addEmergencyContactIntoCollection', () => {
             const result = await deleteEmergencyContactFromCollection("patient123", "contactNotFound");
 
             expect(result.success).toBe(false);
-            expect(result.message).toBe("No se pudo eliminar el contacto de emergencia.");
+            expect(result.message).toBe("No se encontró el contacto de emergencia, el ID del paciente o el ID del contacto de emergencia proporcionado");
         });
 
         it("debería manejar errores internos correctamente", async () => {
