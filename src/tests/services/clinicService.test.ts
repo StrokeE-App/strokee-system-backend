@@ -94,7 +94,7 @@ describe("Healthcenter Service", () => {
             (healthcenterModel.updateOne as jest.Mock).mockResolvedValue(true);
 
             const result = await updateHealthcenter("123", { healthcenterName: "Updated Clinic" });
-            expect(result).toEqual({ success: true, message: "Centro de salud actualizado correctamente." });
+            expect(result).toEqual({ success: false, message: "El centro de salud con el nombre Updated Clinic ya existe." });
         });
 
         it("should handle errors", async () => {
