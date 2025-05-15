@@ -1,0 +1,443 @@
+paths:
+  /paramedic/register:
+    post:
+      summary: Registrar un paramédico
+      description: Registra un nuevo paramédico en el sistema con los datos proporcionados.
+      tags:
+        - Paramedics
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ambulanceId:
+                  type: string
+                  description: Identificador único de la ambulancia.
+                  example: AMB123
+                firstName:
+                  type: string
+                  description: Nombre del paramédico.
+                  example: John
+                lastName:
+                  type: string
+                  description: Apellido del paramédico.
+                  example: Doe
+                email:
+                  type: string
+                  description: Correo electrónico del paramédico.
+                  example: johndoe@example.com
+                password:
+                  type: string
+                  description: Contraseña del paramédico.
+                  example: password123
+              required:
+                - ambulanceId
+                - firstName
+                - lastName
+                - email
+                - password
+      responses:
+        '201':
+          description: Paramédico registrado exitosamente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Paramédico registrado exitosamente.
+                  ambulanceId:
+                    type: string
+                    example: AMB123
+        '400':
+          description: Error de validación o conflicto en el registro.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: El email ya está registrado.
+        '500':
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Error al registrar el paramédico.
+  /paramedic/confirm-stroke:
+    post:
+      summary: Confirmar emergencia y asignar fecha de recogida.
+      description: Este endpoint permite confirmar una emergencia y asignar una fecha de recogida.
+      tags:
+        - Paramedics
+      operationId: confirmEmergency
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                emergencyId:
+                  type: string
+                  description: El identificador único de la emergencia.
+                  example: "EMG123"
+                pickupDate:
+                  type: string
+                  format: date-time
+                  description: La fecha y hora de recogida de la emergencia.
+                  example: "2025-01-22T15:30:00"
+                healthcenterId:
+                  type: string
+                  description: El identificador único del centro de salud.
+                  example: "HCS123"
+      responses:
+        '200':
+          description: La emergencia ha sido confirmada con éxito.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Emergencia confirmada con éxito."
+        '400':
+          description: Se proporcionó información incorrecta o incompleta.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Por favor, ingresar un emergencyid y un pickdate valido"
+        '404':
+          description: No se encontraron emergencias con el ID proporcionado.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "No se encontraron emergencias con ese Id"
+        '500':
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Error al procesar la emergencia."
+  /paramedic/discard-stroke:
+    post:
+      summary: Cancelar una emergencia.
+      description: Este endpoint permite cancelar una emergencia existente.
+      tags:
+        - Paramedics
+      operationId: cancelEmergency
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                emergencyId:
+                  type: string
+                  description: El identificador único de la emergencia a cancelar.
+                  example: "EMG123"
+                pickupDate:
+                  type: string
+                  format: date-time
+                  description: La fecha y hora de recogida de la emergencia.
+                  example: "2025-01-22T15:30:00"
+      responses:
+        '200':
+          description: La emergencia ha sido cancelada con éxito.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Emergencia cancelada con éxito."
+        '400':
+          description: Se proporcionó información incorrecta o incompleta.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Por favor, ingresar un emergencyid y un pickdate valido"
+        '404':
+          description: No se encontraron emergencias con el ID proporcionado.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "No se encontraron emergencias con ese Id"
+        '500':
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Error al procesar la cancelación de la emergencia."
+  /paramedic/{paramedicId}:
+    get:
+      summary: Obtener un paramédico
+      description: Retorna los datos de un paramédico por su ID.
+      tags:
+        - Paramedics
+      parameters:
+        - name: paramedicId
+          in: path
+          required: true
+          description: ID del paramédico a consultar.
+          schema:
+            type: string
+      responses:
+        200:
+          description: Datos del paramédico encontrados.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      firstName:
+                        type: string
+                      lastName:
+                        type: string
+                      ambulanceId:
+                        type: string
+                      email:
+                        type: string
+                      fcmTokens:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            token:
+                              type: string
+                              example: "token"
+                            device:
+                              type: string
+                              example: "web"
+                            createdAt:
+                              type: string
+                              example: "2023-08-04T12:34:56Z"
+                          
+        400:
+          description: No se encontró el paramédico con el ID proporcionado.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "No se encontró el paramédico con el ID proporcionado."
+        500:
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Error al obtener el paramédico."
+    put:
+      summary: Actualizar un paramédico
+      description: Modifica la información de un paramédico existente.
+      tags:
+        - Paramedics
+      parameters:
+        - name: paramedicId
+          in: path
+          required: true
+          description: ID del paramédico a actualizar.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                  example: "Carlos"
+                lastName:
+                  type: string
+                  example: "Gómez"
+                ambulanceId:
+                  type: string
+                  example: "AMB123"
+      responses:
+        200:
+          description: Paramédico actualizado exitosamente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Paramédico actualizado exitosamente."
+        400:
+          description: Error al actualizar el paramédico.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Error al actualizar el paramédico."
+        500:
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Error al actualizar el paramédico."
+    delete:
+      summary: Eliminar un paramédico
+      description: Elimina un paramédico de la base de datos.
+      tags:
+        - Paramedics
+      parameters:
+        - name: paramedicId
+          in: path
+          required: true
+          description: ID del paramédico a eliminar.
+          schema:
+            type: string
+      responses:
+        200:
+          description: Paramédico eliminado exitosamente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Paramédico eliminado exitosamente."
+        400:
+          description: Error al eliminar el paramédico.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Error al eliminar el paramédico."
+        500:
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Error al eliminar el paramédico."
+  /paramedic/deliver-patient:
+    post:
+      summary: Marcar una emergencia como entregada
+      description: Actualiza el estado de una emergencia a "DELIVERED" en la base de datos.
+      tags:
+        - Paramedics
+      operationId: deliverPatient
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - emergencyId
+                - deliveredDate
+              properties:
+                emergencyId:
+                  type: string
+                  example: "emergency-123"
+                  description: ID único de la emergencia a entregar.
+                deliveredDate:
+                  type: string
+                  example: "2025-01-01T02:00:00Z"
+                  description: Fecha de entrega de la emergencia.
+      responses:
+        "200":
+          description: La emergencia fue entregada correctamente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Emergencia entregada correctamente."
+        "400":
+          description: Falta el ID de la emergencia en la solicitud o es inválido.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "El ID de la emergencia es obligatorio."
+        "404":
+          description: No se encontró una emergencia con el ID proporcionado.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "No se encontró una emergencia con ese ID."
+        "500":
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Error interno del servidor."

@@ -1,141 +1,39 @@
-import { Request, Response } from "express";
-import { getAllPatientsFromCollection, addPatientIntoPatientCollection, authenticatePatient, refreshUserToken, cookiesForPatient } from "../../services/patients/patientService";
+import { NextFunction, Request, Response } from "express";
+import {
+    getAllPatientsFromCollection,
+    addPatientIntoPatientCollection,
+    addEmergencyToCollection,
+    getAllEmergencyContactFromCollection,
+    updatePatientFromCollection,
+    getPatientFromCollection,
+    deletePatientFromCollection
+} from "../../services/patients/patientService";
+import jwt from "jsonwebtoken";
+import path from "path";
+import dotenv from "dotenv";
+dotenv.config();
 
-export const registerPatient = async (req: Request, res: Response) => {
-    const {
-        firstName,
-        lastName,
-        email,
-        password,
-        phoneNumber,
-        age,
-        birthDate,
-        weight,
-        height,
-        medications,
-        conditions,
-    } = req.body;
+
+export const registerPatient = async (req: Request, res: Response, next: NextFunction) => {
+    const data = req.body;
 
     try {
-        await addPatientIntoPatientCollection(
-            firstName,
-            lastName,
-            email,
-            password,
-            phoneNumber,
-            age,
-            birthDate,
-            weight,
-            height,
-            medications,
-            conditions
-        );
-        res.status(201).json({ message: "Paciente registrado con éxito." });
-    } catch (error) {
-        if (error instanceof Error) {
-            res.status(500).json({
-                message: "Error al registrar paciente.",
-                error: error.message || "Error desconocido.",
+        const result = await addPatientIntoPatientCollection(data);
+
+        if (result.success) {
+            res.status(201).json({
+                message: result.message,
+                patientId: result.patientId,
             });
         } else {
-            res.status(500).json({
-                message: "Error al registrar paciente.",
-                error: "Error desconocido.",
+            res.status(400).json({
+                message: result.message
             });
         }
+    } catch (error) {
+        next(error);
     }
 };
-
-export const getToken = async (req: Request, res: Response): Promise<void> => {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-        res.status(400).json({ message: 'El email y la contraseña son requeridos' });
-    }
-
-    try {
-        const tokens = await authenticatePatient(email, password);
-
-        if (!tokens) {
-            res.status(401).json({ message: "Credenciales inválidas" });
-            return
-        }
-
-        const { idToken, refreshToken } = tokens;
-
-        res.status(200).json({ message: "Login exitoso.", token : idToken, refreshToken });
-    } catch (error) {
-
-        if (error instanceof Error) {
-            res.status(500).json({
-                message: "Error al logguear usuario.",
-                error: error.message || "Error desconocido.",
-            });
-        } else {
-            res.status(500).json({
-                message: "Error al logguear usuario.",
-                error: "Error desconocido.",
-            });
-        }
-    }
-
-};
-
-export const loginPatient = async (req: Request, res: Response) => {
-    const { token } = req.body;
-
-    if (!token) {
-        res.status(400).json({ message: 'Token y el Refresh token son obligatorios' });
-    }
-
-    try {
-        const sessionCookie  = await cookiesForPatient(token);
-
-        if (!sessionCookie ) {
-            res.status(401).json({ message: "Credenciales inválidas" });
-            return
-        }
-
-        res.cookie('session_token', sessionCookie , {
-            httpOnly: true,  
-            secure: process.env.NODE_ENV === 'production', 
-        });
-
-        res.status(200).json({ message: "Login exitoso."});
-    } catch (error) {
-
-        if (error instanceof Error) {
-            res.status(500).json({
-                message: "Error al logguear usuario.",
-                error: error.message || "Error desconocido.",
-            });
-        } else {
-            res.status(500).json({
-                message: "Error al logguear usuario.",
-                error: "Error desconocido.",
-            });
-        }
-    }
-
-}
-
-export const refreshToken = async (req: Request, res: Response) => {
-    const { refreshToken } = req.body;
-
-    try {
-        const token = await refreshUserToken(refreshToken)
-        res.status(200).send(token)
-    } catch (error: unknown) {
-
-        if (error instanceof Error) {
-            res.status(500).json({
-                message: "Error al refrescar el token.",
-                error: error.message,
-            });
-        }
-
-    }
-}
 
 export const getAllPatients = async (req: Request, res: Response) => {
     try {
@@ -146,22 +44,136 @@ export const getAllPatients = async (req: Request, res: Response) => {
         if (error instanceof Error) {
             res.status(500).json({
                 message: "No fue posible obtener todos los pacientes",
-                error: error.message || "Error desconocido.",
+                error: error.message || "Error.",
             });
         } else {
             res.status(500).json({
                 message: "Error no fue posible obtener todos los pacientes",
-                error: "Error desconocido.",
+                error: "Error.",
             });
         }
     }
 }
 
-export const logoutPatient = (req: Request, res: Response) => {
-    res.clearCookie('session_token', {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production', 
-    });
+export const creatEmergency = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { patientId, role, emergencyContactId, latitude, longitude } = req.body
 
-    res.status(200).json({ message: 'Desconectado correctamente' });
+        const result = await addEmergencyToCollection(patientId, role, emergencyContactId, latitude, longitude)
+
+        if (result.success) {
+            res.status(201).json({
+                message: result.message,
+                emergencyId: result.emergencyId,
+            });
+        } else {
+            res.status(400).json({
+                message: result.message,
+            });
+        }
+    } catch (error) {
+        next(error);
+    }
+}
+
+export const getPatientEmergencyContacts = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { patientId } = req.params
+
+        if (!patientId) {
+            res.status(400).json({
+                message: "Por favor, ingresar un patientId",
+            });
+        }
+
+        const result = await getAllEmergencyContactFromCollection(patientId)
+
+        console.log(result)
+
+        if (result.success) {
+            if (!result.data) {
+                res.status(404).json({ message: result.message });
+                return
+            }
+            res.status(200).json({
+                message: result.message,
+                data: result.data
+            })
+            return
+        } else {
+            res.status(400).json({
+                message: result.message,
+            });
+        }
+
+
+    } catch (error) {
+        next(error);
+    }
+}
+
+export const updatePatient = async (req: Request, res: Response, next: NextFunction) => {
+    const { patientId } = req.params;
+    const patientData = req.body;
+    try {
+        const result = await updatePatientFromCollection(patientId, patientData);
+        if (result.success) {
+            res.status(200).json({
+                message: result.message,
+            });
+        } else {
+            res.status(400).json({
+                message: result.message,
+            });
+        }
+    } catch (error) {
+        next(error);
+    }
+}
+
+export const getPatient = async (req: Request, res: Response, next: NextFunction) => {
+    const { patientId } = req.params;
+    try {
+        const result = await getPatientFromCollection(patientId);
+        if (result.success) {
+            res.status(200).json({
+                message: result.message,
+                data: result.data,
+            });
+        } else {
+            res.status(400).json({
+                message: result.message,
+            });
+        }
+    } catch (error) {
+        next(error);
+    }
+}
+
+export const deletePatient = async (req: Request, res: Response, next: NextFunction) => {
+    const { patientId } = req.params;
+    try {
+        const result = await deletePatientFromCollection(patientId);
+        if (result.success) {
+            res.status(200).json({
+                message: result.message,
+            });
+        } else {
+            res.status(400).json({
+                message: result.message,
+            });
+        }
+    } catch (error) {
+        next(error);
+    }
+}
+
+export const registerEmergencyContact = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    
+    try {
+        res.sendFile(path.join(__dirname, "../../../public/registerEmergencyContact.html"));
+    } catch (error) {
+        console.error("Token inválido:", error);
+        res.status(401).send("Url inválida o expirada.");
+    }
 };

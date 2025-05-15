@@ -1,0 +1,155 @@
+paths:
+  /login:
+    post:
+      summary: Iniciar sesión de un usuario
+      description: Autentica a un usuario utilizando un token y un identificador de aplicación.
+      tags:
+        - Auth
+      parameters:
+        - in: header
+          name: x-app-identifier
+          required: true
+          schema:
+            type: string
+          description: Identificador de la aplicación desde la cual el usuario intenta iniciar sesión. Debe ser uno de ["paramedics", "patients", "operators", "admins", "clinics"].
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+              properties:
+                token:
+                  type: string
+                  example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+      responses:
+        200:
+          description: Login exitoso.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Login exitoso."
+                  userId:
+                    type: string
+                    example: "user-id-12345"
+                  role:
+                    type: string
+                    example: "patient"
+        400:
+          description: Token o identificador de aplicación no válido o vacío.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Token no válido o vacío."
+        401:
+          description: Token inválido o usuario sin permisos.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Token inválido" 
+        403:
+          description: El usuario no tiene permisos para acceder a esta aplicación.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "El usuario no tiene permiso para acceder a esta aplicación."
+        404:
+          description: Usuario no encontrado o sin rol asignado.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "El usuario no tiene un rol asignado o no tiene aplicaciones permitidas."
+        500:
+          description: Error interno en el servidor.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Error al loguear usuario."
+                  error:
+                    type: string
+                    example: "Error desconocido."
+  /logout:
+    post:
+      summary: Cerrar sesión de un usuario
+      description: Invalida el token de un usuario y revoca sus tokens de actualización.
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+              properties:
+                token:
+                  type: string
+                  example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+      responses:
+        200:
+          description: Sesión cerrada exitosamente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Sesión cerrada exitosamente."
+        400:
+          description: Token no válido o vacío.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Token no válido o vacío."
+        401:
+          description: Token inválido.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Token inválido."
+        500:
+          description: Error interno en el servidor al cerrar sesión.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Error al cerrar la sesión."

@@ -1,0 +1,357 @@
+paths:
+  /operator/register:
+    post:
+      summary: Register a new operator
+      description: This endpoint allows you to register a new operator by providing their details (first name, last name, email, and password).
+      requestBody:
+        description: The operator's details to be registered.
+        content:
+          application/json:
+            required: true
+            schema:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                  description: The first name of the operator.
+                lastName:
+                  type: string
+                  description: The last name of the operator.
+                email:
+                  type: string
+                  description: The email address of the operator.
+                  format: email
+                password:
+                  type: string
+                  description: The password for the operator.
+                  minLength: 6
+              required:
+                - firstName
+                - lastName
+                - email
+                - password
+      responses:
+        '201':
+          description: Operator registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example : Operador agregado exitosamente.
+                    description: A success message indicating the operator was registered.
+                  operatorId:
+                    type: string
+                    description: The unique ID of the newly registered operator.
+        '400':
+          description: Bad request, failed to register the operator (e.g., email already in use).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example : No se realizaron cambios en la base de datos.
+                    description: A message indicating why the registration failed.
+        '500':
+          description: Internal server error, if something went wrong during the registration process.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example : Error al agregar al Operador
+                    description: A message indicating an error occurred.
+      tags:
+        - Operator
+  /operator/confirm-emergency:
+    post:
+      summary: Confirmar una emergencia asignando una ambulancia
+      tags:
+       - Operator
+      operationId: confirmEmergencyOperator
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                emergencyId:
+                  type: string
+                  example: 42f059dc-04a4-4222-9de1-a3a4be4ba160
+                  description: El ID de la emergencia a confirmar.
+                ambulanceId:
+                  type: string
+                  example: AMB123
+                  description: El ID de la ambulancia asignada.
+              required:
+                - emergencyId
+                - ambulanceId
+      responses:
+        "200":
+          description: Emergencia confirmada con éxito
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Emergencia confirmada con éxito."
+        "400":
+          description: Entrada o solicitud no válida
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Por favor, ingresar un emergencyId y un ambulanceId válido."
+        "404":
+          description: Emergencia no encontrada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "No se encontró una emergencia con el ID proporcionado."
+
+  /operator/cancel-emergency:
+    post:
+      summary: Cancelar una emergencia
+      operationId: cancelEmergencyOperator
+      tags:
+        - Operator
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                emergencyId:
+                  type: string
+                  example: 42f059dc-04a4-4222-9de1-a3a4be4ba160
+                  description: El ID de la emergencia a cancelar.
+              required:
+                - emergencyId
+      responses:
+        "200":
+          description: Emergencia cancelada con éxito
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Emergencia cancelada con éxito."
+        "400":
+          description: Entrada o solicitud no válida
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Por favor, ingresar un emergencyId válido."
+        "404":
+          description: Emergencia no encontrada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "No se encontró una emergencia con el ID proporcionado."
+
+  /operator/{operatorId}:
+      put:
+        summary: Update an operator
+        description: Update the information of an operator by their ID.
+        tags:
+          - Operator
+        operationId: updateOperator
+        parameters:
+          - in: path
+            name: operatorId
+            required: true
+            description: The ID of the operator to update.
+            schema:
+              type: string
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  firstName:
+                    type: string
+                    description: The first name of the operator.
+                    example: John
+                  lastName:
+                    type: string
+                    description: The last name of the operator.
+                    example: Doe
+        responses:
+          '200':
+            description: Operator updated successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                  example:
+                    message: "Operator updated successfully."
+          '400':
+            description: Bad request due to invalid data
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                  example:
+                    message: "Invalid operator data."
+          '500':
+            description: Internal server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                  example:
+                    message: "An error occurred while updating the operator."
+      get:
+        summary: Get an operator
+        description: Retrieve details of an operator by their ID.
+        tags:
+          - Operator
+        operationId: getOperator
+        parameters:
+          - in: path
+            name: operatorId
+            required: true
+            description: The ID of the operator to retrieve.
+            schema:
+              type: string
+        responses:
+          '200':
+            description: Operator found successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                    operator:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        name:
+                          type: string
+                        email:
+                          type: string
+                        phoneNumber:
+                          type: string
+                      example:
+                        id: operator123
+                        name: John Doe
+                        email: john.doe@example.com
+                        phoneNumber: "+1234567890"
+                  example:
+                    message: "Operator found successfully."
+                    operator:
+                      firstName: John
+                      lastName: Doe
+                      email: john.doe@example.com
+                      fcmTokens: [{ token: "token-12345", device: "web", createdAt: "2023-06-01T10:00:00.000Z" }]
+
+          '400':
+            description: Operator not found or invalid request
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                  example:
+                    message: "No operator found with the given ID."
+          '500':
+            description: Internal server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                  example:
+                    message: "An error occurred while retrieving the operator."
+      delete:
+        summary: Delete an operator
+        description: Delete an operator by their ID.
+        tags:
+          - Operator
+        operationId: deleteOperator
+        parameters:
+          - in: path
+            name: operatorId
+            required: true
+            description: The ID of the operator to delete.
+            schema:
+              type: string
+        responses:
+          '200':
+            description: Operator deleted successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                  example:
+                    message: "Operator deleted successfully."
+          '400':
+            description: Operator not found or invalid request
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                  example:
+                    message: "No operator found with the given ID."
+          '500':
+            description: Internal server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                  example:
+                    message: "An error occurred while deleting the operator."

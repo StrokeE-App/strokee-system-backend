@@ -5,7 +5,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const fireBaseApp = initializeApp({
+export const fireBaseApp = initializeApp({
   apiKey: process.env.APIKEY,
   authDomain: process.env.AUTHDOMAIN,
   projectId: process.env.PROJECT_ID,
@@ -23,4 +23,6 @@ admin.initializeApp({
 });
 
 console.log("Connected to Firebase")
-export const authSDK = admin.auth();
+export const firebaseAdmin = admin.auth();
+export const firebaseMessaging = admin.messaging();
+

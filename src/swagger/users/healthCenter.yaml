@@ -1,0 +1,304 @@
+swagger: '2.0'
+info:
+  title: Clinic Management API
+  description: API para gestionar clínicas y centros de salud.
+  version: 1.0.0
+basePath: /api
+schemes:
+  - http
+  - https
+consumes:
+  - application/json
+produces:
+  - application/json
+securityDefinitions:
+  BearerAuth:
+    type: apiKey
+    name: Authorization
+    in: header
+    description: Token de autenticación JWT
+paths:
+  /clinic/register:
+    post:
+      summary: Registrar una nueva clínica
+      description: Registra una nueva clínica en el sistema. Solo accesible por administradores.
+      tags:
+        - Clinic
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: body
+          name: body
+          description: Datos de la clínica a registrar
+          required: true
+          schema:
+            type: object
+            properties:
+              healthCenterName:
+                type: string
+                description: Nombre del centro de salud
+      responses:
+        200:
+          description: Clínica registrada exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Mensaje de respuesta
+                    example: Clínica registrada correctamente
+        400:
+          description: Error en la solicitud
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Mensaje de error
+                    example: Error al registrar la clínica
+        500:
+          description: Error interno del servidor   
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Mensaje de error
+                    example: Error interno del servidor
+  /clinic/all:
+    get:
+      summary: Obtener todas las clínicas
+      description: Obtiene una lista de todas las clínicas registradas. Accesible por administradores y clínicas.
+      tags:
+        - Clinic
+      security:
+        - BearerAuth: []
+      responses:
+        200:
+          description: Lista de clínicas obtenida exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Mensaje de respuesta
+                    example: Clínicas obtenidas correctamente.
+                  clinics:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        healthcenterId:
+                          type: string
+                          description: ID del centro de salud
+                          example: "56443b78-7d28-44e9-882e-a9d603c44fd2"
+                        healthcenterName:
+                          type: string
+                          description: Nombre del centro de salud
+                          example: sura
+        '400':
+          description: Error en la solicitud
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Mensaje de error
+                    example: Error al obtener las clínicas
+        500:
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Mensaje de error
+                    example: Error interno del servidor
+  /clinic/{healthcenterId}:
+    get:
+      summary: Obtener una clínica específica
+      description: Obtiene los detalles de una clínica específica por su ID. Accesible por administradores y clínicas.
+      tags:
+        - Clinic
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: healthcenterId
+          required: true
+          type: string
+          description: ID del centro de salud
+      responses:
+        '200':
+          description: Detalles de la clínica obtenidos exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Mensaje de respuesta
+                    example: Centro de salud obtenido correctamente.
+                  clinic:
+                    type: object
+                    properties:
+                      healthcenterId:
+                        type: string
+                        description: ID del centro de salud
+                        example: "56443b78-7d28-44e9-882e-a9d603c44fd2"
+                      healthcenterName:
+                        type: string
+                        description: Nombre del centro de salud
+                        example: Imbanaco
+        '400':
+          description: Error en la solicitud
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Mensaje de error
+                    example: Error al obtener el centro de salud
+        '404':
+          description: Clínica no encontrada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Mensaje de error
+                    example: Centro de salud no encontrado
+        500:
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Mensaje de error
+                    example: Error interno del servidor
+  /clinic/update/{healthcenterId}:
+    put:
+      summary: Actualizar una clínica
+      description: Actualiza los detalles de una clínica específica por su ID. Solo accesible por administradores.
+      tags:
+        - Clinic
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: healthcenterId
+          required: true
+          type: string
+          description: ID del centro de salud
+        - in: body
+          name: body
+          description: Datos actualizados de la clínica
+          required: true
+          schema:
+            type: object
+            properties:
+              healthCenterName:
+                type: string
+                description: Nuevo nombre del centro de salud
+      responses:
+        '200':
+          description: Clínica actualizada exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Mensaje de respuesta
+                    example: Clínica actualizada correctamente
+        '400':
+          description: Error en la solicitud
+          content:
+            application/json:
+              schema: 
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Mensaje de error
+                    example: Error al actualizar la clínica
+        500:
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Mensaje de error
+                    example: Error interno del servidor
+  /clinic/delete/{healthcenterId}:
+    delete:
+      summary: Eliminar una clínica
+      description: Elimina una clínica específica por su ID. Solo accesible por administradores.
+      tags:
+        - Clinic
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: healthcenterId
+          required: true
+          type: string
+          description: ID del centro de salud
+      responses:
+        '200':
+          description: Clínica eliminada exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Mensaje de respuesta
+                    example: Clínica eliminada correctamente
+        '400':
+          description: Error en la solicitud
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Mensaje de error
+                    example: Error al eliminar la clínica
+        500:
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Mensaje de error
+                    example: Error interno del servidor

@@ -1,0 +1,172 @@
+paths:
+  /emergencies/{emergencyId}:
+      get:
+        summary: Obtener una emergencia por su ID
+        description: Recupera los detalles de una emergencia utilizando el ID proporcionado.
+        tags:
+          - Emergencies
+        operationId: getEmergency
+        parameters:
+          - name: emergencyId
+            in: path
+            required: true
+            description: ID único de la emergencia
+            schema:
+              type: string
+        responses:
+          '200':
+            description: Emergencia encontrada con éxito.
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: 'Emergencia encontrada'
+                    data:
+                      type: object
+                      properties:
+                        emergencyId:
+                          type: string
+                          example: '42f059dc-04a4-4222-9de1-a3a4be4ba160'
+                        startDate:
+                          type: string
+                          format: date-time
+                          example: '2025-01-01T01:00:00Z'
+                        pickupDate:
+                          type: string
+                          format: date-time
+                          example: '2025-01-01T01:00:00Z'
+                        deliveredDate:
+                          type: string
+                          format: date-time
+                          example: '2025-01-01T01:00:00Z'
+                        status:
+                          type: string
+                          example: 'CONFIRMED'
+                        patient:
+                          type: object
+                          properties:
+                            age:
+                              type: integer
+                              example: 24
+                            firstName:
+                              type: string
+                              example: 'Carlos'
+                            height:
+                              type: integer
+                              example: 101
+                            lastName:
+                              type: string
+                              example: 'Caceres'
+                            phoneNumber:
+                              type: string
+                              example: '3057479364'
+                            weight:
+                              type: number
+                              format: float
+                              example: 74.5
+          '400':
+            description: Error al consultar la emergencia.
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: 'Error al consultar la emergencia'
+          '404':
+            description: No se encontró la emergencia con el ID proporcionado.
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: 'No se encontró la emergencia con el id proporcionado.'
+          '500':
+            description: Error interno en el servidor.
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: 'Error al consultar la emergencia.'
+  /emergencies/all:
+    get:
+      tags:
+        - Emergencies
+      summary: Get all emergencies
+      description: Retrieves a list of all emergency records (accessible to paramedics and admins)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Emergencias encontrada"
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Emergency'
+              example:
+                message: "Emergencias encontrada"
+                data:
+                  - emergencyId: "f87daadb-2e66-4b67-bbd1-d6101274e999"
+                    activatedBy:
+                      rol: "patient"
+                      phoneNumber: "3176829955"
+                      userId: "n5ag8p3MtiWn338RIK5vxbLLnvI3"
+                    startDate: "2025-03-20T14:47:06.111Z"
+                    pickupDate: "2025-03-24T20:33:56.000Z"
+                    deliveredDate: "2025-03-24T20:35:00.000Z"
+                    patientId: "n5ag8p3MtiWn338RIK5vxbLLnvI3"
+                    ambulanceId: "AMB123"
+                    status: "DELIVERED"
+                    createdAt: "2025-03-20T14:47:06.113Z"
+                    updatedAt: "2025-03-24T20:34:54.014Z"
+                    healthcenterId: "b63c9c47-40d9-48ac-ba98-2e9508281608"
+                  - emergencyId: "da116433-313e-4564-832e-6962d9b84699"
+                    activatedBy:
+                      rol: "patient"
+                      phoneNumber: "3176829955"
+                      userId: "n5ag8p3MtiWn338RIK5vxbLLnvI3"
+                    startDate: "2025-03-20T15:20:32.142Z"
+                    pickupDate: "2025-03-21T00:29:14.000Z"
+                    deliveredDate: null
+                    patientId: "n5ag8p3MtiWn338RIK5vxbLLnvI3"
+                    ambulanceId: "AM-1"
+                    status: "CANCELLED"
+                    createdAt: "2025-03-20T15:20:32.148Z"
+                    updatedAt: "2025-03-21T00:29:14.956Z"
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Error al consultar las emergencias"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Error al consultar las emergencias"

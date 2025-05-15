@@ -1,0 +1,310 @@
+paths:
+  /patient/emergency-contacts/add:
+    post:
+      summary: Registrar contactos de emergencia para un paciente
+      description: Permite registrar uno o más contactos de emergencia para un paciente en la base de datos.
+      tags:
+        - Patients
+      security:
+        - BearerAuth: []
+      requestBody:
+        description: Datos de los contactos de emergencia a registrar.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                patientId:
+                  type: string
+                  example: 'patient123'
+                contact:
+                  type: object
+                  properties:
+                    firstName:
+                      type: string
+                      example: 'Jane'
+                    lastName:
+                      type: string
+                      example: 'Doe'
+                    phoneNumber:
+                      type: string
+                      example: '1234567890'
+                    email:
+                      type: string
+                      example: 'jane.doe@example.com'
+                    relationship:
+                      type: string
+                      example: 'sister'
+              required:
+                - contacts
+      responses:
+        '201':
+          description: Contacto de emergencia registrado exitosamente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Contacto de emergencia agregado exitosamente.'
+        '400':
+          description: Error al registrar contacto de emergencia debido a datos incorrectos o duplicados.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Hubo un error al procesar la solicitud: Cada contacto debe tener un nombre, apellido, un número de teléfono y correo electrónico.'
+        '500':
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Error al agregar contacto de emergencia.'
+  /patient/emergency-contacts/validate:
+    post:
+      summary: Validar una lista de contactos de emergencia
+      description: Valida una lista de contactos de emergencia para asegurarse de que no haya errores de formato ni duplicados.
+      tags:
+        - Patients
+      security:
+        - BearerAuth: []
+      requestBody:
+        description: Lista de contactos de emergencia a validar.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                contacts:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      firstName:
+                        type: string
+                        example: 'Jane'
+                      lastName:
+                        type: string
+                        example: 'Doe'
+                      phoneNumber:
+                        type: string
+                        example: '1234567890'
+                      email:
+                        type: string
+                        example: 'jane.doe@example.com'
+                      relationship:
+                        type: string
+                        example: 'sister'
+              required:
+                - contacts
+      responses:
+        '201':
+          description: La lista de contactos de emergencia es válida.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Los contactos de emergencia son válidos.'
+        '400':
+          description: Error en la validación de los contactos debido a datos incorrectos o duplicados.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Algunos contactos ya existen con el mismo número de teléfono o correo electrónico.'
+                  duplicateEmails:
+                    type: array
+                    items:
+                      type: string
+                      example: 'john@exmaple.com'
+                  duplicatePhones:
+                    type: array
+                    items:
+                      type: string
+                      example: '9876543210' 
+        '500':
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Error al validar los contactos de emergencia.'
+  /patient/emergency-contacts/{patientId}/{contactId}:
+    get:
+      summary: Obtener un contacto de emergencia
+      description: Obtiene la información de un contacto de emergencia específico de un paciente.
+      tags:
+        - Patients
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          description: ID del paciente
+          schema:
+            type: string
+        - name: contactId
+          in: path
+          required: true
+          description: ID del contacto de emergencia
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Contacto de emergencia obtenido exitosamente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Contacto de emergencia obtenido exitosamente."
+                  data:
+                    type: object
+                    properties:
+                      firstName:
+                        type: string
+                        example: "Alice"
+                      lastName:
+                        type: string
+                        example: "Smith"
+                      phoneNumber:
+                        type: string
+                        example: "5551234567"
+                      email:
+                        type: string
+                        example: "alice.smith@example.com"
+                      relationship:
+                        type: string
+                        example: "sister"
+        "400":
+          description: No se pudo obtener el contacto de emergencia.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "No se pudo obtener el contacto de emergencia."
+        "500":
+          description: Error interno del servidor.
+
+    put:
+      summary: Actualizar un contacto de emergencia
+      description: Actualiza la información de un contacto de emergencia de un paciente.
+      tags:
+        - Patients
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          description: ID del paciente
+          schema:
+            type: string
+        - name: contactId
+          in: path
+          required: true
+          description: ID del contacto de emergencia
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                contact:
+                  type: object
+                  properties:
+                    firstName:
+                      type: string
+                      example: "Bob"
+                    lastName:
+                      type: string
+                      example: "Jones"
+                    phoneNumber:
+                      type: string
+                      example: "5559876543"
+                    email:
+                      type: string
+                      example: "bob.jones@example.com"
+                    relationship:
+                      type: string
+                      example: "brother"
+      responses:
+        "200":
+          description: Contacto de emergencia actualizado exitosamente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Contacto de emergencia actualizado exitosamente."
+        "400":
+          description: No se pudo actualizar el contacto de emergencia.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "No se pudo actualizar el contacto de emergencia."
+        "500":
+          description: Error interno del servidor.
+    delete:
+      summary: Eliminar un contacto de emergencia
+      description: Elimina un contacto de emergencia específico.
+      tags:
+        - Patients
+      parameters:
+        - name: contactId
+          in: path
+          required: true
+          description: ID del contacto de emergencia
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Contacto de emergencia eliminado exitosamente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Contacto de emergencia eliminado exitosamente."
+        "400":
+          description: No se pudo eliminar el contacto de emergencia.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "No se pudo eliminar el contacto de emergencia."
+        "500":
+          description: Error interno del servidor.

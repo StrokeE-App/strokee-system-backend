@@ -1,0 +1,348 @@
+paths:
+  /healthCenter/register:
+    post:
+      summary: Registra un nuevo centro de salud
+      description: Crea un nuevo centro de salud en la base de datos y en Firebase Authentication.
+      tags:
+        - Health center
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+                - firstName
+                - lastName
+                - healthcenterId
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "healthcenter@example.com"
+                password:
+                  type: string
+                  format: password
+                  example: "securepassword"
+                firstName:
+                  type: string
+                  example: "John"
+                lastName:
+                  type: string
+                  example: "Doe"
+                healthcenterId:
+                  type: string
+                  example: "healthcenter-12345"
+      responses:
+        "201":
+          description: Centro de salud agregado exitosamente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Centro de salud agregado correctamente."
+                  healthCenterId:
+                    type: string
+                    example: "healthcenter-12345"
+        "400":
+          description: Error en el registro del centro de salud.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "El correo electrónico ya está registrado."
+        "500":
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Error al agregar el centro de salud."
+  /healthCenter/{medicId}:
+    get:
+      summary: Obtener un integrante del centro de salud
+      description: Obtiene la información de un integrante del centro de salud por su ID.
+      tags:
+        - Health center
+      parameters:
+        - name: medicId
+          in: path
+          required: true
+          description: ID del integrante del centro de salud.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Información obtenida exitosamente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Integrante de centro de salud obtenido correctamente."
+                  healthCenterStaff:
+                    type: object
+                    example:
+                      firstName: "Carlos"
+                      lastName: "Gómez"
+                      email: "carlos.gomez@example"
+                      healthcenterId: "healthcenter-12345"
+                      fcmTokens: [{ token: "token-12345", device: "web", createdAt: "2023-06-01T10:00:00.000Z" }]
+        "400":
+          description: No se encontró el integrante.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "No se encontró el integrante del centro de salud."
+        "500":
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Error al buscar el integrante del centro de salud."
+  /healthCenter/update/{medicId}:
+    put:
+      summary: Actualizar un integrante del centro de salud
+      description: Actualiza la información de un integrante del centro de salud.
+      tags:
+        - Health center
+      parameters:
+        - name: medicId
+          in: path
+          required: true
+          description: ID del integrante del centro de salud.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                  example: "Carlos"
+                lastName:
+                  type: string
+                  example: "Gómez"
+      responses:
+        "200":
+          description: Integrante actualizado correctamente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Integrante de centro de salud actualizado correctamente."
+        "400":
+          description: Error en la actualización.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "No se encontró el integrante del centro de salud o ya fue eliminado."
+        "500":
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Error al actualizar el integrante del centro de salud."
+  /healthCenter/delete/{medicId}:
+    delete:
+      summary: Eliminar un integrante del centro de salud
+      description: Elimina un integrante del centro de salud por su ID.
+      tags:
+        - Health center
+      parameters:
+        - name: medicId
+          in: path
+          required: true
+          description: ID del integrante del centro de salud.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Integrante eliminado correctamente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Integrante de centro de salud eliminado correctamente."
+        "400":
+          description: No se encontró el integrante.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "No se encontró el integrante del centro de salud o ya fue eliminado."
+        "500":
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Error al eliminar el integrante del centro de salud."
+                    
+  /healthCenter/invite-patient:
+    post:
+      summary: Invitar a un paciente para su registro
+      description: Envía un correo electrónico a un paciente con un código de activación para su registro.
+      operationId: invitePatient
+      tags:
+        - Health center
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "paciente@example.com"
+                  description: Correo electrónico del paciente.
+                medicId:
+                  type: string
+                  example: "123456"
+                  description: Identificador del médico responsable.
+              required:
+                - email
+                - medicId
+      responses:
+        "200":
+          description: El correo de activación fue enviado exitosamente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Se envió un correo de activación al contacto de emergencia."
+        "400":
+          description: Error en la solicitud.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "No se pudo enviar el correo de activación al contacto de emergencia."
+        "500":
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Error interno del servidor."
+  /healthCenter/attended-patient:
+    post:
+      summary: Marcar una emergencia como atendida por el centro de salud
+      description: Actualiza el estado de una emergencia a "ATTENDED" en la base de datos.
+      tags:
+        - Health center
+      operationId: deliverPatient
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - emergencyId
+                - attendedDate
+              properties:
+                emergencyId:
+                  type: string
+                  example: "emergency-123"
+                  description: ID único de la emergencia a entregar.
+                attendedDate:
+                  type: string
+                  example: "2025-01-01T02:00:00Z"
+                  description: Fecha de entrega de la emergencia.
+      responses:
+        "200":
+          description: La emergencia fue atendida correctamente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Emergencia  correctamente."
+        "400":
+          description: Falta el ID de la emergencia en la solicitud o es inválido.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "El ID de la emergencia es obligatorio."
+        "404":
+          description: No se encontró una emergencia con el ID proporcionado.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "No se encontró una emergencia con ese ID."
+        "500":
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Error interno del servidor."

@@ -1,0 +1,587 @@
+paths:
+  /patient/register:
+    post:
+      summary: Registrar un nuevo paciente
+      description: Registra un nuevo paciente proporcionando detalles personales e información médica.
+      tags:
+        - Patients
+      operationId: registerPatient
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                  example: 'John'
+                  description: El primer nombre del paciente.
+                lastName:
+                  type: string
+                  example: 'Doe'
+                  description: El apellido del paciente.
+                email:
+                  type: string
+                  example: 'johndoe@example.com'
+                  description: La dirección de correo electrónico del paciente.
+                token:
+                  type: string
+                  example: '123456'
+                  description: Token de autenticación del paciente.
+                password:
+                  type: string
+                  example: 'password123'
+                  description: La contraseña para el paciente.
+                phoneNumber:
+                  type: string
+                  example: '1234567890'
+                  description: El número de teléfono del paciente.
+                age:
+                  type: integer
+                  example: 30
+                  description: La edad del paciente.
+                birthDate:
+                  type: string
+                  format: date
+                  example: '1995-01-01'
+                  description: La fecha de nacimiento del paciente.
+                weight:
+                  type: number
+                  format: float
+                  example: 70
+                  description: El peso del paciente en kilogramos.
+                height:
+                  type: number
+                  format: float
+                  example: 175
+                  description: La altura del paciente en centímetros.
+                emergencyContact:
+                  type: array
+                  description: Lista de contactos de emergencia del paciente.
+                  items:
+                    type: object
+                    properties:
+                      firstName:
+                        firstName: string
+                        example: 'John'
+                        description: Primer nombre del contacto de emergencia.
+                      lastName:
+                        lastName: string
+                        example: 'Doe'
+                        description: Apellido del contacto de emergencia.
+                      email:
+                        email: string
+                        example: 'john.doe@example.com'
+                        description: Correo del contacto de emergencia.
+                      token:
+                        type: string
+                        example: '123456'
+                        description: Token de autenticación del contacto de emergencia.
+                      phoneNumber:
+                        type: string
+                        example: '9876543210'
+                        description: Número de teléfono del contacto de emergencia.
+                      relationship:
+                        type: string
+                        example: 'Twin'
+                        description: Relación con el paciente.
+                medications:
+                  type: array
+                  items:
+                    type: string
+                  example: ['med1']
+                  description: Lista de los medicamentos actuales del paciente.
+                conditions:
+                  type: array
+                  items:
+                    type: string
+                  example: ['condition1']
+                  description: Lista de las condiciones médicas preexistentes del paciente.
+                termsAndConditions:
+                  type: boolean
+                  example: true
+                  description: Indica si el paciente ha aceptado los t&eacute;rminos y condiciones.
+                registerDate:
+                  type: string
+                  format: date-time
+                  example: '2023-06-01T10:00:00.000Z'
+                  description: La fecha y hora de registro del paciente.
+      responses:
+        '201':
+          description: Paciente registrado exitosamente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Paciente agregado exitosamente.'
+                  patientId:
+                    type: string
+                    example: '12345'
+        '400':
+          description: Solicitud incorrecta, el registro falló.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'El email ya está registrado.'
+        '500':
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Error al agregar al paciente.'
+  /patient/{patientId}:
+    get:
+      summary: Obtener información de un paciente
+      description: Recupera la información de un paciente específico basado en su ID.
+      tags:
+        - Patients
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID único del paciente.
+      responses:
+        "200":
+          description: Información del paciente obtenida exitosamente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Paciente obtenido exitosamente."
+                  data:
+                    type: object
+                    example: 
+                      patientId: "12345"
+                      firstName: "John"
+                      lastName: "Doe"
+                      email: "johndoe@example.com"
+                      password: "password123"
+                      phoneNumber: "1234567890"
+                      age: 30
+                      birthDate: "2000-02-29T05:00:00.000Z"
+                      weight: 70
+                      height: 175
+                      medications: ["med1", "med2"]
+                      conditions: ["condition1", "condition2"]
+        "400":
+          description: Error en la solicitud.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "No se encontró un paciente con ese ID."
+        "500":
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Error al encontrar paciente: [detalle del error]."
+  /patient/delete/{patientId}:
+    delete:
+      summary: Eliminar un paciente
+      description: Elimina un paciente del sistema junto con su información relacionada.
+      tags:
+        - Patients
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID único del paciente a eliminar.
+      responses:
+        "200":
+          description: Paciente eliminado exitosamente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Paciente eliminado exitosamente."
+        "400":
+          description: Error en la solicitud.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "No se encontró un paciente con ese ID."
+        "500":
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Error al eliminar el paciente: [detalle del error]."
+  /patient/update/{patientId}:
+    put:
+      summary: Actualizar información de un paciente
+      description: Actualiza los datos de un paciente en la base de datos.
+      tags:
+        - Patients
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          description: ID del paciente a actualizar.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                  description: Nombre del paciente.
+                  example: "Carlos"
+                lastName:
+                  type: string
+                  description: Apellido del paciente.
+                  example: "Caceres"
+                phoneNumber:
+                  type: string
+                  description: Número de teléfono del paciente.
+                  example: "3057479364"
+                age:
+                  type: integer
+                  description: Edad del paciente.
+                  example: 21
+                birthDate:
+                  type: string
+                  format: date
+                  description: Fecha de nacimiento del paciente en formato YYYY-MM-DD.
+                  example: "1995-01-01"
+                weight:
+                  type: number
+                  format: float
+                  description: Peso del paciente en kilogramos.
+                  example: 74.5
+                height:
+                  type: integer
+                  description: Altura del paciente en centímetros.
+                  example: 101
+                medications:
+                  type: array
+                  description: Lista de medicamentos que toma el paciente.
+                  items:
+                    type: string
+                  example: ["dolex"]
+                conditions:
+                  type: array
+                  description: Condiciones médicas del paciente.
+                  items:
+                    type: string
+                  example: ["gripa", "Dolor de cabeza"]
+      responses:
+        200:
+          description: Paciente actualizado correctamente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Paciente actualizado exitosamente."
+        400:
+          description: Error al actualizar el paciente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "No se pudo actualizar el paciente."
+        500:
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Error interno del servidor."
+  /patient/start-emergency:
+    post:
+      summary: Comenzar una emergencia
+      description: Crea una emergencia agregando el ID del paciente a la colección de emergencias.
+      operationId: crearEmergencia
+      tags:
+        - Patients
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                patientId:
+                  type: string
+                  description: El ID del paciente para el registro de emergencia.
+                  example: "12345"
+                role:
+                  type: string
+                  enum: ["patient", "emergencyContact"]
+                  description: "Rol del usuario que inicia la emergencia. Debe ser 'patient' o 'emergencyContact'."
+                  example: "patient"
+                emergencyContactId:
+                  type: string
+                  description: ID del contacto de emergencia.
+                  example: "12345"
+                latitude:
+                  type: number
+                  format: float
+                  description: Latitud de la ubicación del paciente.
+                  example: 4.60971
+                longitude:
+                  type: number
+                  format: float
+                  description: Longitud de la ubicación del paciente.
+                  example: -74.08175
+              required:
+                - patientId
+                - role
+                - emergencyContactId
+                - latitude
+                - longitude
+      responses:
+        '201':
+          description: Emergencia creada con éxito
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Registro de emergencia creado con éxito."
+                  emergencyId:
+                    type: string
+                    example: "abc123"
+        '400':
+          description: Solicitud incorrecta - entrada no válida
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "ID de paciente no válido."
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Algo salió mal, por favor intenta de nuevo más tarde."
+  /patient/emergency-contacts/all/{patientId}:
+    get:
+      summary: Obtener todos los contactos de emergencia de un paciente
+      description: Recupera la lista de contactos de emergencia asociados a un paciente.
+      tags:
+        - Patients
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          description: ID del paciente
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Contactos de emergencia obtenidos exitosamente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Contactos de emergencia obtenidos exitosamente."
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        firstName:
+                          type: string
+                          example: "Carlos"
+                        lastName:
+                          type: string
+                          example: "Doe"
+                        email:
+                          type: string
+                          example: "john.doe@example.com"
+                        phoneNumber:
+                          type: string
+                          example: "1234767890"
+                        relationship:
+                          type: string
+                          example: "Friend"
+                        emergencyContactId:
+                          type: string
+                          example: "5e30e6e1-3a7d-49de-af99-da12879865eb"
+        "400":
+          description: El ID del paciente no fue proporcionado o es inválido.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Por favor, ingresar un patientId."
+        "404":
+          description: No se encontraron contactos de emergencia para el paciente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "No se encontraron contactos de emergencia."
+        "500":
+          description: Error interno del servidor.
+  /patient/send-activation-email:
+    post:
+      summary: Enviar correo de activación al contacto de emergencia
+      description: Envia un email con un token de activación para el contacto de emergencia.
+      tags:
+        - Patients
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - patientId
+                - emergencyContactId
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: contacto@email.com
+                patientId:
+                  type: string
+                  example: "123456"
+                emergencyContactId:
+                  type: string
+                  example: "654321"
+      responses:
+        "200":
+          description: Correo enviado exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Se envió un correo de activación al contacto de emergencia."
+        "400":
+          description: Error al enviar el correo
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "No se pudo enviar el correo de activación."
+
+  /emergency-contact/register-emergency-contact-to-start-emergency:
+    post:
+      summary: Registrar contacto de emergencia y activar emergencia
+      description: Registra un contacto de emergencia usando un código de verificación y un token de activación.
+      tags:
+        - Emergency Contact
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+                - phoneNumber
+                - verification_code
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: contacto@email.com
+                password:
+                  type: string
+                  format: password
+                  example: "contraseñaSegura123"
+                phoneNumber:
+                  type: string
+                  example: "3001234567"
+                verification_code:
+                  type: string
+                  example: "123456"
+      responses:
+        "200":
+          description: Contacto de emergencia registrado exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Contacto de emergencia registrado exitosamente."
+        "400":
+          description: Error en la validación o el código de verificación es incorrecto
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "El código de verificación es incorrecto."

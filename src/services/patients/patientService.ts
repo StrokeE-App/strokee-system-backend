@@ -1,194 +1,101 @@
 import Patient from "../../models/usersModels/patientModel";
-import { authSDK, auth } from "../../config/firebase-cofig";
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import axios from "axios";
+import emergencyModel from "../../models/emergencyModel";
+import patientEmergencyContactModel from "../../models/usersModels/patientEmergencyContact";
+import mongoose from 'mongoose';
+import rolesModel from "../../models/usersModels/rolesModel";
+import { v4 as uuidv4 } from 'uuid';
+import { publishToExchange } from "../publisherService";
+import { IEmergencyContact } from "../../models/usersModels/emergencyContactModel";
+import { firebaseAdmin } from "../../config/firebase-config";
+import { patientSchema, patientUpadteSchema } from "../../validationSchemas/patientShemas";
+import { PatientUpdate } from "./patient.dto";
+import { sendMessage } from "../whatsappService";
+import { hashEmail, validateVerificationCodePatient } from "../utils";
+import { handleAsyncErrorRegister } from "../errorHandlers";
+import { notifyOperatorsAboutEmergency } from "../operators/operatorService";
 import dotenv from "dotenv";
-import { AuthResponse } from "../../models/authResponseModel";
+import verificationCode from "../../models/verificationCode";
 
 dotenv.config();
 
-const validatePatientFields = (
-    firstName: string,
-    lastName: string,
-    email: string,
-    password: string,
-    phoneNumber: string,
-    age: number,
-    birthDate: Date,
-    weight: number,
-    height: number,
-    medications: string[],
-    conditions: string[]
-): string | null => {
-    if (!firstName) return "firstName";
-    if (!lastName) return "lastName";
-    if (!email) return "email";
-    if (!password) return "password";
-    if (!phoneNumber) return "phoneNumber";
-    if (!age) return "age";
-    if (!birthDate) return "birthDate";
-    if (!weight) return "weight";
-    if (!height) return "height";
-    if (medications.length === 0) return "medications";
-    if (conditions.length === 0) return "conditions";
+export const addPatientIntoPatientCollection = async (data: any): Promise<{ 
+    success: boolean;
+    message: string;
+    patientId?: string;
+}> => {
+    const { error } = patientSchema.validate(data);
+    if (error) {
+        return { success: false, message: `Error de validación: ${error.details[0].message}` };
+    }
 
-    return null;
-};
+    if (data.termsAndConditions !== true) {
+        return { success: false, message: "Debe aceptar los términos y condiciones." };
+    }
 
-export const addPatientIntoPatientCollection = async (
-    firstName: string,
-    lastName: string,
-    email: string,
-    password: string,
-    phoneNumber: string,
-    age: number,
-    birthDate: Date,
-    weight: number,
-    height: number,
-    medications: string[],
-    conditions: string[]
-): Promise<void> => {
+    const {
+        firstName, lastName, email, password, phoneNumber, age, birthDate,
+        weight, height, emergencyContact, medications, conditions, token, registerDate
+    } = data;
+
+    const formattedRegisterDate = new Date(registerDate);
+    let invitedByMedicId: string;
     try {
-        const missingField = validatePatientFields(
-            firstName,
-            lastName,
-            email,
-            password,
-            phoneNumber,
-            age,
-            birthDate,
-            weight,
-            height,
-            medications,
-            conditions
-        );
+        const { medicId } = await validateVerificationCodePatient(email, token);
+        invitedByMedicId = medicId;
+    } catch {
+        return { success: false, message: "El correo electrónico o el código de verificación es incorrecto." };
+    }
 
-        if (missingField) {
-            throw new Error(`El campo ${missingField} es requerido.`);
-        }
-
+    try {
         const existingPatient = await Patient.findOne({ email });
-
         if (existingPatient) {
-            throw new Error(`El email ${email} ya está registrado.`);
+            return { success: false, message: `El email ${email} ya está registrado.` };
         }
 
-        const patientRecord = await authSDK.createUser({
-            email,
-            password,
-        });
-
-        if (!patientRecord.uid) {
-            throw new Error('No se pudo crear el usuario en Firebase.');
+        for (const contact of emergencyContact) {
+            contact.emergencyContactId = uuidv4();
+            contact.canActivateEmergency = false;
         }
+
+        const firebaseUser = await firebaseAdmin.createUser({ email, password });
+        const firebaseUserId = firebaseUser.uid;
 
         const newPatient = new Patient({
-            patientId: patientRecord.uid,
+            patientId: firebaseUserId,
             firstName,
             lastName,
             email,
+            medicId: invitedByMedicId,
             phoneNumber,
             age,
+            emergencyContact,
             birthDate,
             weight,
             height,
             medications,
             conditions,
-            isDeleted: false
+            termsAndConditions: true,
+            registerDate: formattedRegisterDate.toISOString(),
         });
 
-        await Patient.updateOne(
-            { patientId: patientRecord.uid, isDeleted: false },
-            newPatient,
+        await newPatient.save();
+
+        await rolesModel.updateOne(
+            { userId: firebaseUserId },
+            { $set: { userId: firebaseUserId, role: "patient", allowedApps: ["patients"] } },
             { upsert: true }
         );
 
-    } catch (error: unknown) {
-        if (error instanceof Error) {
-            console.error(`Error al agregar al paciente: ${error.message}`);
-            throw new Error(`Error al agregar al paciente: ${error.message}`);
-        } else {
-            console.error("Error desconocido al agregar al paciente.");
-            throw new Error("Error desconocido al agregar al paciente.");
-        }
+        await verificationCode.deleteOne({ email: email, type: "REGISTER_PATIENT" });
+
+        return { success: true, message: "Paciente agregado exitosamente.", patientId: firebaseUserId };
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Error desconocido";
+        console.error(`Error al agregar la emergencia: ${errorMessage}`);
+
+        return { success: false, message: `Error al agregar paciente: ${errorMessage}` };
     }
 };
-
-export const cookiesForPatient = async (token: string): Promise<String | null> => {
-    try {
-        const decodedToken = await authSDK.verifyIdToken(token);
-
-        const sessionCookie = await authSDK.createSessionCookie(token, { expiresIn: 60 * 60 * 24 * 1000 }); 
-
-        return sessionCookie;
-    } catch (e: unknown) {
-        if (e instanceof Error) {
-            if (e.message.includes('auth/user-not-found')) {
-                console.error("El usuario no existe. Por favor, verifica las credenciales.");
-            } else if (e.message.includes('auth/wrong-password')) {
-                console.error("La contraseña es incorrecta. Inténtalo de nuevo.");
-            } else if (e.message.includes('auth/invalid-id-token')) {
-                console.error("El token de ID proporcionado no es válido o ha expirado.");
-            } else {
-                console.error("Ocurrió un error desconocido durante la autenticación:", e.message);
-            }
-        } else {
-            console.error("Ocurrió un error inesperado durante la autenticación.");
-        }
-
-        return null;
-    }
-};
-
-export const authenticatePatient = async (email: string, password: string): Promise<AuthResponse | null> => {
-    try {
-
-        const patientRecord = await signInWithEmailAndPassword(auth, email, password);
-
-        const idToken = await patientRecord.user.getIdToken();
-        const refreshToken = patientRecord.user.refreshToken;
-
-        return { idToken, refreshToken };
-    } catch (e: unknown) {
-        if (e instanceof Error) {
-            if (e.message.includes('auth/user-not-found')) {
-                console.log("El usuario no existe.");
-            } else if (e.message.includes('auth/wrong-password')) {
-                console.log("Contraseña incorrecta.");
-            } else {
-                console.log("Error desconocido:", e.message);
-            }
-        } else {
-            console.log("Error desconocido al autenticar.");
-        }
-
-        return null;
-    }
-};
-
-export const refreshUserToken = async (refreshToken: String) => {
-
-    try {
-        const url = `https://securetoken.googleapis.com/v1/token?key=${process.env.APIKEY}`;
-
-        const response = await axios.post(url, {
-            grant_type: "refresh_token",
-            refresh_token: refreshToken,
-        });
-
-        const { id_token, expires_in, refresh_token, user_id } = response.data;
-
-        return {
-            message: "Token refrescado exitosamente.",
-            idToken: id_token,
-            expiresIn: expires_in,
-            refreshToken: refresh_token,
-            userId: user_id,
-        };
-    } catch (error: unknown) {
-        console.error("Failed to refresh token |", error)
-    }
-}
 
 export const getAllPatientsFromCollection = async () => {
     try {
@@ -202,4 +109,228 @@ export const getAllPatientsFromCollection = async () => {
     }
 }
 
+export const addEmergencyToCollection = async (patientId: string, role: string, emergencyContactId?: string, latitude?: string, longitude?: string): Promise<{ success: boolean, message: string, emergencyId?: string }> => {
+    try {
+        if (!patientId) {
+            return { success: false, message: "El ID del paciente es obligatorio." };
+        }
 
+        const allowedRoles = ["patient", "emergencyContact"];
+        if (!allowedRoles.includes(role)) {
+            return { success: false, message: "El rol no es válido." };
+        }
+
+        const existingPatient = await Patient.findOne(
+            { patientId },
+            { firstName: 1, lastName: 1, height: 1, weight: 1, phoneNumber: 1 }
+        );
+        if (!existingPatient) {
+            return { success: false, message: "No se encontró un paciente con ese ID." };
+        }
+
+        let phoneNumber = existingPatient.phoneNumber;
+
+        // Verificación de emergencia activa
+        const existingEmergency = await emergencyModel.findOne({
+            patientId,
+            status: { $in: ["PENDING", "TO_AMBULANCE", "CONFIRMED"] }
+        });
+
+        if (existingEmergency) {
+            return { success: false, message: "Ya tienes una emergencia activa. Espera a que sea atendida antes de solicitar otra." };
+        }
+
+        let userId = patientId; // Paciente como activador por defecto
+
+        if (role === "emergencyContact") {
+            if (!emergencyContactId) {
+                return { success: false, message: "El ID del contacto de emergencia es obligatorio." };
+            }
+            const emergencyContact = await patientEmergencyContactModel.findOne({ "patients.emergencyContactId" : emergencyContactId });
+            if (!emergencyContact || !emergencyContact.fireBaseId) {
+                return { success: false, message: "No se encontró un contacto de emergencia válido para el paciente." };
+            }
+            userId = emergencyContact.fireBaseId;
+            phoneNumber = emergencyContact.phoneNumber;
+        }
+
+        const emergencyId = uuidv4();
+
+        const newEmergency = new emergencyModel({
+            emergencyId,
+            startDate: new Date().toISOString(),
+            pickupDate: null,
+            deliveredDate: null,
+            attendedDate: null,
+            latitude: latitude? parseFloat(latitude) : 0,
+            longitude: longitude? parseFloat(longitude) : 0,
+            patientId,
+            activatedBy: { rol: role, phoneNumber, userId },
+            ambulanceId: null,
+            status: "PENDING",
+            patient: existingPatient
+        });
+
+        const savedEmergency = await newEmergency.save();
+
+        const message = {
+            emergencyId,
+            status: "PENDING",
+        };
+
+        await notifyOperatorsAboutEmergency(
+            emergencyId,
+            patientId,
+            `${existingPatient.firstName} ${existingPatient.lastName}`
+        );
+
+        await publishToExchange("patient_exchange", "patient_report_queue", message);
+
+        try {
+            await sendMessage(existingPatient.firstName, existingPatient.lastName, phoneNumber);
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : "Error desconocido";
+            console.warn(`No se pudo enviar el mensaje al paciente: ${errorMessage}`);
+        }
+
+        return { success: true, message: "Emergencia creada exitosamente.", emergencyId: savedEmergency.emergencyId };
+
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Error desconocido";
+        console.error(`Error al agregar la emergencia: ${errorMessage}`);
+        return { success: false, message: `Error al agregar la emergencia: ${errorMessage}` };
+    }
+};
+
+export const getAllEmergencyContactFromCollection = async (patientId: string): Promise<{ success: boolean, message: string, data: { email: string }[] | null }> => {
+    try {
+
+        if (!patientId) {
+            return { success: false, message: "El ID del paciente es obligatorio.", data: null };
+        }
+
+        const existingPatient = await Patient.findOne({ patientId: patientId }, { _id: 0, emergencyContact: 1 });
+        if (!existingPatient) {
+            return { success: true, message: "No se encontró un paciente con ese ID.", data: null };
+        }
+
+        return { success: true, message: "Contactos de emergencia obtenidos exitosamente.", data: existingPatient.emergencyContact };
+
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Error";
+        console.error(`Error encontrar contactos de emergencia: ${errorMessage}`);
+        return { success: false, message: `Error encontrar contactos de emergencia: ${errorMessage}`, data: null };
+    }
+}
+
+export const getEmergencyContactFromCollection = async (emergencyContactId: string) => {
+    try {
+
+        if (!emergencyContactId) {
+            return { success: false, message: "El ID del paciente es obligatorio." };
+        }
+
+        const existingPatient = await Patient.findOne({ patientId: emergencyContactId }, { _id: 0, emergencyContact: 1 });
+        if (!existingPatient) {
+            return { success: true, message: "No se encontró un paciente con ese ID.", data: null };
+        }
+
+        return { success: true, message: "Contactos de emergencia obtenidos exitosamente.", data: existingPatient.emergencyContact };
+
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Error";
+        console.error(`Error encontrar contactos de emergencia: ${errorMessage}`);
+        return { success: false, message: `Error encontra contacto de emergencia: ${errorMessage}` };
+    }
+}
+
+export const updatePatientFromCollection = async (patientId: string, patientData: PatientUpdate) => {
+    try {
+
+        if (!patientId) {
+            return { success: false, message: "El ID del paciente es obligatorio." };
+        }
+
+        const { error } = patientUpadteSchema.validate(patientData);
+        if (error) {
+            return { success: false, message: `Error de validación: ${error.details[0].message}` };
+        }
+
+        const existingPatient = await Patient.findOne({ patientId: patientId });
+        if (!existingPatient) {
+            return { success: false, message: "No se encontró un paciente con ese ID." };
+        }
+
+        const { firstName, lastName, phoneNumber, age, birthDate, weight, height, medications, conditions } = patientData;
+
+        existingPatient.firstName = firstName;
+        existingPatient.lastName = lastName;
+        existingPatient.phoneNumber = phoneNumber;
+        existingPatient.age = age;
+        existingPatient.birthDate = birthDate;
+        existingPatient.weight = weight;
+        existingPatient.height = height;
+        existingPatient.medications = medications;
+        existingPatient.conditions = conditions;
+
+        await existingPatient.save();
+
+        return { success: true, message: "Paciente actualizado correctamente" };
+
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Error";
+        console.error(`Error al actualizar el paciente: ${errorMessage}`);
+        return { success: false, message: `Error al actualizar el paciente: ${errorMessage}` };
+    }
+};
+
+export const getPatientFromCollection = async (patientId: string) => {
+    try {
+
+        if (!patientId) {
+            return { success: false, message: "El ID del paciente es obligatorio." };
+        }
+
+        const existingPatient = await Patient.findOne({ patientId: patientId }, { _id: 0, createdAt: 0, updatedAt: 0 });
+        if (!existingPatient) {
+            return { success: false, message: "No se encontró un paciente con ese ID." };
+        }
+
+        return { success: true, message: "Paciente obtenido exitosamente.", data: existingPatient };
+
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Error";
+        console.error(`Error encontrar paciente: ${errorMessage}`);
+        return { success: false, message: `Error encontrar paciente: ${errorMessage}` };
+    }
+}
+
+export const deletePatientFromCollection = async (patientId: string) => {
+    try {
+
+        if (!patientId) {
+            return { success: false, message: "El ID del paciente es obligatorio." };
+        }
+
+        const existingPatient = await Patient.findOne({ patientId: patientId });
+        if (!existingPatient) {
+            return { success: false, message: "No se encontró un paciente con ese ID." };
+        }
+
+        firebaseAdmin.deleteUser(patientId);
+
+        await Patient.deleteOne({ patientId: patientId });
+        await rolesModel.deleteOne({ userId: patientId });
+        await patientEmergencyContactModel.updateMany(
+            { "patients.patientId": patientId }, 
+            { $pull: { patients: { patientId: patientId } } }
+        );
+
+        return { success: true, message: "Paciente eliminado exitosamente." };
+
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Error";
+        console.error(`Error al eliminar el paciente: ${errorMessage}`);
+        return { success: false, message: `Error al eliminar el paciente: ${errorMessage}` };
+    }
+}
